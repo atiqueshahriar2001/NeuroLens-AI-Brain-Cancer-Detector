@@ -1387,7 +1387,7 @@ def generate_gradcam(image, model, model_name):
             cam /= cam.max()
 
         original = np.asarray(image).astype(np.float32) / 255.0
-        fig, ax = plt.subplots(figsize=(3.2, 2.6))
+        fig, ax = plt.subplots(figsize=(3, 2))
         ax.imshow(original)
         ax.imshow(cam, cmap="jet", alpha=0.42,
                   extent=(0, original.shape[1], original.shape[0], 0))
