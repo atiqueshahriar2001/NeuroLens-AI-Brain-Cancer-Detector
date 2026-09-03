@@ -967,6 +967,11 @@ for key, value in defaults.items():
     if key not in st.session_state:
         st.session_state[key] = value
 
+model = None
+class_names = None
+model_name = None
+model_error = None
+
 NAV_ITEMS = [
     "🏠 Home",
     "🔬 MRI Analysis",
@@ -1121,11 +1126,6 @@ def render_sticky_header():
         unsafe_allow_html=True,
     )
 
-
-model = None
-class_names = None
-model_name = None
-model_error = None
 
 try:
     model, class_names, model_name = load_model(MODEL_PATH)
