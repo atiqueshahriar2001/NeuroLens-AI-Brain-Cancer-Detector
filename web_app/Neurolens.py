@@ -1013,7 +1013,7 @@ with st.sidebar:
                 st.rerun()
 
     st.markdown("---")
-    engine_status = "🟢 ENGINE READY" if MODEL_PATH.exists() else "🔴 MODEL MISSING"
+    engine_status = "🟢 ENGINE READY" if (MODEL_PATH.exists() and model_error is None) else "🔴 MODEL MISSING"
     st.markdown(f"""
     <div class="sidebar-status">
         <div class="status-title">NEURAL ENGINE</div>
@@ -1035,6 +1035,12 @@ with st.sidebar:
 
     st.markdown('<div class="sidebar-section-label">QUICK ACTIONS</div>', unsafe_allow_html=True)
     if st.button("🗑️ Clear History", key="sidebar_clear_history", use_container_width=True):
+        old_fig = st.session_state.get("gradcam_image")
+        if old_fig is not None:
+            try:
+                plt.close(old_fig)
+            except Exception:
+                pass
         st.session_state.prediction_history = []
         st.session_state.last_result = None
         st.session_state.last_image = None
@@ -1042,6 +1048,12 @@ with st.sidebar:
         st.rerun()
 
     if st.button("🔄 Reset Session", key="sidebar_reset_session", use_container_width=True):
+        old_fig = st.session_state.get("gradcam_image")
+        if old_fig is not None:
+            try:
+                plt.close(old_fig)
+            except Exception:
+                pass
         for key, value in defaults.items():
             st.session_state[key] = value
         st.rerun()
@@ -1115,14 +1127,17 @@ class_names = None
 model_name = None
 model_error = None
 
-render_sticky_header()
 try:
     model, class_names, model_name = load_model(MODEL_PATH)
 except Exception as e:
     model_error = str(e)
 
+render_sticky_header()
+
 
 def predict_image(image, model, class_names):
+    if model is None or class_names is None:
+        raise RuntimeError("Neural engine unavailable — cannot run inference.")
     tensor = test_transforms(image).unsqueeze(0).to(DEVICE)
     model.eval()
     with torch.no_grad():
@@ -1133,6 +1148,9 @@ def predict_image(image, model, class_names):
     return class_names[idx], float(probs[idx] * 100), {
         class_names[i]: float(probs[i] * 100) for i in range(len(class_names))
     }
+
+
+MAX_HISTORY = 200
 
 
 def log_activity(message, level="info"):
@@ -1334,6 +1352,8 @@ def render_live_probability_animation(result):
 
 
 def generate_gradcam(image, model, model_name):
+    if model is None:
+        raise RuntimeError("Neural engine unavailable — cannot compute Grad-CAM.")
     model.eval()
     activations, gradients = [], []
 
@@ -1347,6 +1367,7 @@ def generate_gradcam(image, model, model_name):
     fwd = target_layer.register_forward_hook(lambda m, i, o: activations.append(o.detach()))
     bwd = target_layer.register_full_backward_hook(lambda m, gi, go: gradients.append(go[0].detach()))
 
+    fig = None
     try:
         tensor = test_transforms(image).unsqueeze(0).to(DEVICE)
         model.zero_grad()
@@ -1366,7 +1387,7 @@ def generate_gradcam(image, model, model_name):
             cam /= cam.max()
 
         original = np.asarray(image).astype(np.float32) / 255.0
-        fig, ax = plt.subplots(figsize=(4, 3))
+        fig, ax = plt.subplots(figsize=(5, 4))
         ax.imshow(original)
         ax.imshow(cam, cmap="jet", alpha=0.42,
                   extent=(0, original.shape[1], original.shape[0], 0))
@@ -1374,8 +1395,16 @@ def generate_gradcam(image, model, model_name):
         fig.tight_layout(pad=0)
         return fig
     finally:
-        fwd.remove()
-        bwd.remove()
+        try:
+            fwd.remove()
+        except Exception:
+            pass
+        try:
+            bwd.remove()
+        except Exception:
+            pass
+        if fig is None:
+            plt.close("all")
 
 
 
@@ -1383,7 +1412,7 @@ def generate_gradcam(image, model, model_name):
 def plot_confidence_trend(history):
     if len(history) < 2:
         return None
-    fig, ax = plt.subplots(figsize=(5, 2.5))
+    fig, ax = plt.subplots(figsize=(6, 2.8))
     confidences = [item["confidence"] for item in history]
     indices = list(range(1, len(history) + 1))
     ax.plot(indices, confidences, marker="o", linewidth=2, markersize=5, color="#6366f1")
@@ -1454,9 +1483,9 @@ if nav == "🏠 Home":
         st.progress(st.session_state.live_inference_progress)
 
     if st.session_state.last_result:
-        render_live_probability_animation = True
+        show_live_prob = True
     else:
-        render_live_probability_animation = False
+        show_live_prob = False
 
     c1, c2, c3 = st.columns(3)
     cards = [
@@ -1505,7 +1534,7 @@ if nav == "🏠 Home":
             unsafe_allow_html=True,
         )
 
-    if render_live_probability_animation and st.session_state.last_result is not None:
+    if show_live_prob and st.session_state.last_result is not None:
         st.write("")
         st.subheader("⚡ Live Probability Stream")
         render_live_probability_animation(st.session_state.last_result)
@@ -1613,8 +1642,19 @@ elif nav == "🔬 MRI Analysis":
                         }
                         st.session_state.last_result = result
                         st.session_state.last_image = image
+                        # Close previous Grad-CAM figure to release memory before reassignment.
+                        old_fig = st.session_state.get("gradcam_image")
+                        if old_fig is not None:
+                            try:
+                                plt.close(old_fig)
+                            except Exception:
+                                pass
                         st.session_state.gradcam_image = gradcam_fig
                         st.session_state.prediction_history.append(result)
+                        if len(st.session_state.prediction_history) > MAX_HISTORY:
+                            st.session_state.prediction_history = (
+                                st.session_state.prediction_history[-MAX_HISTORY:]
+                            )
 
                         update_live_stats(result, latency_ms)
                         log_activity(
@@ -1664,7 +1704,7 @@ elif nav == "🔬 MRI Analysis":
                 st.metric("Deep Model", result["model"])
 
             st.write("")
-            st.markdown("### 📊 Probability Distribution (Softmax)")
+            st.markdown("### 📊 Probability Distribution")
 
             st.markdown(
                 '<div class="probability-grid">' +
@@ -1692,7 +1732,7 @@ elif nav == "🔬 MRI Analysis":
                 st.write("")
                 st.markdown("### 🔥 Grad-CAM Visualization")
                 st.markdown('<div class="chart-container">', unsafe_allow_html=True)
-                st.pyplot(st.session_state.gradcam_image, use_container_width=False)
+                st.pyplot(st.session_state.gradcam_image, use_container_width=True)
                 st.markdown('</div>', unsafe_allow_html=True)
                 st.caption("Red/yellow regions indicate areas most influential to the model's diagnostic decision.")
 
@@ -1705,7 +1745,7 @@ elif nav == "📊 Dashboard":
 
     render_live_ticker()
 
-    if "live_session_start" not in st.session_state or st.session_state.live_session_start is None:
+    if st.session_state.live_session_start is None:
         st.session_state.live_session_start = datetime.now()
 
     history = st.session_state.prediction_history
@@ -1781,6 +1821,7 @@ elif nav == "📊 Dashboard":
                 st.markdown('<div class="chart-container">', unsafe_allow_html=True)
                 st.pyplot(trend_fig, use_container_width=True)
                 st.markdown('</div>', unsafe_allow_html=True)
+                plt.close(trend_fig)
             else:
                 st.caption("Need at least 2 analyses to show trend.")
 
@@ -1880,7 +1921,16 @@ elif nav == "🕘 History":
 
         st.write("")
         if st.button("🗑️ Clear History", key="clear_history_button"):
+            old_fig = st.session_state.get("gradcam_image")
+            if old_fig is not None:
+                try:
+                    plt.close(old_fig)
+                except Exception:
+                    pass
             st.session_state.prediction_history = []
+            st.session_state.last_result = None
+            st.session_state.last_image = None
+            st.session_state.gradcam_image = None
             st.rerun()
 
 
@@ -1924,7 +1974,7 @@ elif nav == "🔥 Grad-CAM":
                 """,
                 unsafe_allow_html=True,
             )
-            st.pyplot(st.session_state.gradcam_image, use_container_width=False)
+            st.pyplot(st.session_state.gradcam_image, use_container_width=True)
 
         st.write("")
         c1, c2 = st.columns(2)
@@ -2008,6 +2058,12 @@ elif nav == "⚙️ Settings":
 
         if st.button("🧹 Reset Session", key="reset_session_button",
                      use_container_width=True, type="primary"):
+            old_fig = st.session_state.get("gradcam_image")
+            if old_fig is not None:
+                try:
+                    plt.close(old_fig)
+                except Exception:
+                    pass
             for key, value in defaults.items():
                 st.session_state[key] = value
             st.success("Session cleared. All diagnostic reports reset.")
