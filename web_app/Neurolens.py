@@ -1085,8 +1085,8 @@ def render_sticky_header():
                 {nav}
             </div>
             <div class="sticky-clock" id="sticky-clock">
-                <div class="sticky-clock-time" id="clocktime">--:--:--</div>
-                <div class="sticky-clock-date" id="clockdate">— —</div>
+                <div class="sticky-clock-time" id="clocktime"></div>
+                <div class="sticky-clock-date" id="clockdate"></div>
             </div>
         </div>
         <script>
