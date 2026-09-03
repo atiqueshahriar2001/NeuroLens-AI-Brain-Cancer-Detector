@@ -1387,7 +1387,7 @@ def generate_gradcam(image, model, model_name):
             cam /= cam.max()
 
         original = np.asarray(image).astype(np.float32) / 255.0
-        fig, ax = plt.subplots(figsize=(5, 4))
+        fig, ax = plt.subplots(figsize=(3.2, 2.6))
         ax.imshow(original)
         ax.imshow(cam, cmap="jet", alpha=0.42,
                   extent=(0, original.shape[1], original.shape[0], 0))
@@ -1732,7 +1732,7 @@ elif nav == "🔬 MRI Analysis":
                 st.write("")
                 st.markdown("### 🔥 Grad-CAM Visualization")
                 st.markdown('<div class="chart-container">', unsafe_allow_html=True)
-                st.pyplot(st.session_state.gradcam_image, use_container_width=True)
+                st.pyplot(st.session_state.gradcam_image, use_container_width=False)
                 st.markdown('</div>', unsafe_allow_html=True)
                 st.caption("Red/yellow regions indicate areas most influential to the model's diagnostic decision.")
 
@@ -1974,7 +1974,7 @@ elif nav == "🔥 Grad-CAM":
                 """,
                 unsafe_allow_html=True,
             )
-            st.pyplot(st.session_state.gradcam_image, use_container_width=True)
+            st.pyplot(st.session_state.gradcam_image, use_container_width=False)
 
         st.write("")
         c1, c2 = st.columns(2)
