@@ -8,3 +8,4 @@
 !packages.txt
 !web_app/
 !web_app/**
+!brain_tumor_detector.pth
