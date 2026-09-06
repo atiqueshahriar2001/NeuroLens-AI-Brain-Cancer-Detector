@@ -858,6 +858,9 @@ if not MODEL_PATH.exists():
 
 DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
+if torch.cuda.is_available():
+    torch.backends.cudnn.benchmark = True
+
 test_transforms = transforms.Compose([
     transforms.Resize((IMG_SIZE, IMG_SIZE)),
     transforms.ToTensor(),
@@ -866,17 +869,16 @@ test_transforms = transforms.Compose([
 
 
 class ConvBlock(nn.Module):
-    def __init__(self, in_channels, out_channels):
+    def __init__(self, in_channels, out_channels, pool=True):
         super().__init__()
-        self.block = nn.Sequential(
-            nn.Conv2d(in_channels, out_channels, kernel_size=3, padding=1),
+        layers = [
+            nn.Conv2d(in_channels, out_channels, kernel_size=3, padding=1, bias=False),
             nn.BatchNorm2d(out_channels),
             nn.ReLU(inplace=True),
-            nn.Conv2d(out_channels, out_channels, kernel_size=3, padding=1),
-            nn.BatchNorm2d(out_channels),
-            nn.ReLU(inplace=True),
-            nn.MaxPool2d(2),
-        )
+        ]
+        if pool:
+            layers.append(nn.MaxPool2d(2))
+        self.block = nn.Sequential(*layers)
 
     def forward(self, x):
         return self.block(x)
@@ -886,33 +888,59 @@ class CustomCNN(nn.Module):
     def __init__(self, num_classes):
         super().__init__()
         self.features = nn.Sequential(
-            ConvBlock(3, 32),
-            ConvBlock(32, 64),
-            ConvBlock(64, 128),
-            ConvBlock(128, 256),
+            ConvBlock(3, 32, pool=True),
+            ConvBlock(32, 64, pool=True),
+            ConvBlock(64, 128, pool=True),
+            ConvBlock(128, 256, pool=False),
+            ConvBlock(256, 256, pool=True),
+            nn.Dropout2d(0.3),
         )
-        self.pool = nn.AdaptiveAvgPool2d((1, 1))
+        self.pool = nn.AdaptiveAvgPool2d(1)
         self.classifier = nn.Sequential(
             nn.Flatten(),
-            nn.Linear(256, 128),
+            nn.Linear(256, 256),
+            nn.BatchNorm1d(256),
             nn.ReLU(inplace=True),
-            nn.Dropout(0.30),
-            nn.Linear(128, num_classes),
+            nn.Dropout(0.35),
+            nn.Linear(256, num_classes),
         )
+        self._init_weights()
+
+    def _init_weights(self):
+        for m in self.modules():
+            if isinstance(m, nn.Conv2d):
+                nn.init.kaiming_normal_(m.weight, mode="fan_out", nonlinearity="relu")
+            elif isinstance(m, nn.BatchNorm2d):
+                nn.init.ones_(m.weight)
+                nn.init.zeros_(m.bias)
+            elif isinstance(m, nn.Linear):
+                nn.init.xavier_uniform_(m.weight)
+                nn.init.zeros_(m.bias)
 
     def forward(self, x):
-        return self.classifier(self.pool(self.features(x)))
+        x = self.features(x)
+        x = self.pool(x)
+        return self.classifier(x)
 
 
 def build_resnet50(num_classes):
     model = resnet50(weights=None)
-    model.fc = nn.Linear(model.fc.in_features, num_classes)
+    model.fc = nn.Sequential(
+        nn.Linear(model.fc.in_features, 256),
+        nn.BatchNorm1d(256),
+        nn.ReLU(inplace=True),
+        nn.Dropout(0.35),
+        nn.Linear(256, num_classes),
+    )
     return model
 
 
 def build_efficientnet_b0(num_classes):
     model = efficientnet_b0(weights=None)
-    model.classifier[-1] = nn.Linear(model.classifier[-1].in_features, num_classes)
+    in_features = model.classifier[1].in_features
+    model.classifier = nn.Sequential(
+        nn.Dropout(0.35), nn.Linear(in_features, num_classes)
+    )
     return model
 
 
@@ -939,7 +967,7 @@ def load_model(model_path):
         key[len("module."):] if key.startswith("module.") else key: value
         for key, value in state_dict.items()
     }
-    model.load_state_dict(clean_state_dict, strict=False)
+    model.load_state_dict(clean_state_dict, strict=True)
     model.to(DEVICE)
     model.eval()
     return model, class_names, best_model_name
@@ -1362,7 +1390,7 @@ def generate_gradcam(image, model, model_name):
     elif model_name == "EfficientNet-B0":
         target_layer = model.features[-1]
     else:
-        target_layer = model.features[3].block[0]
+        target_layer = model.features[4].block[0]
 
     fwd = target_layer.register_forward_hook(lambda m, i, o: activations.append(o.detach()))
     bwd = target_layer.register_full_backward_hook(lambda m, gi, go: gradients.append(go[0].detach()))
