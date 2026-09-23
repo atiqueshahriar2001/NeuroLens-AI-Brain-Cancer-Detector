@@ -37,12 +37,30 @@ from torchvision.models import resnet50, efficientnet_b0
 
 warnings.filterwarnings("ignore")
 
+
 # ─────────────────────────────────────────────────────────────────────────────
-# HTML HELPER — prevents Streamlit from treating indented HTML as a code block
+# HTML HELPERS — Streamlit-compat shims (old + new API)
 # ─────────────────────────────────────────────────────────────────────────────
 def safe_html(html: str) -> str:
     """Collapse newlines+indentation so Streamlit markdown keeps HTML as HTML."""
     return " ".join(line.strip() for line in html.strip().splitlines() if line.strip())
+
+
+def _render_html(content: str, height: int = 200, scrolling: bool = False):
+    """
+    Render a raw HTML (with optional JS) block in an isolated frame.
+    Tries the newest Streamlit API first (`st.iframe(srcdoc=...)`), then falls
+    back to the legacy `components.html` for older Streamlit versions.
+    """
+    # New API (Streamlit ≥ 1.40-ish supports srcdoc)
+    try:
+        if hasattr(st, "iframe"):
+            st.iframe(srcdoc=content, height=height, scrolling=scrolling)
+            return
+    except (AttributeError, TypeError):
+        pass
+    # Legacy API — still works even though it prints a deprecation warning
+    components.html(content, height=height, scrolling=scrolling)
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -83,6 +101,7 @@ test_transforms = transforms.Compose([
     transforms.Normalize(NORM_MEAN, NORM_STD),
 ])
 
+
 def uncertainty_band(uncertainty: float) -> tuple[str, str]:
     if uncertainty < 0.05:
         return "Very High Reliability", "#10b981"
@@ -92,8 +111,9 @@ def uncertainty_band(uncertainty: float) -> tuple[str, str]:
         return "Moderate Reliability", "#f59e0b"
     return "Low Reliability", "#ef4444"
 
+
 # ─────────────────────────────────────────────────────────────────────────────
-# CSS
+# CSS  (unchanged — same as before)
 # ─────────────────────────────────────────────────────────────────────────────
 STYLES = """
 <style>
@@ -130,7 +150,6 @@ STYLES = """
 header[data-testid="stHeader"] { background: transparent; }
 #MainMenu, footer { visibility: hidden; }
 
-/* ── SIDEBAR ── */
 [data-testid="stSidebar"] {
     background: var(--bg-secondary) !important;
     border-right: 1px solid var(--border-subtle) !important;
@@ -184,13 +203,12 @@ header[data-testid="stHeader"] { background: transparent; }
     border-radius: 0 4px 4px 0; background: var(--accent-light); box-shadow: 0 0 10px var(--accent);
 }
 
-/* ── ACTIVE INDICATOR — perfect vertical centering ── */
 .sidebar-active-indicator {
     display: flex;
     align-items: center;
     justify-content: flex-start;
     gap: 0.6rem;
-    height: 40px;                            /* fixed height = predictable centering */
+    height: 40px;
     padding: 0 0.85rem;
     margin: 0.2rem 0 0.5rem;
     border-radius: 10px;
@@ -199,7 +217,7 @@ header[data-testid="stHeader"] { background: transparent; }
     color: var(--accent-light);
     font-size: 0.75rem;
     font-weight: 700;
-    line-height: 1;                          /* kill default line-height jump */
+    line-height: 1;
     letter-spacing: 0.02em;
     box-shadow: var(--shadow-glow);
 }
@@ -226,7 +244,6 @@ header[data-testid="stHeader"] { background: transparent; }
 .sidebar-mini-value { margin-top: 0.2rem; font-size: 0.78rem; font-weight: 700; color: var(--text-primary); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .sidebar-footer { margin-top: 1rem; padding: 0.75rem; border-radius: 12px; background: rgba(245,158,11,.06); border: 1px solid rgba(245,158,11,.18); font-size: .7rem; color: var(--text-secondary); text-align: center; line-height: 1.45; }
 
-/* ── STICKY HEADER ── */
 .sticky-header {
     position: fixed; top: 0.5rem; left: calc(300px + 0.4rem); right: 0.4rem; z-index: 9999;
     display: flex; align-items: center; gap: 1rem; padding: 0.85rem 1.25rem;
@@ -254,12 +271,7 @@ header[data-testid="stHeader"] { background: transparent; }
 
 .main .block-container { padding-top: 6.5rem !important; padding-left: 1.5rem !important; padding-right: 1.5rem !important; }
 
-/* ── CARDS ── */
-.info-card {
-    padding: 1.5rem; min-height: 150px; border-radius: var(--radius-lg);
-    background: var(--bg-card); border: 1px solid var(--border-subtle);
-    transition: all 0.25s ease;
-}
+.info-card { padding: 1.5rem; min-height: 150px; border-radius: var(--radius-lg); background: var(--bg-card); border: 1px solid var(--border-subtle); transition: all 0.25s ease; }
 .info-card:hover { border-color: var(--border-hover); box-shadow: var(--shadow-glow); transform: translateY(-2px); }
 .info-card h3 { margin-top: 0; color: var(--text-primary); font-size: 1rem; font-weight: 700; }
 .info-card p { color: var(--text-secondary); line-height: 1.6; font-size: 0.88rem; margin: 0.25rem 0; }
@@ -270,18 +282,12 @@ header[data-testid="stHeader"] { background: transparent; }
 .metric-label { font-size: 0.7rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: .1em; font-weight: 600; }
 .metric-icon { font-size: 1.8rem; margin-bottom: 0.35rem; }
 
-.hero { padding: 3rem 2.5rem; border-radius: 24px; text-align: center; margin-bottom: 1.75rem;
-    background: linear-gradient(135deg, rgba(14,165,233,.10) 0%, rgba(6,182,212,.05) 50%, rgba(139,92,246,.08) 100%);
-    border: 1px solid rgba(56,189,248,.22); position: relative; overflow: hidden; }
+.hero { padding: 3rem 2.5rem; border-radius: 24px; text-align: center; margin-bottom: 1.75rem; background: linear-gradient(135deg, rgba(14,165,233,.10) 0%, rgba(6,182,212,.05) 50%, rgba(139,92,246,.08) 100%); border: 1px solid rgba(56,189,248,.22); position: relative; overflow: hidden; }
 .hero::before { content: ""; position: absolute; top: -50%; left: -50%; width: 200%; height: 200%; background: radial-gradient(circle at 60% 40%, rgba(14,165,233,.08), transparent 60%); pointer-events: none; }
 .hero h1 { font-size: 3rem; font-weight: 900; letter-spacing: -0.03em; margin-bottom: .5rem; background: var(--gradient-1); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
 .hero p { color: var(--text-secondary); font-size: 1.05rem; line-height: 1.7; max-width: 680px; margin: 0 auto; }
 .hero-badge { display: inline-flex; align-items: center; gap: .4rem; padding: .4rem .9rem; border-radius: 8px; background: var(--accent-glow); border: 1px solid var(--border-hover); font-size: .72rem; font-weight: 700; color: var(--accent-light); margin-bottom: .85rem; }
 
-.result-card { padding: 1.25rem 1.5rem; margin-top: 1.5rem; border-radius: 16px; background: var(--bg-card); border: 1px solid var(--border-hover); box-shadow: var(--shadow-glow); }
-.result-label { color: var(--accent-light); font-size: .72rem; font-weight: 700; text-transform: uppercase; letter-spacing: .1em; }
-
-/* ── DIAGNOSTIC PANEL ── */
 .diagnostic-panel { padding: 1.75rem; border-radius: 22px; background: var(--bg-card); border: 1px solid var(--border-hover); box-shadow: var(--shadow-glow); margin-top: 1.5rem; }
 .diagnostic-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; padding-bottom: .75rem; border-bottom: 1px solid var(--border-subtle); }
 .diagnostic-title { font-size: .78rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: .1em; font-weight: 700; }
@@ -294,13 +300,11 @@ header[data-testid="stHeader"] { background: transparent; }
 .badge-moderate { background: rgba(245,158,11,.12); color: var(--warning); border: 1px solid rgba(245,158,11,.3); }
 .badge-low { background: rgba(239,68,68,.12); color: var(--error); border: 1px solid rgba(239,68,68,.3); }
 
-/* ── UNCERTAINTY CARD ── */
 .uncertainty-card { padding: 1.25rem 1.5rem; border-radius: var(--radius-md); background: rgba(139,92,246,.08); border: 1px solid rgba(139,92,246,.25); margin-top: 1.2rem; }
 .uncertainty-title { font-size: .72rem; color: #a78bfa; text-transform: uppercase; letter-spacing: .1em; font-weight: 700; margin-bottom: .6rem; }
 .uncertainty-value { font-size: 1.5rem; font-weight: 800; }
 .uncertainty-band { font-size: .8rem; font-weight: 600; margin-top: .15rem; }
 
-/* ── PROBABILITY ── */
 .probability-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: .75rem; margin-top: 1rem; }
 .probability-card { padding: 1rem; border-radius: 12px; background: var(--bg-glass); border: 1px solid var(--border-subtle); text-align: center; transition: all .2s ease; }
 .probability-card:hover { border-color: var(--border-hover); transform: translateY(-2px); }
@@ -309,10 +313,8 @@ header[data-testid="stHeader"] { background: transparent; }
 .probability-card.predicted { border-color: rgba(14,165,233,.5); background: rgba(14,165,233,.08); }
 .probability-card.predicted .probability-value { color: var(--accent); }
 
-/* ── CHARTS ── */
 .chart-container { padding: 1.25rem; border-radius: 16px; background: var(--bg-card); border: 1px solid var(--border-subtle); margin-top: 1rem; }
 
-/* ── HISTORY ── */
 .thumbnail-card { display: flex; align-items: center; gap: .85rem; padding: .9rem 1rem; border-radius: 14px; background: var(--bg-card); border: 1px solid var(--border-subtle); transition: all .2s ease; margin-bottom: .6rem; }
 .thumbnail-card:hover { border-color: var(--border-hover); box-shadow: 0 4px 16px rgba(14,165,233,.08); }
 .thumbnail-img { width: 54px; height: 54px; border-radius: 10px; background: var(--bg-glass); display: flex; align-items: center; justify-content: center; font-size: 1.4rem; border: 1px solid var(--border-subtle); flex-shrink: 0; }
@@ -324,13 +326,11 @@ header[data-testid="stHeader"] { background: transparent; }
 .confidence-medium { background: rgba(245,158,11,.12); color: #f59e0b; border: 1px solid rgba(245,158,11,.3); }
 .confidence-low { background: rgba(239,68,68,.12); color: #ef4444; border: 1px solid rgba(239,68,68,.3); }
 
-/* ── EMPTY STATE ── */
 .empty-state { padding: 3.5rem 2rem; border-radius: var(--radius-lg); background: var(--bg-card); border: 1px solid var(--border-subtle); text-align: center; }
 .empty-state-icon { font-size: 3rem; margin-bottom: 1rem; opacity: .55; }
 .empty-state-title { font-size: 1.1rem; font-weight: 700; color: var(--text-primary); margin-bottom: .5rem; }
 .empty-state-text { font-size: .88rem; color: var(--text-secondary); }
 
-/* ── ACTIVITY FEED ── */
 .activity-feed { border-radius: 12px; border: 1px solid rgba(255,255,255,.06); background: rgba(11,17,32,.65); max-height: 340px; overflow-y: auto; font-family: 'JetBrains Mono', monospace; font-size: .76rem; }
 .activity-row { display: flex; gap: .7rem; padding: .42rem .8rem; border-bottom: 1px solid rgba(255,255,255,.04); }
 .activity-row:last-child { border-bottom: none; }
@@ -340,7 +340,6 @@ header[data-testid="stHeader"] { background: transparent; }
 .activity-warn    .activity-msg { color: #fbbf24; }
 .activity-error   .activity-msg { color: #fca5a5; }
 
-/* ── DISTRIBUTION BAR ── */
 .dist-card { padding: .9rem 1.1rem; border-radius: 12px; background: var(--bg-card); border: 1px solid var(--border-subtle); margin-bottom: .65rem; transition: all .2s ease; }
 .dist-card:hover { border-color: var(--border-hover); }
 .dist-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: .45rem; }
@@ -349,24 +348,19 @@ header[data-testid="stHeader"] { background: transparent; }
 .dist-bar-bg { height: 6px; border-radius: 3px; background: rgba(255,255,255,.06); overflow: hidden; }
 .dist-bar-fill { height: 100%; border-radius: 3px; background: var(--gradient-1); transition: width .5s cubic-bezier(.4,0,.2,1); }
 
-/* ── LATEST CARD ── */
 .latest-card { padding: 1.25rem; border-radius: 16px; background: var(--bg-card); border: 1px solid var(--border-subtle); }
 .latest-row { display: flex; justify-content: space-between; align-items: center; padding: .65rem 0; border-bottom: 1px solid var(--border-subtle); }
 .latest-row:last-child { border-bottom: none; }
 .latest-key { font-size: .82rem; color: var(--text-secondary); font-weight: 500; }
 .latest-val { font-size: .82rem; color: var(--text-primary); font-weight: 700; }
 
-/* ── FILE UPLOADER ── */
 [data-testid="stFileUploader"] { background: var(--bg-card); border-radius: 16px; padding: 1.25rem; border: 2px dashed var(--border-subtle); }
 [data-testid="stFileUploader"]:hover { border-color: var(--accent); background: var(--accent-glow); }
 
-/* ── EXPANDER ── */
 [data-testid="stExpander"] { border-radius: 14px !important; border: 1px solid var(--border-subtle) !important; background: var(--bg-card) !important; }
 
-/* ── DISCLAIMER ── */
 .disclaimer { margin-top: 1.5rem; padding: 1rem 1.25rem; border-radius: 12px; background: rgba(245,158,11,.07); border: 1px solid rgba(245,158,11,.22); color: var(--text-secondary); font-size: .84rem; line-height: 1.65; }
 
-/* ── BUTTONS ── */
 .stButton > button { border-radius: 12px !important; font-weight: 700 !important; transition: all .2s ease !important; }
 .stButton > button:hover { transform: translateY(-1px); }
 [data-testid="stMetricValue"] { font-size: 1.65rem !important; font-weight: 800 !important; }
@@ -376,19 +370,16 @@ header[data-testid="stHeader"] { background: transparent; }
 hr { border-color: var(--border-subtle) !important; margin: 1.25rem 0 !important; }
 .stImage { border-radius: 16px !important; overflow: hidden !important; border: 1px solid var(--border-subtle) !important; }
 
-/* ── XAI CARD ── */
 .xai-card { padding: 1.25rem 1.5rem; border-radius: var(--radius-md); background: rgba(14,165,233,.06); border: 1px solid rgba(14,165,233,.22); margin-top: 1.2rem; }
 .xai-title { font-size: .72rem; color: var(--accent-light); text-transform: uppercase; letter-spacing: .1em; font-weight: 700; margin-bottom: .5rem; }
 .xai-text { font-size: .85rem; color: var(--text-secondary); line-height: 1.65; }
 
-/* ── APP FOOTER ── */
 .app-footer { display: flex; justify-content: space-between; align-items: center; padding: 1.1rem 1.5rem; border-radius: 16px; background: var(--bg-card); border: 1px solid var(--border-subtle); margin-top: 2rem; font-size: .8rem; color: var(--text-secondary); flex-wrap: wrap; gap: .75rem; }
 .footer-brand { font-weight: 800; color: var(--text-primary); }
 .footer-meta { display: flex; gap: .75rem; align-items: center; flex-wrap: wrap; }
 .footer-divider { color: var(--text-muted); }
 .footer-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--success); box-shadow: 0 0 8px var(--success); display: inline-block; }
 
-/* ── RESPONSIVE ── */
 @media (max-width: 768px) {
     .sticky-header { left: .3rem !important; right: .3rem !important; padding: .5rem .75rem !important; }
     .sticky-ticker, .sticky-brand-version { display: none; }
@@ -409,6 +400,7 @@ hr { border-color: var(--border-subtle) !important; margin: 1.25rem 0 !important
 """
 
 st.markdown(STYLES, unsafe_allow_html=True)
+
 
 # ─────────────────────────────────────────────────────────────────────────────
 # MODEL ARCHITECTURES
@@ -948,7 +940,7 @@ except Exception as exc:
 # ─────────────────────────────────────────────────────────────────────────────
 
 def render_neural_animation():
-    components.html("""
+    _render_html("""
     <div id="nw" style="position:relative;width:100%;height:160px;overflow:hidden;border-radius:20px;
     background:radial-gradient(circle at 50% 50%,rgba(14,165,233,.12),rgba(11,17,32,.15) 55%,rgba(11,17,32,.7));
     border:1px solid rgba(56,189,248,.2)">
@@ -987,7 +979,7 @@ def render_live_ticker():
         band  = mc.get("band", "")
         u_val = mc.get("uncertainty", 0)
         unc_str = f" · Uncertainty σ={u_val:.3f} ({band})"
-    components.html(f"""
+    _render_html(f"""
     <style>
     @keyframes mq{{0%{{transform:translateX(100%);}}100%{{transform:translateX(-100%);}}}}
     .tw{{overflow:hidden;border-radius:11px;border:1px solid rgba(56,189,248,.28);
@@ -1097,7 +1089,7 @@ def render_live_probability_animation(result, mc_result=None):
         color = mc_result["color"]
         unc_html = f'<div style="margin-top:.75rem;padding:.6rem .85rem;border-radius:9px;background:rgba(139,92,246,.08);border:1px solid rgba(139,92,246,.22)"><span style="font-size:.7rem;color:#a78bfa;text-transform:uppercase;letter-spacing:.1em;font-weight:700">MC Uncertainty</span><span style="float:right;font-weight:800;color:{color}">σ={uval:.4f} · {band}</span></div>'
 
-    components.html(f"""
+    _render_html(f"""
     <style>
     .live-prob{{padding:1.2rem 1.5rem;border-radius:18px;border:1px solid rgba(56,189,248,.32);
     background:linear-gradient(135deg,rgba(14,165,233,.09),rgba(6,182,212,.03));font-family:Inter,sans-serif;color:#e2e8f0}}
@@ -1170,7 +1162,7 @@ with st.sidebar:
             label = f"▶ {item}" if active_nav == item else item
             if active_nav == item:
                 st.markdown('<div class="nav-active">', unsafe_allow_html=True)
-            if st.button(label, key=f"nav_{item}", use_container_width=True):
+            if st.button(label, key=f"nav_{item}", width="stretch"):
                 st.session_state.nav = item
                 st.rerun()
             if active_nav == item:
@@ -1197,7 +1189,7 @@ with st.sidebar:
     </div>"""), unsafe_allow_html=True)
 
     st.markdown('<div class="sidebar-section-label">QUICK ACTIONS</div>', unsafe_allow_html=True)
-    if st.button("🗑️ Clear History", key="sb_clear", use_container_width=True):
+    if st.button("🗑️ Clear History", key="sb_clear", width="stretch"):
         st.session_state.confirm_clear = True
     if st.session_state.get("confirm_clear", False):
         st.caption("Clear all session records?")
@@ -1209,7 +1201,7 @@ with st.sidebar:
         if c2.button("Cancel", key="sb_clear_no"):
             st.session_state.confirm_clear = False
 
-    if st.button("🔄 Reset Session", key="sb_reset", use_container_width=True):
+    if st.button("🔄 Reset Session", key="sb_reset", width="stretch"):
         st.session_state.confirm_reset = True
     if st.session_state.get("confirm_reset", False):
         st.caption("Reset entire session?")
@@ -1382,7 +1374,7 @@ elif nav == "🔬 MRI Analysis":
 
                 with col1:
                     st.markdown("### MRI Preview")
-                    st.image(image, use_container_width=True)
+                    st.image(image, width="stretch")
                     st.caption(f"Original: {image.width}×{image.height}px · Processed: {IMG_SIZE}×{IMG_SIZE}px · RGB · Normalized")
 
                 with col2:
@@ -1396,7 +1388,7 @@ elif nav == "🔬 MRI Analysis":
                     run_xai = st.checkbox("Enable Dual XAI (Grad-CAM + Grad-CAM++)", value=True, key="run_xai_cb")
                     run_agreement = st.checkbox("Compute Explanation Agreement Score", value=True, key="run_agree_cb")
 
-                    if st.button("🔍 Run AI Analysis", type="primary", use_container_width=True, key="analyze_btn"):
+                    if st.button("🔍 Run AI Analysis", type="primary", width="stretch", key="analyze_btn"):
                         if st.session_state.live_session_start is None:
                             st.session_state.live_session_start = datetime.now()
 
@@ -1625,12 +1617,12 @@ elif nav == "🔬 MRI Analysis":
                 with gc_col:
                     st.markdown("**Grad-CAM**")
                     if st.session_state.gradcam_image:
-                        st.pyplot(st.session_state.gradcam_image, use_container_width=True)
+                        st.pyplot(st.session_state.gradcam_image, width="stretch")
                         st.caption("Grad-CAM · Jet colormap · α=0.44")
                 with pp_col:
                     st.markdown("**Grad-CAM++ (Sharper)**")
                     if st.session_state.gradcam_pp_image:
-                        st.pyplot(st.session_state.gradcam_pp_image, use_container_width=True)
+                        st.pyplot(st.session_state.gradcam_pp_image, width="stretch")
                         st.caption("Grad-CAM++ · Inferno colormap · α=0.46")
 
                 st.markdown(safe_html("""
@@ -1782,7 +1774,7 @@ elif nav == "📊 Dashboard":
             cf = plot_confidence_trend(history)
             if cf:
                 st.markdown('<div class="chart-container">', unsafe_allow_html=True)
-                st.pyplot(cf, use_container_width=True)
+                st.pyplot(cf, width="stretch")
                 st.markdown('</div>', unsafe_allow_html=True)
                 plt.close(cf)
             else:
@@ -1792,7 +1784,7 @@ elif nav == "📊 Dashboard":
             lf = plot_latency_trend(history)
             if lf:
                 st.markdown('<div class="chart-container">', unsafe_allow_html=True)
-                st.pyplot(lf, use_container_width=True)
+                st.pyplot(lf, width="stretch")
                 st.markdown('</div>', unsafe_allow_html=True)
                 plt.close(lf)
             else:
@@ -1803,7 +1795,7 @@ elif nav == "📊 Dashboard":
                 uf = plot_uncertainty_history(history)
                 if uf:
                     st.markdown('<div class="chart-container">', unsafe_allow_html=True)
-                    st.pyplot(uf, use_container_width=True)
+                    st.pyplot(uf, width="stretch")
                     st.markdown('</div>', unsafe_allow_html=True)
                     plt.close(uf)
 
@@ -1944,15 +1936,15 @@ elif nav == "🔥 Grad-CAM":
         with orig_col:
             st.subheader("Original MRI")
             if st.session_state.last_image:
-                st.image(st.session_state.last_image, use_container_width=True)
+                st.image(st.session_state.last_image, width="stretch")
         with gc_col:
             st.subheader("Grad-CAM (Jet)")
             if st.session_state.gradcam_image:
-                st.pyplot(st.session_state.gradcam_image, use_container_width=True)
+                st.pyplot(st.session_state.gradcam_image, width="stretch")
         with pp_col:
             st.subheader("Grad-CAM++ (Inferno)")
             if st.session_state.gradcam_pp_image:
-                st.pyplot(st.session_state.gradcam_pp_image, use_container_width=True)
+                st.pyplot(st.session_state.gradcam_pp_image, width="stretch")
 
         st.markdown("**Heatmap influence:** Low (dark) ░░░▒▒▒████ High (bright)")
 
@@ -2030,7 +2022,7 @@ elif nav == "🎯 XAI Lab":
             fig = plot_uncertainty_history(history)
             if fig:
                 st.markdown('<div class="chart-container">', unsafe_allow_html=True)
-                st.pyplot(fig, use_container_width=True)
+                st.pyplot(fig, width="stretch")
                 st.markdown('</div>', unsafe_allow_html=True)
                 plt.close(fig)
 
@@ -2073,7 +2065,7 @@ elif nav == "🎯 XAI Lab":
             ax2.grid(True, alpha=0.12, linestyle="--")
             fig2.tight_layout(pad=0.5)
             st.markdown('<div class="chart-container">', unsafe_allow_html=True)
-            st.pyplot(fig2, use_container_width=True)
+            st.pyplot(fig2, width="stretch")
             st.markdown('</div>', unsafe_allow_html=True)
             plt.close(fig2)
 
@@ -2096,7 +2088,7 @@ elif nav == "🎯 XAI Lab":
         if rows:
             import pandas as pd
             df = pd.DataFrame(rows)
-            st.dataframe(df, use_container_width=True, hide_index=True)
+            st.dataframe(df, width="stretch", hide_index=True)
         else:
             st.caption("No per-class uncertainty data yet.")
 
@@ -2174,7 +2166,7 @@ elif nav == "⚙️ Settings":
 
         st.write("")
         st.markdown('<div class="disclaimer"><b>⚠️ Reset Session</b><br>Permanently clears all diagnostic reports and session data.</div>', unsafe_allow_html=True)
-        if st.button("🧹 Reset Session", type="primary", use_container_width=True, key="settings_reset"):
+        if st.button("🧹 Reset Session", type="primary", width="stretch", key="settings_reset"):
             st.session_state.settings_confirm_reset = True
         if st.session_state.get("settings_confirm_reset", False):
             st.warning("Reset all session results?")
