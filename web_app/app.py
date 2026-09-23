@@ -2445,5 +2445,3 @@ st.markdown(safe_html(f"""
         </div>
     </div>
 </div>"""), unsafe_allow_html=True)
-
-st.caption("NeuroLens AI is a research prototype for educational and research purposes. Predictions are not medical diagnoses and must not replace evaluation by a qualified healthcare professional.")
