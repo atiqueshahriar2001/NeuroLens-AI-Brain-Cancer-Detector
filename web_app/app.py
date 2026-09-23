@@ -346,14 +346,6 @@ header[data-testid="stHeader"] { background: transparent; }
 }
 @keyframes dot-pulse { 0%,100% { opacity: 1; } 50% { opacity: .35; } }
 
-.sticky-clock {
-    display: flex; flex-direction: column; align-items: flex-end;
-    font-family: 'JetBrains Mono', monospace; line-height: 1.05;
-    white-space: nowrap; padding-left: 0.2rem; flex-shrink: 0;
-}
-.sticky-clock-time { font-size: 0.95rem; font-weight: 700; color: var(--text-primary); letter-spacing: .03em; }
-.sticky-clock-date { font-size: 0.6rem; color: var(--text-muted); letter-spacing: .08em; text-transform: uppercase; font-weight: 600; }
-
 .main .block-container { padding-top: 6.5rem !important; padding-left: 1.5rem !important; padding-right: 1.5rem !important; }
 
 /* ── CARDS ── */
@@ -466,7 +458,7 @@ hr { border-color: var(--border-subtle) !important; margin: 1.25rem 0 !important
 .xai-title { font-size: .72rem; color: var(--accent-light); text-transform: uppercase; letter-spacing: .1em; font-weight: 700; margin-bottom: .5rem; }
 .xai-text { font-size: .85rem; color: var(--text-secondary); line-height: 1.65; }
 
-/* ── APP FOOTER (redesigned) ── */
+/* ── APP FOOTER ── */
 .app-footer {
     display: flex;
     justify-content: space-between;
@@ -546,7 +538,7 @@ hr { border-color: var(--border-subtle) !important; margin: 1.25rem 0 !important
 /* ── RESPONSIVE ── */
 @media (max-width: 768px) {
     .sticky-header { left: .3rem !important; right: .3rem !important; padding: .55rem .75rem !important; gap: 0.5rem !important; }
-    .sticky-ticker, .sticky-brand-version, .sticky-clock { display: none; }
+    .sticky-ticker, .sticky-brand-version { display: none; }
     .sticky-status { display: none; }
     .sticky-brand-logo { width: 36px; height: 36px; font-size: 1.1rem; }
     .sticky-brand-name { font-size: 0.92rem; }
@@ -1168,7 +1160,7 @@ def render_live_ticker():
 
 
 # ─────────────────────────────────────────────────────────────────────────────
-# STICKY HEADER
+# STICKY HEADER  (clock removed)
 # ─────────────────────────────────────────────────────────────────────────────
 
 def render_sticky_header():
@@ -1183,9 +1175,6 @@ def render_sticky_header():
     mc     = st.session_state.mc_result
     nav    = st.session_state.nav
     eng    = model_name or "—"
-    now    = datetime.now()
-    clock_time = now.strftime("%H:%M:%S")
-    clock_date = now.strftime("%b %d, %Y").upper()
 
     engine_ok   = model_error is None and MODEL_PATH.exists()
     status_cls  = "status-ok" if engine_ok else "status-err"
@@ -1229,11 +1218,6 @@ def render_sticky_header():
         <div class="sticky-page">
             <span class="sticky-page-dot"></span>
             {nav}
-        </div>
-
-        <div class="sticky-clock">
-            <div class="sticky-clock-time">{clock_time}</div>
-            <div class="sticky-clock-date">{clock_date}</div>
         </div>
     </div>"""), unsafe_allow_html=True)
 
