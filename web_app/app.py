@@ -169,6 +169,11 @@ header[data-testid="stHeader"] { background: transparent; }
     color: var(--text-primary) !important; transform: translateX(4px) !important;
     box-shadow: 0 4px 14px rgba(14,165,233,.10) !important;
 }
+[data-testid="stSidebar"] .stButton > button p {
+    line-height: 1 !important;
+    margin: 0 !important;
+    display: flex; align-items: center;
+}
 .nav-active {
     position: relative !important; border-radius: 12px !important;
     background: linear-gradient(135deg, rgba(14,165,233,.20), rgba(6,182,212,.07)) !important;
@@ -179,15 +184,32 @@ header[data-testid="stHeader"] { background: transparent; }
     content: ""; position: absolute; left: 0; top: 20%; width: 3px; height: 60%;
     border-radius: 0 4px 4px 0; background: var(--accent-light); box-shadow: 0 0 10px var(--accent);
 }
+
+/* ── ACTIVE INDICATOR (vertically centered) ── */
 .sidebar-active-indicator {
-    display: flex; align-items: center; gap: 0.5rem;
-    padding: 0.6rem 0.8rem; margin: 0.2rem 0 0.5rem;
+    display: flex; align-items: center; justify-content: flex-start;
+    gap: 0.55rem;
+    padding: 0.55rem 0.85rem; margin: 0.2rem 0 0.5rem;
+    min-height: 38px;
     border-radius: 10px; background: var(--accent-glow);
     border: 1px solid var(--border-hover);
     color: var(--accent-light); font-size: 0.75rem; font-weight: 700;
+    line-height: 1;
+    letter-spacing: 0.02em;
     box-shadow: var(--shadow-glow);
 }
-.sidebar-active-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--success); box-shadow: 0 0 8px var(--success); }
+.sidebar-active-dot {
+    width: 8px; height: 8px; border-radius: 50%;
+    background: var(--success);
+    box-shadow: 0 0 8px var(--success);
+    flex-shrink: 0; display: block;
+}
+.sidebar-active-text {
+    display: inline-flex; align-items: center;
+    line-height: 1;
+    transform: translateY(0.5px);
+}
+
 .sidebar-engine-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0.45rem; margin-top: 0.75rem; }
 .sidebar-mini-stat { padding: 0.6rem; border-radius: 9px; background: rgba(255,255,255,.025); border: 1px solid var(--border-subtle); }
 .sidebar-mini-label { font-size: 0.6rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: .07em; }
@@ -1128,7 +1150,7 @@ with st.sidebar:
     st.markdown(safe_html(f"""
     <div class="sidebar-active-indicator">
         <span class="sidebar-active-dot"></span>
-        ACTIVE: {active_nav}
+        <span class="sidebar-active-text">ACTIVE: {active_nav}</span>
     </div>"""), unsafe_allow_html=True)
 
     groups = [
