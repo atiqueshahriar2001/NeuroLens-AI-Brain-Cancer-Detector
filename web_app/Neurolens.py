@@ -460,9 +460,18 @@ def load_model(model_path):
     if not isinstance(checkpoint, dict):
         raise ValueError("Checkpoint must be a dictionary.")
 
-    class_names = checkpoint.get("class_names", CLASS_NAMES)
-    if list(class_names) != CLASS_NAMES:
-        raise ValueError(f"Unexpected class order. Expected: {CLASS_NAMES}")
+    checkpoint_classes = checkpoint.get("class_names", CLASS_NAMES)
+    # Training checkpoints may store the same labels in lowercase (for
+    # example: glioma / meningioma / notumor / pituitary). Validate their
+    # order case-insensitively, then use the canonical display names here.
+    normalized_classes = [str(name).strip().casefold().replace(" ", "") for name in checkpoint_classes]
+    expected_classes = [name.casefold().replace(" ", "") for name in CLASS_NAMES]
+    if normalized_classes != expected_classes:
+        raise ValueError(
+            "Unexpected class order in checkpoint. "
+            f"Expected {CLASS_NAMES}; found {checkpoint_classes}."
+        )
+    class_names = CLASS_NAMES
 
     num_classes    = checkpoint.get("num_classes", len(class_names))
     best_model_name = checkpoint.get("best_model_name", "CustomCNN")
@@ -698,8 +707,10 @@ def explanation_agreement(image, model, model_name):
     """
     Compute a pixel-wise correlation between Grad-CAM and Grad-CAM++ heatmaps.
     Returns a score 0–1 indicating how consistently both methods explain the prediction.
-    A high score (> 0.7) suggests stable, trustworthy explanations.
+    A high score (> 0.7) means the two heatmaps are more similar; it does not
+    establish that either explanation is correct or clinically trustworthy.
     """
+    hook_handles = []
     try:
         model.eval()
         # ── Grad-CAM activations ──
@@ -709,6 +720,7 @@ def explanation_agreement(image, model, model_name):
 
         fwd1 = target_layer.register_forward_hook(lambda m, i, o: activations_gc.append(o.detach()))
         bwd1 = target_layer.register_full_backward_hook(lambda m, gi, go: gradients_gc.append(go[0].detach()))
+        hook_handles.extend((fwd1, bwd1))
 
         tensor = test_transforms(image).unsqueeze(0).to(DEVICE)
         model.zero_grad()
@@ -729,6 +741,7 @@ def explanation_agreement(image, model, model_name):
         # ── Grad-CAM++ activations ──
         fwd2 = target_layer.register_forward_hook(lambda m, i, o: activations_pp.append(o.detach()))
         bwd2 = target_layer.register_full_backward_hook(lambda m, gi, go: gradients_pp.append(go[0].detach()))
+        hook_handles.extend((fwd2, bwd2))
 
         model.zero_grad()
         out2 = model(tensor)
@@ -759,6 +772,9 @@ def explanation_agreement(image, model, model_name):
         return max(0.0, min(1.0, corr))
     except Exception:
         return None
+    finally:
+        for handle in hook_handles:
+            handle.remove()
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -988,6 +1004,9 @@ def render_sticky_header():
     nav    = st.session_state.nav
     eng    = model_name or "—"
     mc_unc = f" · σ={mc['uncertainty']:.3f}" if mc else ""
+    now    = datetime.now()
+    clock_time = now.strftime("%H:%M:%S")
+    clock_date = now.strftime("%b %d, %Y").upper()
 
     st.markdown(f"""
     <div class="sticky-header">
@@ -1007,22 +1026,10 @@ def render_sticky_header():
         <div class="sticky-divider"></div>
         <div class="sticky-page"><span class="sticky-page-dot"></span>{nav}</div>
         <div class="sticky-clock">
-            <div class="sticky-clock-time" id="clocktime"></div>
-            <div class="sticky-clock-date" id="clockdate"></div>
+            <div class="sticky-clock-time">{clock_time}</div>
+            <div class="sticky-clock-date">{clock_date}</div>
         </div>
-    </div>
-    <script>
-    (function(){{
-        function tick(){{
-            const d=new Date(),pad=n=>String(n).padStart(2,'0');
-            const months=['JAN','FEB','MAR','APR','MAY','JUN','JUL','AUG','SEP','OCT','NOV','DEC'];
-            const tEl=document.getElementById('clocktime'),dEl=document.getElementById('clockdate');
-            if(tEl)tEl.textContent=pad(d.getHours())+':'+pad(d.getMinutes())+':'+pad(d.getSeconds());
-            if(dEl)dEl.textContent=months[d.getMonth()]+' '+pad(d.getDate())+', '+d.getFullYear();
-        }}
-        tick();setInterval(tick,1000);
-    }})();
-    </script>""", unsafe_allow_html=True)
+    </div>""", unsafe_allow_html=True)
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -1258,7 +1265,7 @@ if nav == "🏠 Home":
     cards = [
         ("🔬", "Brain MRI Classification", "Four-class classification: Glioma, Meningioma, No Tumor, Pituitary using state-of-the-art CNN architectures."),
         ("🎯", "MC Dropout Uncertainty", "Bayesian uncertainty estimation via Monte Carlo Dropout. Reliability bands tell you how confident the model really is."),
-        ("🔥", "Dual XAI (Grad-CAM++)", "Side-by-side Grad-CAM and Grad-CAM++ visualizations with an Explanation Agreement Score for trustworthy interpretations."),
+        ("🔥", "Dual XAI (Grad-CAM++)", "Side-by-side Grad-CAM and Grad-CAM++ visualizations with a score showing how similar their heatmaps are."),
         ("⚡", "Real-Time Inference", "Detailed timing breakdown: preprocessing, inference, and XAI generation with CUDA-accurate latency measurement."),
     ]
     for col, (icon, title, desc) in zip([c1, c2, c3, c4], cards):
@@ -1582,7 +1589,7 @@ elif nav == "🔬 MRI Analysis":
                     <div style="display:flex;justify-content:space-between;align-items:center">
                         <div class="xai-text">
                             Pearson correlation between Grad-CAM and Grad-CAM++ heatmaps.<br>
-                            A high score (&gt;0.70) means both methods highlight similar regions, suggesting a reliable, stable explanation.
+                            A high score (&gt;0.70) means both methods highlight similar regions. Similarity alone does not verify that an explanation is correct.
                         </div>
                         <div style="text-align:right;min-width:90px">
                             <div style="font-size:1.5rem;font-weight:800;color:{a_color}">{agree:.3f}</div>
@@ -1819,8 +1826,8 @@ elif nav == "📊 Dashboard":
                 ("Confidence",      f"{latest['confidence']:.2f}%"),
                 ("Architecture",    latest["model"]),
                 ("Inference",       f"{latest.get('latency_ms', 0):.0f} ms"),
-                ("Uncertainty σ",   f"{latest['uncertainty']:.4f}" if latest.get("uncertainty") else "—"),
-                ("Agreement",       f"{latest['agreement_score']:.3f}" if latest.get("agreement_score") else "—"),
+                ("Uncertainty σ",   f"{latest['uncertainty']:.4f}" if latest.get("uncertainty") is not None else "—"),
+                ("Agreement",       f"{latest['agreement_score']:.3f}" if latest.get("agreement_score") is not None else "—"),
                 ("Session Time",    elapsed),
                 ("Analyzed At",     latest["timestamp"]),
             ]
@@ -1877,8 +1884,8 @@ elif nav == "🕘 History":
             for item in filtered:
                 conf = item["confidence"]
                 cc   = "confidence-high" if conf >= 80 else "confidence-medium" if conf >= 60 else "confidence-low"
-                unc_tag = f" · σ={item['uncertainty']:.4f}" if item.get("uncertainty") else ""
-                agree_tag = f" · Agreement={item['agreement_score']:.3f}" if item.get("agreement_score") else ""
+                unc_tag = f" · σ={item['uncertainty']:.4f}" if item.get("uncertainty") is not None else ""
+                agree_tag = f" · Agreement={item['agreement_score']:.3f}" if item.get("agreement_score") is not None else ""
                 st.markdown(f"""
                 <div class="thumbnail-card">
                     <div class="thumbnail-img">🧠</div>
@@ -1962,7 +1969,7 @@ elif nav == "🔥 Grad-CAM":
                 <div style="display:flex;justify-content:space-between;align-items:center">
                     <div class="xai-text">
                         Correlation between Grad-CAM and Grad-CAM++ attention regions.<br>
-                        High scores (&gt;0.70) indicate consistent, trustworthy explanations from both methods.
+                        High scores (&gt;0.70) indicate similar heatmaps, but do not establish that the explanation is correct.
                     </div>
                     <div style="text-align:right">
                         <div style="font-size:1.6rem;font-weight:900;color:{a_color}">{agree:.3f}</div>
@@ -2080,7 +2087,7 @@ elif nav == "🎯 XAI Lab":
         st.subheader("📋 Per-Class Uncertainty Analysis")
         class_unc = {c: [] for c in CLASS_NAMES}
         for h in history:
-            if h.get("uncertainty") and h.get("prediction") in class_unc:
+            if h.get("uncertainty") is not None and h.get("prediction") in class_unc:
                 class_unc[h["prediction"]].append(h["uncertainty"])
         rows = []
         for cls, vals in class_unc.items():
