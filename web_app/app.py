@@ -38,6 +38,14 @@ from torchvision.models import resnet50, efficientnet_b0
 warnings.filterwarnings("ignore")
 
 # ─────────────────────────────────────────────────────────────────────────────
+# HTML HELPER — prevents Streamlit from treating indented HTML as a code block
+# ─────────────────────────────────────────────────────────────────────────────
+def safe_html(html: str) -> str:
+    """Collapse newlines+indentation so Streamlit markdown keeps HTML as HTML."""
+    return " ".join(line.strip() for line in html.strip().splitlines() if line.strip())
+
+
+# ─────────────────────────────────────────────────────────────────────────────
 # PAGE CONFIG
 # ─────────────────────────────────────────────────────────────────────────────
 st.set_page_config(
@@ -461,9 +469,6 @@ def load_model(model_path):
         raise ValueError("Checkpoint must be a dictionary.")
 
     checkpoint_classes = checkpoint.get("class_names", CLASS_NAMES)
-    # Training checkpoints may store the same labels in lowercase (for
-    # example: glioma / meningioma / notumor / pituitary). Validate their
-    # order case-insensitively, then use the canonical display names here.
     normalized_classes = [str(name).strip().casefold().replace(" ", "") for name in checkpoint_classes]
     expected_classes = [name.casefold().replace(" ", "") for name in CLASS_NAMES]
     if normalized_classes != expected_classes:
@@ -529,15 +534,10 @@ def predict_image(image, model, class_names):
 
 
 def mc_dropout_predict(image, model, class_names, n_samples: int = MC_SAMPLES):
-    """
-    MC Dropout uncertainty estimation.
-    Enables dropout layers during inference for Bayesian approximation.
-    Returns mean probs, std (uncertainty), and reliability band.
-    """
+    """MC Dropout uncertainty estimation."""
     if model is None:
         return None
 
-    # Enable dropout during inference
     def _enable_dropout(m):
         if isinstance(m, (nn.Dropout, nn.Dropout2d)):
             m.train()
@@ -554,11 +554,11 @@ def mc_dropout_predict(image, model, class_names, n_samples: int = MC_SAMPLES):
             p   = F.softmax(out, dim=1)[0].detach().cpu().numpy()
             mc_preds.append(p)
 
-    model.eval()   # restore fully eval mode
+    model.eval()
 
-    mc_preds   = np.stack(mc_preds)        # (n_samples, n_classes)
-    mean_probs = mc_preds.mean(axis=0)     # (n_classes,)
-    std_probs  = mc_preds.std(axis=0)      # (n_classes,)
+    mc_preds   = np.stack(mc_preds)
+    mean_probs = mc_preds.mean(axis=0)
+    std_probs  = mc_preds.std(axis=0)
 
     pred_idx     = int(np.argmax(mean_probs))
     uncertainty  = float(std_probs[pred_idx])
@@ -576,7 +576,7 @@ def mc_dropout_predict(image, model, class_names, n_samples: int = MC_SAMPLES):
 
 
 # ─────────────────────────────────────────────────────────────────────────────
-# GRAD-CAM (standard) + GRAD-CAM++ (dual XAI)
+# GRAD-CAM + GRAD-CAM++
 # ─────────────────────────────────────────────────────────────────────────────
 
 def _get_target_layer(model, model_name):
@@ -589,7 +589,6 @@ def _get_target_layer(model, model_name):
 
 
 def _cam_to_heatmap(cam_raw, original_np):
-    """Normalise a raw CAM array and return float heatmap [0-1] resized."""
     cam = np.maximum(cam_raw, 0)
     cam -= cam.min()
     if cam.max() > 0:
@@ -644,10 +643,7 @@ def generate_gradcam(image, model, model_name):
 
 
 def generate_gradcam_pp(image, model, model_name):
-    """
-    Grad-CAM++ (improved localization).
-    Uses second-order gradient weighting for sharper saliency maps.
-    """
+    """Grad-CAM++ (improved localization)."""
     if model is None:
         raise RuntimeError("Neural engine unavailable.")
     model.eval()
@@ -667,16 +663,15 @@ def generate_gradcam_pp(image, model, model_name):
         if not activations or not gradients:
             raise RuntimeError("Grad-CAM++ hooks failed.")
 
-        activation = activations[0][0].cpu().numpy()   # (C, H, W)
-        gradient   = gradients[0][0].cpu().numpy()     # (C, H, W)
+        activation = activations[0][0].cpu().numpy()
+        gradient   = gradients[0][0].cpu().numpy()
 
-        # Grad-CAM++ weight computation
         alpha_num   = gradient ** 2
         alpha_denom = 2 * gradient ** 2 + \
                       (activation * gradient ** 3).sum(axis=(1, 2), keepdims=True) + 1e-8
         alpha       = alpha_num / alpha_denom
         relu_grad   = np.maximum(gradient, 0)
-        weights     = (alpha * relu_grad).sum(axis=(1, 2))  # (C,)
+        weights     = (alpha * relu_grad).sum(axis=(1, 2))
 
         cam_raw = np.zeros(activation.shape[1:], dtype=np.float32)
         for w, a in zip(weights, activation):
@@ -704,16 +699,10 @@ def generate_gradcam_pp(image, model, model_name):
 
 
 def explanation_agreement(image, model, model_name):
-    """
-    Compute a pixel-wise correlation between Grad-CAM and Grad-CAM++ heatmaps.
-    Returns a score 0–1 indicating how consistently both methods explain the prediction.
-    A high score (> 0.7) means the two heatmaps are more similar; it does not
-    establish that either explanation is correct or clinically trustworthy.
-    """
+    """Pixel-wise correlation between Grad-CAM and Grad-CAM++ heatmaps."""
     hook_handles = []
     try:
         model.eval()
-        # ── Grad-CAM activations ──
         activations_gc, gradients_gc = [], []
         activations_pp, gradients_pp = [], []
         target_layer = _get_target_layer(model, model_name)
@@ -738,7 +727,6 @@ def explanation_agreement(image, model, model_name):
         cam_gc = F.relu((w_gc * act_gc).sum(dim=0)).detach().cpu().numpy()
         cam_gc /= (cam_gc.max() + 1e-8)
 
-        # ── Grad-CAM++ activations ──
         fwd2 = target_layer.register_forward_hook(lambda m, i, o: activations_pp.append(o.detach()))
         bwd2 = target_layer.register_full_backward_hook(lambda m, gi, go: gradients_pp.append(go[0].detach()))
         hook_handles.extend((fwd2, bwd2))
@@ -763,7 +751,6 @@ def explanation_agreement(image, model, model_name):
         cam_pp = np.maximum(cam_pp, 0)
         cam_pp /= (cam_pp.max() + 1e-8)
 
-        # Pearson correlation
         flat_gc = cam_gc.flatten()
         flat_pp = cam_pp.flatten()
         if flat_gc.std() < 1e-8 or flat_pp.std() < 1e-8:
@@ -823,7 +810,6 @@ def plot_latency_trend(history):
 
 
 def plot_uncertainty_history(history):
-    """Plot MC dropout uncertainty over time."""
     unc_data = [(i+1, h.get("uncertainty", 0)) for i, h in enumerate(history) if "uncertainty" in h]
     if len(unc_data) < 2:
         return None
@@ -1008,7 +994,7 @@ def render_sticky_header():
     clock_time = now.strftime("%H:%M:%S")
     clock_date = now.strftime("%b %d, %Y").upper()
 
-    st.markdown(f"""
+    st.markdown(safe_html(f"""
     <div class="sticky-header">
         <div class="sticky-brand">
             <div class="sticky-brand-logo">🧠</div>
@@ -1029,7 +1015,7 @@ def render_sticky_header():
             <div class="sticky-clock-time">{clock_time}</div>
             <div class="sticky-clock-date">{clock_date}</div>
         </div>
-    </div>""", unsafe_allow_html=True)
+    </div>"""), unsafe_allow_html=True)
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -1132,18 +1118,18 @@ with st.sidebar:
     last_pred  = history[-1]["prediction"] if history else "No analysis yet"
     active_nav = st.session_state.nav
 
-    st.markdown("""
+    st.markdown(safe_html("""
     <div style="padding:.3rem .4rem 1.1rem">
         <div class="sidebar-brand-title">🧠 NeuroLens AI</div>
         <div class="sidebar-brand-subtitle">Neurodiagnostic Intelligence Platform · v3.0</div>
-    </div>""", unsafe_allow_html=True)
+    </div>"""), unsafe_allow_html=True)
 
     engine_online = MODEL_PATH.exists() and model_error is None
-    st.markdown(f"""
+    st.markdown(safe_html(f"""
     <div class="sidebar-active-indicator">
         <span class="sidebar-active-dot"></span>
         ACTIVE: {active_nav}
-    </div>""", unsafe_allow_html=True)
+    </div>"""), unsafe_allow_html=True)
 
     groups = [
         ("MAIN",      ["🏠 Home", "🔬 MRI Analysis", "📊 Dashboard"]),
@@ -1170,7 +1156,7 @@ with st.sidebar:
         mc = st.session_state.mc_result
         mc_badge = f"<br><div style='margin-top:.4rem;font-size:.68rem;color:#a78bfa'>σ={mc['uncertainty']:.4f} · {mc['band']}</div>"
 
-    st.markdown(f"""
+    st.markdown(safe_html(f"""
     <div style="margin-top:.5rem;padding:.8rem;border-radius:12px;background:rgba(255,255,255,.025);border:1px solid rgba(255,255,255,.06)">
         <div class="sidebar-mini-label">NEURAL ENGINE</div>
         <div style="margin-top:.3rem;font-size:.82rem;font-weight:700;color:{'#10b981' if engine_online else '#ef4444'}">{eng_status}</div>
@@ -1181,7 +1167,7 @@ with st.sidebar:
             <div class="sidebar-mini-stat"><div class="sidebar-mini-label">Architecture</div><div class="sidebar-mini-value">{model_name or '—'}</div></div>
             <div class="sidebar-mini-stat"><div class="sidebar-mini-label">Avg Conf</div><div class="sidebar-mini-value">{avg_conf:.0f}%</div></div>
         </div>
-    </div>""", unsafe_allow_html=True)
+    </div>"""), unsafe_allow_html=True)
 
     st.markdown('<div class="sidebar-section-label">QUICK ACTIONS</div>', unsafe_allow_html=True)
     if st.button("🗑️ Clear History", key="sb_clear", use_container_width=True):
@@ -1212,11 +1198,11 @@ with st.sidebar:
         if c2.button("Cancel", key="sb_reset_no"):
             st.session_state.confirm_reset = False
 
-    st.markdown("""
+    st.markdown(safe_html("""
     <div class="sidebar-footer">
         ⚠️ Research Prototype<br>
         Not for clinical use. Predictions do not constitute medical diagnoses.
-    </div>""", unsafe_allow_html=True)
+    </div>"""), unsafe_allow_html=True)
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -1235,19 +1221,18 @@ if nav == "🏠 Home":
     render_neural_animation()
     render_live_ticker()
 
-    st.markdown(dedent("""
+    st.markdown(safe_html(dedent("""
     <div class="hero">
         <div class="hero-badge">🧠 AI-Powered Brain MRI Analysis · Research Prototype</div>
         <h1>NeuroLens AI</h1>
         <p>Deep Learning · Dual XAI (Grad-CAM + Grad-CAM++) · MC Dropout Uncertainty Estimation · Neuroimaging</p>
-    </div>"""), unsafe_allow_html=True)
+    </div>""")), unsafe_allow_html=True)
 
     if st.button("🔬 Analyze MRI Scan", type="primary", key="home_cta"):
         st.session_state.nav = "🔬 MRI Analysis"
         st.rerun()
     st.caption("Research prototype for education and research. Model predictions are not medical diagnoses.")
 
-    # Live metrics
     h2 = st.session_state.prediction_history
     hc1, hc2, hc3, hc4 = st.columns(4)
     lm = [
@@ -1286,31 +1271,30 @@ if nav == "🏠 Home":
     step_cols = st.columns(len(steps))
     for col, (num, title, desc) in zip(step_cols, steps):
         with col:
-            st.markdown(f"""
-            <div style="text-align:center;padding:.85rem .5rem;border-radius:14px;
-            background:rgba(14,165,233,.06);border:1px solid rgba(14,165,233,.18)">
+            st.markdown(safe_html(f"""
+            <div style="text-align:center;padding:.85rem .5rem;border-radius:14px;background:rgba(14,165,233,.06);border:1px solid rgba(14,165,233,.18)">
                 <div style="font-size:1.4rem;font-weight:900;color:var(--accent-light)">{num}</div>
                 <div style="font-size:.78rem;font-weight:700;color:var(--text-primary);margin:.2rem 0">{title}</div>
                 <div style="font-size:.68rem;color:var(--text-muted)">{desc}</div>
-            </div>""", unsafe_allow_html=True)
+            </div>"""), unsafe_allow_html=True)
 
     st.write("")
     if model_error:
-        st.markdown(f"""
+        st.markdown(safe_html(f"""
         <div class="info-card" style="border-color:rgba(239,68,68,.3);background:rgba(239,68,68,.06)">
             <h3 style="color:var(--error)">⚠️ Neural Engine Unavailable</h3>
             <p>Expected: <code>{MODEL_PATH}</code></p>
-        </div>""", unsafe_allow_html=True)
+        </div>"""), unsafe_allow_html=True)
         with st.expander("Technical Details"):
             st.code(model_error)
     else:
-        st.markdown(f"""
+        st.markdown(safe_html(f"""
         <div class="info-card" style="border-color:rgba(16,185,129,.3);background:rgba(16,185,129,.06)">
             <h3 style="color:var(--success)">✅ Neural Engine Ready</h3>
             <p>Architecture: <b>{model_name}</b> · Device: <b>{DEVICE}</b></p>
             <p>Classes: <b style="color:var(--accent-light)">{', '.join(class_names)}</b></p>
             <p>MC Dropout Passes: <b>{MC_SAMPLES}</b> · Dual XAI: <b>Grad-CAM + Grad-CAM++</b></p>
-        </div>""", unsafe_allow_html=True)
+        </div>"""), unsafe_allow_html=True)
 
     if st.session_state.last_result:
         st.write("")
@@ -1347,7 +1331,6 @@ elif nav == "🔬 MRI Analysis":
             upload_bytes = uploaded_file.getvalue()
             image_id     = hashlib.sha256(upload_bytes).hexdigest()
 
-            # Clear stale result when a new image is uploaded
             prev = st.session_state.last_result
             if prev is not None and prev.get("image_id") != image_id:
                 for fk in ("gradcam_image", "gradcam_pp_image"):
@@ -1410,7 +1393,7 @@ elif nav == "🔬 MRI Analysis":
                             stages.append("Report Generation")
 
                             total_stages = len(stages)
-                            for i, stage in enumerate(stages[:-4]):  # show first stages quickly
+                            for i, stage in enumerate(stages[:-4]):
                                 status.info(f"⏳ {stage}…")
                                 prog.progress((i + 1) / total_stages)
 
@@ -1431,7 +1414,6 @@ elif nav == "🔬 MRI Analysis":
                                 except Exception:
                                     log_activity("MC Dropout failed", "warn")
 
-                            # Grad-CAM
                             gradcam_fig  = None
                             gradcam_ms   = 0.0
                             gradcam_pp_fig = None
@@ -1460,7 +1442,6 @@ elif nav == "🔬 MRI Analysis":
                                 except Exception:
                                     log_activity("Grad-CAM++ failed", "warn")
 
-                            # Agreement score
                             agree_score = None
                             if run_agreement and run_xai:
                                 status.info("⏳ Computing Explanation Agreement Score…")
@@ -1496,7 +1477,6 @@ elif nav == "🔬 MRI Analysis":
                                 "agreement_score": agree_score,
                             }
 
-                            # Save old figs before replacing
                             for fk, new_fig in [("gradcam_image", gradcam_fig), ("gradcam_pp_image", gradcam_pp_fig)]:
                                 old = st.session_state.get(fk)
                                 if old is not None:
@@ -1526,7 +1506,6 @@ elif nav == "🔬 MRI Analysis":
                         finally:
                             st.session_state.live_inference_running = False
 
-        # ── RESULTS ──
         if (image_id is not None
                 and st.session_state.last_result is not None
                 and st.session_state.last_result.get("image_id") == image_id):
@@ -1537,8 +1516,7 @@ elif nav == "🔬 MRI Analysis":
             conf_lbl = "High" if conf_val >= 80 else "Moderate" if conf_val >= 60 else "Low"
             conf_cls = "high" if conf_val >= 80 else "moderate" if conf_val >= 60 else "low"
 
-            # Diagnostic panel
-            st.markdown(f"""
+            st.markdown(safe_html(f"""
             <div class="diagnostic-panel">
                 <div class="diagnostic-header">
                     <span class="diagnostic-title">🩺 AI Classification Result</span>
@@ -1549,21 +1527,19 @@ elif nav == "🔬 MRI Analysis":
                 <div style="margin-top:.75rem">
                     <span class="medical-badge badge-{conf_cls}">{conf_lbl} Confidence</span>
                 </div>
-            </div>""", unsafe_allow_html=True)
+            </div>"""), unsafe_allow_html=True)
 
-            # Metrics row
             m1, m2, m3, m4 = st.columns(4)
             m1.metric("Model Confidence", f"{conf_val:.2f}%")
             m2.metric("Inference Latency", f"{result['latency_ms']:.1f} ms")
             m3.metric("Preprocessing", f"{result.get('preprocessing_ms', 0):.1f} ms")
             m4.metric("Total Time", f"{result.get('total_ms', 0):.1f} ms")
 
-            # Uncertainty card
             if mc_res:
                 unc   = mc_res["uncertainty"]
                 band  = mc_res["band"]
                 color = mc_res["color"]
-                st.markdown(f"""
+                st.markdown(safe_html(f"""
                 <div class="uncertainty-card">
                     <div class="uncertainty-title">🎯 MC Dropout Uncertainty Estimation ({MC_SAMPLES} passes)</div>
                     <div style="display:flex;justify-content:space-between;align-items:center">
@@ -1576,14 +1552,13 @@ elif nav == "🔬 MRI Analysis":
                             Prediction: <b>{mc_res['prediction']}</b>
                         </div>
                     </div>
-                </div>""", unsafe_allow_html=True)
+                </div>"""), unsafe_allow_html=True)
 
-            # Explanation agreement
             agree = result.get("agreement_score")
             if agree is not None:
                 a_color = "#10b981" if agree >= 0.7 else "#f59e0b" if agree >= 0.5 else "#ef4444"
                 a_label = "High Agreement" if agree >= 0.7 else "Moderate Agreement" if agree >= 0.5 else "Low Agreement"
-                st.markdown(f"""
+                st.markdown(safe_html(f"""
                 <div class="xai-card">
                     <div class="xai-title">🔗 Explanation Agreement Score</div>
                     <div style="display:flex;justify-content:space-between;align-items:center">
@@ -1596,11 +1571,10 @@ elif nav == "🔬 MRI Analysis":
                             <div style="font-size:.72rem;color:{a_color};font-weight:700">{a_label}</div>
                         </div>
                     </div>
-                </div>""", unsafe_allow_html=True)
+                </div>"""), unsafe_allow_html=True)
 
             st.warning("⚠️ NeuroLens AI is a research prototype for educational use. Model outputs are not medical diagnoses and must not replace evaluation by a qualified healthcare professional.")
 
-            # Probability distribution
             st.write("")
             st.markdown("### 📊 Probability Distribution")
             prob_html = '<div class="probability-grid">' + "".join(
@@ -1617,7 +1591,6 @@ elif nav == "🔬 MRI Analysis":
             st.markdown("### ⚡ Live Probability Stream")
             render_live_probability_animation(result, mc_result=mc_res)
 
-            # Grad-CAM results inline
             if st.session_state.gradcam_image is not None or st.session_state.gradcam_pp_image is not None:
                 st.write("")
                 st.markdown("### 🔥 Dual XAI Visualization")
@@ -1633,7 +1606,7 @@ elif nav == "🔬 MRI Analysis":
                         st.pyplot(st.session_state.gradcam_pp_image, use_container_width=True)
                         st.caption("Grad-CAM++ · Inferno colormap · α=0.46")
 
-                st.markdown("""
+                st.markdown(safe_html("""
                 <div class="xai-card">
                     <div class="xai-title">🔥 Why This Prediction?</div>
                     <div class="xai-text">
@@ -1641,7 +1614,7 @@ elif nav == "🔬 MRI Analysis":
                         Grad-CAM uses weighted class activations; Grad-CAM++ uses second-order gradients for sharper localization.
                         Neither method provides medically certified tumor localization. Use for research interpretation only.
                     </div>
-                </div>""", unsafe_allow_html=True)
+                </div>"""), unsafe_allow_html=True)
 
                 cam_col, pp_col2 = st.columns(2)
                 if st.session_state.gradcam_image:
@@ -1653,7 +1626,6 @@ elif nav == "🔬 MRI Analysis":
                     st.session_state.gradcam_pp_image.savefig(buf2, format="png", bbox_inches="tight", dpi=160)
                     pp_col2.download_button("⬇️ Grad-CAM++ PNG", buf2.getvalue(), "gradcam_pp.png", "image/png", key="dl_pp")
 
-            # Download report
             lines = [
                 "═══════════════════════════════════════════════════════",
                 "  NeuroLens AI — MRI Analysis Report",
@@ -1723,12 +1695,12 @@ elif nav == "📊 Dashboard":
     history = st.session_state.prediction_history
 
     if not history:
-        st.markdown("""
+        st.markdown(safe_html("""
         <div class="empty-state">
             <div class="empty-state-icon">📊</div>
             <div class="empty-state-title">Awaiting live diagnostic data</div>
             <div class="empty-state-text">Run an MRI analysis to populate the dashboard.</div>
-        </div>""", unsafe_allow_html=True)
+        </div>"""), unsafe_allow_html=True)
     else:
         total    = st.session_state.live_predictions_count
         avg_c    = st.session_state.live_avg_confidence
@@ -1753,13 +1725,11 @@ elif nav == "📊 Dashboard":
                 st.markdown(f'<div class="metric-card"><div class="metric-icon">{icon}</div><div class="metric-value">{val}</div><div class="metric-label">{lbl}</div></div>', unsafe_allow_html=True)
 
         if avg_agree is not None:
-            st.markdown(f"""
-            <div style="margin:.75rem 0;padding:.85rem 1.25rem;border-radius:12px;
-            background:rgba(14,165,233,.07);border:1px solid rgba(14,165,233,.22);
-            display:flex;justify-content:space-between;align-items:center">
+            st.markdown(safe_html(f"""
+            <div style="margin:.75rem 0;padding:.85rem 1.25rem;border-radius:12px;background:rgba(14,165,233,.07);border:1px solid rgba(14,165,233,.22);display:flex;justify-content:space-between;align-items:center">
                 <span style="font-size:.78rem;color:var(--accent-light);font-weight:700;text-transform:uppercase;letter-spacing:.08em">Average Explanation Agreement Score</span>
                 <span style="font-size:1.35rem;font-weight:800;color:var(--text-primary)">{avg_agree:.3f}</span>
-            </div>""", unsafe_allow_html=True)
+            </div>"""), unsafe_allow_html=True)
 
         st.write("")
         col_left, col_right = st.columns([2, 1])
@@ -1771,14 +1741,14 @@ elif nav == "📊 Dashboard":
             for label, count in counts.items():
                 pct      = (count / max_cnt) * 100
                 live_pct = (count / total) * 100 if total else 0
-                st.markdown(f"""
+                st.markdown(safe_html(f"""
                 <div class="dist-card">
                     <div class="dist-header">
                         <div class="dist-name">{label}</div>
                         <div class="dist-count">{count} · {live_pct:.1f}%</div>
                     </div>
                     <div class="dist-bar-bg"><div class="dist-bar-fill" style="width:{pct:.0f}%"></div></div>
-                </div>""", unsafe_allow_html=True)
+                </div>"""), unsafe_allow_html=True)
 
             st.write("")
             st.subheader("📈 Model Confidence Trend")
@@ -1850,12 +1820,12 @@ elif nav == "🕘 History":
     history = st.session_state.prediction_history
 
     if not history:
-        st.markdown("""
+        st.markdown(safe_html("""
         <div class="empty-state">
             <div class="empty-state-icon">🕘</div>
             <div class="empty-state-title">No diagnostic history</div>
             <div class="empty-state-text">Analysis reports appear here after running MRI scans.</div>
-        </div>""", unsafe_allow_html=True)
+        </div>"""), unsafe_allow_html=True)
     else:
         fc1, fc2, fc3, fc4 = st.columns([1, 1, 1, 2])
         pred_filter = fc1.selectbox("Prediction", ["All"] + CLASS_NAMES)
@@ -1886,7 +1856,7 @@ elif nav == "🕘 History":
                 cc   = "confidence-high" if conf >= 80 else "confidence-medium" if conf >= 60 else "confidence-low"
                 unc_tag = f" · σ={item['uncertainty']:.4f}" if item.get("uncertainty") is not None else ""
                 agree_tag = f" · Agreement={item['agreement_score']:.3f}" if item.get("agreement_score") is not None else ""
-                st.markdown(f"""
+                st.markdown(safe_html(f"""
                 <div class="thumbnail-card">
                     <div class="thumbnail-img">🧠</div>
                     <div class="thumbnail-info">
@@ -1894,7 +1864,7 @@ elif nav == "🕘 History":
                         <div class="thumbnail-meta">{item['timestamp']} · {item['model']}{unc_tag}{agree_tag}</div>
                     </div>
                     <div><span class="confidence-badge {cc}">{conf:.1f}%</span></div>
-                </div>""", unsafe_allow_html=True)
+                </div>"""), unsafe_allow_html=True)
                 with st.expander(f"Details — {item['timestamp']}"):
                     d1, d2 = st.columns(2)
                     with d1:
@@ -1936,12 +1906,12 @@ elif nav == "🔥 Grad-CAM":
     render_live_ticker()
 
     if st.session_state.gradcam_image is None and st.session_state.gradcam_pp_image is None:
-        st.markdown("""
+        st.markdown(safe_html("""
         <div class="empty-state">
             <div class="empty-state-icon">🔥</div>
             <div class="empty-state-title">No Grad-CAM visualization yet</div>
             <div class="empty-state-text">Run an MRI analysis with XAI enabled to generate heatmaps.</div>
-        </div>""", unsafe_allow_html=True)
+        </div>"""), unsafe_allow_html=True)
     else:
         orig_col, gc_col, pp_col = st.columns(3)
         with orig_col:
@@ -1963,7 +1933,7 @@ elif nav == "🔥 Grad-CAM":
         if agree is not None:
             a_color = "#10b981" if agree >= 0.7 else "#f59e0b" if agree >= 0.5 else "#ef4444"
             a_label = "High Agreement" if agree >= 0.7 else "Moderate" if agree >= 0.5 else "Low Agreement"
-            st.markdown(f"""
+            st.markdown(safe_html(f"""
             <div class="xai-card">
                 <div class="xai-title">🔗 Explanation Agreement Score</div>
                 <div style="display:flex;justify-content:space-between;align-items:center">
@@ -1976,9 +1946,9 @@ elif nav == "🔥 Grad-CAM":
                         <div style="font-size:.72rem;color:{a_color};font-weight:700">{a_label}</div>
                     </div>
                 </div>
-            </div>""", unsafe_allow_html=True)
+            </div>"""), unsafe_allow_html=True)
 
-        st.markdown("""
+        st.markdown(safe_html("""
         <div class="xai-card">
             <div class="xai-title">🧠 About These Visualizations</div>
             <div class="xai-text">
@@ -1989,7 +1959,7 @@ elif nav == "🔥 Grad-CAM":
                 ⚠️ These visualizations explain the <em>model's</em> decision, not the ground-truth anatomy.
                 They do not constitute medically certified tumor localization.
             </div>
-        </div>""", unsafe_allow_html=True)
+        </div>"""), unsafe_allow_html=True)
 
         if st.session_state.last_result:
             res = st.session_state.last_result
@@ -2020,12 +1990,12 @@ elif nav == "🎯 XAI Lab":
     history = st.session_state.prediction_history
 
     if not history:
-        st.markdown("""
+        st.markdown(safe_html("""
         <div class="empty-state">
             <div class="empty-state-icon">🎯</div>
             <div class="empty-state-title">No XAI data yet</div>
             <div class="empty-state-text">Run analyses with MC Dropout and dual XAI enabled to populate this lab.</div>
-        </div>""", unsafe_allow_html=True)
+        </div>"""), unsafe_allow_html=True)
     else:
         st.subheader("📊 Uncertainty Distribution")
         unc_data = [(i+1, h["uncertainty"]) for i, h in enumerate(history) if h.get("uncertainty") is not None]
@@ -2037,7 +2007,6 @@ elif nav == "🎯 XAI Lab":
                 st.markdown('</div>', unsafe_allow_html=True)
                 plt.close(fig)
 
-        # Reliability band breakdown
         bands = {}
         for h in history:
             b = h.get("mc_band")
@@ -2054,13 +2023,12 @@ elif nav == "🎯 XAI Lab":
             for band, (col, color) in band_cols.items():
                 cnt = bands.get(band, 0)
                 with col:
-                    st.markdown(f"""
+                    st.markdown(safe_html(f"""
                     <div class="metric-card" style="border-color:{color}30">
                         <div class="metric-value" style="color:{color};font-size:1.8rem">{cnt}</div>
                         <div class="metric-label">{band.replace(' Reliability', '')}</div>
-                    </div>""", unsafe_allow_html=True)
+                    </div>"""), unsafe_allow_html=True)
 
-        # Agreement score history
         agree_hist = [(i+1, h["agreement_score"]) for i, h in enumerate(history) if h.get("agreement_score") is not None]
         if len(agree_hist) >= 2:
             st.write("")
@@ -2082,7 +2050,6 @@ elif nav == "🎯 XAI Lab":
             st.markdown('</div>', unsafe_allow_html=True)
             plt.close(fig2)
 
-        # Per-class uncertainty table
         st.write("")
         st.subheader("📋 Per-Class Uncertainty Analysis")
         class_unc = {c: [] for c in CLASS_NAMES}
@@ -2106,7 +2073,6 @@ elif nav == "🎯 XAI Lab":
         else:
             st.caption("No per-class uncertainty data yet.")
 
-        # Research methodology
         with st.expander("📖 Methodology Reference"):
             st.markdown("""
             **MC Dropout Uncertainty Estimation**
@@ -2143,7 +2109,7 @@ elif nav == "⚙️ Settings":
     with c1:
         try: tv = metadata.version("torchvision")
         except Exception: tv = "—"
-        st.markdown(f"""
+        st.markdown(safe_html(f"""
         <div class="info-card">
             <h3>📋 Neural Engine</h3>
             <p><b>Architecture:</b> {model_name or 'Unavailable'}</p>
@@ -2153,10 +2119,10 @@ elif nav == "⚙️ Settings":
             <p><b>Classes:</b> {', '.join(CLASS_NAMES)}</p>
             <p><b>Checkpoint:</b> {MODEL_PATH.name if MODEL_PATH.exists() else 'Not found'}</p>
             <p><b>MC Dropout Passes:</b> {MC_SAMPLES}</p>
-        </div>""", unsafe_allow_html=True)
+        </div>"""), unsafe_allow_html=True)
 
     with c2:
-        st.markdown(f"""
+        st.markdown(safe_html(f"""
         <div class="info-card">
             <h3>🖥️ System Information</h3>
             <p><b>PyTorch:</b> {torch.__version__}</p>
@@ -2167,7 +2133,7 @@ elif nav == "⚙️ Settings":
             <p><b>CUDA Device:</b> {torch.cuda.get_device_name(0) if torch.cuda.is_available() else 'N/A'}</p>
             <p><b>XAI Methods:</b> Grad-CAM · Grad-CAM++</p>
             <p><b>Uncertainty:</b> MC Dropout ({MC_SAMPLES} passes)</p>
-        </div>""", unsafe_allow_html=True)
+        </div>"""), unsafe_allow_html=True)
 
         show_tech = st.toggle("Show technical details", key="show_tech")
         if show_tech:
@@ -2211,7 +2177,7 @@ avg_c_f    = st.session_state.live_avg_confidence
 eng_n      = model_name or "—"
 eng_ok     = model_error is None and MODEL_PATH.exists()
 
-st.markdown(f"""
+st.markdown(safe_html(f"""
 <div class="app-footer">
     <div class="footer-meta">
         <span class="footer-brand">🧠 NeuroLens AI</span>
@@ -2233,6 +2199,6 @@ st.markdown(f"""
         <span class="footer-divider">·</span>
         <span>Uncertainty: MC Dropout</span>
     </div>
-</div>""", unsafe_allow_html=True)
+</div>"""), unsafe_allow_html=True)
 
 st.caption("NeuroLens AI is a research prototype for educational and research purposes. Predictions are not medical diagnoses and must not replace evaluation by a qualified healthcare professional.")
