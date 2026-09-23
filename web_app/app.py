@@ -52,14 +52,12 @@ def _render_html(content: str, height: int = 200, scrolling: bool = False):
     Tries the newest Streamlit API first (`st.iframe(srcdoc=...)`), then falls
     back to the legacy `components.html` for older Streamlit versions.
     """
-    # New API (Streamlit ≥ 1.40-ish supports srcdoc)
     try:
         if hasattr(st, "iframe"):
             st.iframe(srcdoc=content, height=height, scrolling=scrolling)
             return
     except (AttributeError, TypeError):
         pass
-    # Legacy API — still works even though it prints a deprecation warning
     components.html(content, height=height, scrolling=scrolling)
 
 
@@ -113,7 +111,7 @@ def uncertainty_band(uncertainty: float) -> tuple[str, str]:
 
 
 # ─────────────────────────────────────────────────────────────────────────────
-# CSS  (unchanged — same as before)
+# CSS
 # ─────────────────────────────────────────────────────────────────────────────
 STYLES = """
 <style>
@@ -150,6 +148,7 @@ STYLES = """
 header[data-testid="stHeader"] { background: transparent; }
 #MainMenu, footer { visibility: hidden; }
 
+/* ── SIDEBAR ── */
 [data-testid="stSidebar"] {
     background: var(--bg-secondary) !important;
     border-right: 1px solid var(--border-subtle) !important;
@@ -244,34 +243,125 @@ header[data-testid="stHeader"] { background: transparent; }
 .sidebar-mini-value { margin-top: 0.2rem; font-size: 0.78rem; font-weight: 700; color: var(--text-primary); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .sidebar-footer { margin-top: 1rem; padding: 0.75rem; border-radius: 12px; background: rgba(245,158,11,.06); border: 1px solid rgba(245,158,11,.18); font-size: .7rem; color: var(--text-secondary); text-align: center; line-height: 1.45; }
 
+/* ── STICKY HEADER (redesigned) ── */
 .sticky-header {
     position: fixed; top: 0.5rem; left: calc(300px + 0.4rem); right: 0.4rem; z-index: 9999;
-    display: flex; align-items: center; gap: 1rem; padding: 0.85rem 1.25rem;
+    display: flex; align-items: center; gap: 0.85rem; padding: 0.7rem 1rem;
     border-radius: 16px;
-    background: linear-gradient(135deg, rgba(11,17,32,.88), rgba(17,24,39,.72));
-    backdrop-filter: blur(20px) saturate(150%); -webkit-backdrop-filter: blur(20px) saturate(150%);
-    border: 1px solid rgba(56,189,248,.18);
-    box-shadow: 0 8px 30px rgba(0,0,0,.35), 0 0 24px rgba(14,165,233,.07);
+    background: linear-gradient(135deg, rgba(11,17,32,.92), rgba(17,24,39,.82));
+    backdrop-filter: blur(24px) saturate(160%); -webkit-backdrop-filter: blur(24px) saturate(160%);
+    border: 1px solid rgba(56,189,248,.20);
+    box-shadow: 0 8px 32px rgba(0,0,0,.4), 0 0 24px rgba(14,165,233,.06), inset 0 1px 0 rgba(255,255,255,.04);
     transition: all 0.3s ease;
 }
-.sticky-brand { display: flex; align-items: center; gap: 0.55rem; padding-right: 0.85rem; border-right: 1px solid rgba(255,255,255,.07); }
-.sticky-brand-logo { width: 40px; height: 40px; border-radius: 10px; background: var(--gradient-1); display: flex; align-items: center; justify-content: center; font-size: 1.3rem; box-shadow: 0 0 16px rgba(14,165,233,.5); }
-.sticky-brand-name { font-size: 1.15rem; font-weight: 800; color: var(--text-primary); letter-spacing: -0.01em; }
-.sticky-brand-version { font-size: 0.68rem; color: var(--text-muted); font-weight: 600; letter-spacing: .08em; text-transform: uppercase; }
-.sticky-divider { width: 1px; height: 28px; background: rgba(255,255,255,.07); }
-.sticky-ticker { flex: 1; overflow: hidden; border-radius: 9px; border: 1px solid rgba(56,189,248,.18); background: linear-gradient(90deg, rgba(14,165,233,.08), rgba(6,182,212,.02)); padding: 0.55rem 0; min-width: 0; }
-.sticky-ticker-inner { display: inline-block; white-space: nowrap; padding-left: 100%; color: #7dd3fc; font: 600 0.84rem Inter, Arial, sans-serif; letter-spacing: .04em; animation: ticker-scroll 26s linear infinite; }
+
+.sticky-brand { display: flex; align-items: center; gap: 0.6rem; padding-right: 0.85rem; flex-shrink: 0; }
+.sticky-brand-logo {
+    position: relative;
+    width: 42px; height: 42px; border-radius: 11px;
+    background: var(--gradient-1);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1.35rem;
+    box-shadow: 0 0 18px rgba(14,165,233,.5), inset 0 1px 0 rgba(255,255,255,.2);
+}
+.sticky-brand-pulse {
+    position: absolute; top: -3px; right: -3px;
+    width: 11px; height: 11px; border-radius: 50%;
+    background: var(--success); border: 2px solid #0b1120;
+    box-shadow: 0 0 8px var(--success);
+    animation: brand-pulse 2s infinite;
+}
+@keyframes brand-pulse {
+    0%, 100% { box-shadow: 0 0 8px var(--success); }
+    50%      { box-shadow: 0 0 14px var(--success), 0 0 0 4px rgba(16,185,129,.22); }
+}
+.sticky-brand-text { display: flex; flex-direction: column; gap: 0.1rem; }
+.sticky-brand-name {
+    font-size: 1.05rem; font-weight: 800; color: var(--text-primary);
+    letter-spacing: -0.015em; line-height: 1.1;
+}
+.sticky-brand-version {
+    font-size: 0.6rem; color: var(--accent-light); font-weight: 700;
+    letter-spacing: .12em; text-transform: uppercase; opacity: 0.85;
+}
+
+.sticky-divider { width: 1px; height: 26px; background: rgba(255,255,255,.08); flex-shrink: 0; }
+
+.sticky-ticker {
+    flex: 1; overflow: hidden; border-radius: 10px;
+    border: 1px solid rgba(56,189,248,.16);
+    background: linear-gradient(90deg, rgba(14,165,233,.06), rgba(6,182,212,.02));
+    padding: 0.5rem 0; min-width: 0;
+}
+.sticky-ticker-inner {
+    display: inline-flex; align-items: center; gap: 1.2rem;
+    white-space: nowrap; padding-left: 100%;
+    color: #7dd3fc; font: 600 0.78rem Inter, sans-serif;
+    letter-spacing: .03em;
+    animation: ticker-scroll 30s linear infinite;
+}
+.tick-badge {
+    padding: 0.2rem 0.55rem; border-radius: 6px;
+    background: rgba(16,185,129,.15); color: #34d399;
+    border: 1px solid rgba(16,185,129,.3);
+    font-size: 0.68rem; font-weight: 800; letter-spacing: 0.1em;
+    margin-right: 0.3rem;
+}
+.tick-item { color: #94a3b8; }
+.tick-item b { color: #e2e8f0; font-weight: 700; }
+.tick-idle { color: #64748b; font-style: italic; }
 @keyframes ticker-scroll { 0% { transform: translateX(0); } 100% { transform: translateX(-100%); } }
-.sticky-page { display: flex; align-items: center; gap: 0.5rem; padding: 0.45rem 0.9rem; border-radius: 9px; background: rgba(14,165,233,.10); border: 1px solid rgba(56,189,248,.30); font-size: 0.9rem; font-weight: 700; color: var(--text-primary); white-space: nowrap; }
-.sticky-page-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--success); box-shadow: 0 0 8px var(--success); animation: dot-pulse 1.6s infinite; }
-@keyframes dot-pulse { 0%,100% { opacity: 1; } 50% { opacity: .4; } }
-.sticky-clock { display: flex; flex-direction: column; align-items: flex-end; font-family: 'JetBrains Mono', monospace; line-height: 1.1; white-space: nowrap; }
-.sticky-clock-time { font-size: 1rem; font-weight: 700; color: var(--text-primary); letter-spacing: .02em; }
-.sticky-clock-date { font-size: 0.68rem; color: var(--text-muted); letter-spacing: .06em; text-transform: uppercase; }
+
+.sticky-status {
+    display: inline-flex; align-items: center; gap: 0.4rem;
+    padding: 0.35rem 0.75rem; border-radius: 8px;
+    font-size: 0.68rem; font-weight: 800; letter-spacing: 0.08em;
+    white-space: nowrap; flex-shrink: 0;
+}
+.status-ok {
+    background: rgba(16,185,129,.10); color: #34d399;
+    border: 1px solid rgba(16,185,129,.28);
+}
+.status-err {
+    background: rgba(239,68,68,.10); color: #f87171;
+    border: 1px solid rgba(239,68,68,.28);
+}
+.sticky-status-dot {
+    width: 6px; height: 6px; border-radius: 50%;
+    background: currentColor; box-shadow: 0 0 6px currentColor;
+}
+
+.sticky-page {
+    display: inline-flex; align-items: center; gap: 0.5rem;
+    padding: 0.4rem 0.85rem; border-radius: 9px;
+    background: rgba(14,165,233,.10);
+    border: 1px solid rgba(56,189,248,.30);
+    font-size: 0.82rem; font-weight: 700; color: var(--text-primary);
+    white-space: nowrap; flex-shrink: 0;
+}
+.sticky-page-dot {
+    width: 7px; height: 7px; border-radius: 50%;
+    background: var(--success); box-shadow: 0 0 8px var(--success);
+    animation: dot-pulse 1.6s infinite;
+}
+@keyframes dot-pulse { 0%,100% { opacity: 1; } 50% { opacity: .35; } }
+
+.sticky-clock {
+    display: flex; flex-direction: column; align-items: flex-end;
+    font-family: 'JetBrains Mono', monospace; line-height: 1.05;
+    white-space: nowrap; padding-left: 0.2rem; flex-shrink: 0;
+}
+.sticky-clock-time { font-size: 0.95rem; font-weight: 700; color: var(--text-primary); letter-spacing: .03em; }
+.sticky-clock-date { font-size: 0.6rem; color: var(--text-muted); letter-spacing: .08em; text-transform: uppercase; font-weight: 600; }
 
 .main .block-container { padding-top: 6.5rem !important; padding-left: 1.5rem !important; padding-right: 1.5rem !important; }
 
-.info-card { padding: 1.5rem; min-height: 150px; border-radius: var(--radius-lg); background: var(--bg-card); border: 1px solid var(--border-subtle); transition: all 0.25s ease; }
+/* ── CARDS ── */
+.info-card {
+    padding: 1.5rem; min-height: 150px; border-radius: var(--radius-lg);
+    background: var(--bg-card); border: 1px solid var(--border-subtle);
+    transition: all 0.25s ease;
+}
 .info-card:hover { border-color: var(--border-hover); box-shadow: var(--shadow-glow); transform: translateY(-2px); }
 .info-card h3 { margin-top: 0; color: var(--text-primary); font-size: 1rem; font-weight: 700; }
 .info-card p { color: var(--text-secondary); line-height: 1.6; font-size: 0.88rem; margin: 0.25rem 0; }
@@ -282,7 +372,9 @@ header[data-testid="stHeader"] { background: transparent; }
 .metric-label { font-size: 0.7rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: .1em; font-weight: 600; }
 .metric-icon { font-size: 1.8rem; margin-bottom: 0.35rem; }
 
-.hero { padding: 3rem 2.5rem; border-radius: 24px; text-align: center; margin-bottom: 1.75rem; background: linear-gradient(135deg, rgba(14,165,233,.10) 0%, rgba(6,182,212,.05) 50%, rgba(139,92,246,.08) 100%); border: 1px solid rgba(56,189,248,.22); position: relative; overflow: hidden; }
+.hero { padding: 3rem 2.5rem; border-radius: 24px; text-align: center; margin-bottom: 1.75rem;
+    background: linear-gradient(135deg, rgba(14,165,233,.10) 0%, rgba(6,182,212,.05) 50%, rgba(139,92,246,.08) 100%);
+    border: 1px solid rgba(56,189,248,.22); position: relative; overflow: hidden; }
 .hero::before { content: ""; position: absolute; top: -50%; left: -50%; width: 200%; height: 200%; background: radial-gradient(circle at 60% 40%, rgba(14,165,233,.08), transparent 60%); pointer-events: none; }
 .hero h1 { font-size: 3rem; font-weight: 900; letter-spacing: -0.03em; margin-bottom: .5rem; background: var(--gradient-1); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
 .hero p { color: var(--text-secondary); font-size: 1.05rem; line-height: 1.7; max-width: 680px; margin: 0 auto; }
@@ -374,19 +466,96 @@ hr { border-color: var(--border-subtle) !important; margin: 1.25rem 0 !important
 .xai-title { font-size: .72rem; color: var(--accent-light); text-transform: uppercase; letter-spacing: .1em; font-weight: 700; margin-bottom: .5rem; }
 .xai-text { font-size: .85rem; color: var(--text-secondary); line-height: 1.65; }
 
-.app-footer { display: flex; justify-content: space-between; align-items: center; padding: 1.1rem 1.5rem; border-radius: 16px; background: var(--bg-card); border: 1px solid var(--border-subtle); margin-top: 2rem; font-size: .8rem; color: var(--text-secondary); flex-wrap: wrap; gap: .75rem; }
-.footer-brand { font-weight: 800; color: var(--text-primary); }
-.footer-meta { display: flex; gap: .75rem; align-items: center; flex-wrap: wrap; }
-.footer-divider { color: var(--text-muted); }
-.footer-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--success); box-shadow: 0 0 8px var(--success); display: inline-block; }
+/* ── APP FOOTER (redesigned) ── */
+.app-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: stretch;
+    gap: 1.5rem;
+    padding: 1.25rem 1.5rem;
+    border-radius: 18px;
+    background: linear-gradient(135deg, rgba(17,24,39,.85), rgba(11,17,32,.75));
+    border: 1px solid var(--border-subtle);
+    margin-top: 2rem;
+    font-size: .8rem;
+    color: var(--text-secondary);
+    flex-wrap: wrap;
+}
 
+.footer-col { display: flex; flex-direction: column; gap: 0.5rem; }
+.footer-col-brand { flex: 1; min-width: 220px; }
+.footer-col-stack { flex: 1.2; min-width: 220px; }
+.footer-col-stats { flex: 0 0 auto; min-width: 260px; }
+
+.footer-brand-row { display: flex; align-items: center; gap: 0.65rem; }
+.footer-brand-logo {
+    width: 36px; height: 36px; border-radius: 9px;
+    background: var(--gradient-1);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1.1rem;
+    box-shadow: 0 0 14px rgba(14,165,233,.4);
+}
+.footer-brand {
+    font-weight: 800; color: var(--text-primary);
+    font-size: 0.95rem; letter-spacing: -0.01em;
+}
+.footer-tagline {
+    font-size: 0.68rem; color: var(--text-muted);
+    letter-spacing: 0.05em; font-weight: 500;
+}
+.footer-copy { font-size: 0.7rem; color: var(--text-muted); line-height: 1.5; margin-top: 0.3rem; }
+
+.footer-col-title {
+    font-size: 0.62rem; color: var(--text-muted);
+    text-transform: uppercase; letter-spacing: 0.14em;
+    font-weight: 800; margin-bottom: 0.2rem;
+}
+.footer-badges { display: flex; flex-wrap: wrap; gap: 0.4rem; }
+.badge-tech {
+    padding: 0.28rem 0.65rem; border-radius: 7px;
+    background: rgba(56,189,248,.08);
+    border: 1px solid rgba(56,189,248,.18);
+    color: #7dd3fc; font-size: 0.68rem; font-weight: 700;
+    letter-spacing: 0.02em;
+    transition: all .2s ease;
+}
+.badge-tech:hover {
+    background: rgba(56,189,248,.15);
+    border-color: rgba(56,189,248,.35);
+    transform: translateY(-1px);
+}
+
+.footer-stats { display: flex; gap: 1.2rem; margin-top: 0.2rem; }
+.footer-stat { display: flex; flex-direction: column; gap: 0.15rem; }
+.footer-stat-val {
+    font-size: 0.95rem; font-weight: 800; color: var(--text-primary);
+    display: inline-flex; align-items: center; gap: 0.35rem;
+    letter-spacing: -0.01em;
+}
+.footer-stat-lbl {
+    font-size: 0.6rem; color: var(--text-muted);
+    text-transform: uppercase; letter-spacing: 0.1em;
+    font-weight: 700;
+}
+.footer-dot {
+    width: 7px; height: 7px; border-radius: 50%;
+    background: var(--success); box-shadow: 0 0 8px var(--success);
+    display: inline-block;
+}
+
+/* ── RESPONSIVE ── */
 @media (max-width: 768px) {
-    .sticky-header { left: .3rem !important; right: .3rem !important; padding: .5rem .75rem !important; }
-    .sticky-ticker, .sticky-brand-version { display: none; }
+    .sticky-header { left: .3rem !important; right: .3rem !important; padding: .55rem .75rem !important; gap: 0.5rem !important; }
+    .sticky-ticker, .sticky-brand-version, .sticky-clock { display: none; }
+    .sticky-status { display: none; }
+    .sticky-brand-logo { width: 36px; height: 36px; font-size: 1.1rem; }
+    .sticky-brand-name { font-size: 0.92rem; }
     [data-testid="stSidebar"] { min-width: 100% !important; max-width: 100% !important; }
     .main .block-container { padding-top: 5rem !important; }
     .hero h1 { font-size: 1.85rem !important; }
     .probability-grid { grid-template-columns: 1fr 1fr !important; }
+    .app-footer { flex-direction: column; gap: 1rem; }
+    .footer-col-brand, .footer-col-stack, .footer-col-stats { flex: 1 1 100% !important; min-width: 0 !important; }
 }
 @media (min-width: 769px) and (max-width: 1024px) {
     .sticky-header { left: calc(260px + .3rem) !important; }
@@ -1004,32 +1173,64 @@ def render_live_ticker():
 
 def render_sticky_header():
     counts = st.session_state.live_class_counts or {}
-    ticker = " · ".join(f"<b>{k}</b>: {v}" for k, v in counts.items()) if counts else "<b>Awaiting first scan</b>"
+    if counts:
+        ticker_items = " ".join(
+            f"<span class='tick-item'><b>{k}</b> · {v}</span>" for k, v in counts.items()
+        )
+    else:
+        ticker_items = "<span class='tick-item tick-idle'>Awaiting first scan…</span>"
+
     mc     = st.session_state.mc_result
     nav    = st.session_state.nav
     eng    = model_name or "—"
-    mc_unc = f" · σ={mc['uncertainty']:.3f}" if mc else ""
     now    = datetime.now()
     clock_time = now.strftime("%H:%M:%S")
     clock_date = now.strftime("%b %d, %Y").upper()
 
+    engine_ok   = model_error is None and MODEL_PATH.exists()
+    status_cls  = "status-ok" if engine_ok else "status-err"
+    status_text = "ONLINE" if engine_ok else "OFFLINE"
+    device_tag  = "GPU" if DEVICE.type == "cuda" else "CPU"
+
+    mc_str = f"<span class='tick-item'>Uncertainty σ=<b>{mc['uncertainty']:.3f}</b></span>" if mc else ""
+
     st.markdown(safe_html(f"""
     <div class="sticky-header">
         <div class="sticky-brand">
-            <div class="sticky-brand-logo">🧠</div>
-            <div>
+            <div class="sticky-brand-logo">
+                🧠
+                <span class="sticky-brand-pulse"></span>
+            </div>
+            <div class="sticky-brand-text">
                 <div class="sticky-brand-name">NeuroLens AI</div>
                 <div class="sticky-brand-version">v3.0 · Production</div>
             </div>
         </div>
+
         <div class="sticky-divider"></div>
+
         <div class="sticky-ticker">
             <div class="sticky-ticker-inner">
-                ⚡ LIVE · {ticker} · Engine: {eng} · Device: {DEVICE}{mc_unc}
+                <span class="tick-badge">⚡ LIVE</span>
+                {ticker_items}
+                <span class="tick-item">Engine: <b>{eng}</b></span>
+                <span class="tick-item">Device: <b>{device_tag}</b></span>
+                {mc_str}
             </div>
         </div>
+
         <div class="sticky-divider"></div>
-        <div class="sticky-page"><span class="sticky-page-dot"></span>{nav}</div>
+
+        <div class="sticky-status {status_cls}">
+            <span class="sticky-status-dot"></span>
+            <span>{status_text}</span>
+        </div>
+
+        <div class="sticky-page">
+            <span class="sticky-page-dot"></span>
+            {nav}
+        </div>
+
         <div class="sticky-clock">
             <div class="sticky-clock-time">{clock_time}</div>
             <div class="sticky-clock-date">{clock_date}</div>
@@ -2193,30 +2394,55 @@ year       = datetime.now().year
 build_time = datetime.now().strftime("%Y-%m-%d %H:%M UTC")
 total_s    = st.session_state.live_predictions_count
 avg_c_f    = st.session_state.live_avg_confidence
-eng_n      = model_name or "—"
 eng_ok     = model_error is None and MODEL_PATH.exists()
+
+torch_ver = torch.__version__.split('+')[0]
+st_ver    = st.__version__
 
 st.markdown(safe_html(f"""
 <div class="app-footer">
-    <div class="footer-meta">
-        <span class="footer-brand">🧠 NeuroLens AI</span>
-        <span class="footer-divider">·</span>
-        <span>© {year} NeuroLens Research</span>
-        <span class="footer-divider">·</span>
-        <span>Build {build_time}</span>
+    <div class="footer-col footer-col-brand">
+        <div class="footer-brand-row">
+            <div class="footer-brand-logo">🧠</div>
+            <div>
+                <div class="footer-brand">NeuroLens AI</div>
+                <div class="footer-tagline">Neurodiagnostic Intelligence Platform</div>
+            </div>
+        </div>
+        <div class="footer-copy">
+            © {year} NeuroLens Research<br>
+            Build {build_time}
+        </div>
     </div>
-    <div class="footer-meta">
-        <span><b>Engine:</b> {eng_n}</span>
-        <span class="footer-divider">·</span>
-        <span><b>Scans:</b> {total_s}</span>
-        <span class="footer-divider">·</span>
-        <span><b>Avg:</b> {avg_c_f:.1f}%</span>
-        <span class="footer-divider">·</span>
-        <span><span class="footer-dot"></span> {'Online' if eng_ok else 'Offline'}</span>
-        <span class="footer-divider">·</span>
-        <span>XAI: Grad-CAM + Grad-CAM++</span>
-        <span class="footer-divider">·</span>
-        <span>Uncertainty: MC Dropout</span>
+
+    <div class="footer-col footer-col-stack">
+        <div class="footer-col-title">Tech Stack</div>
+        <div class="footer-badges">
+            <span class="badge-tech">PyTorch {torch_ver}</span>
+            <span class="badge-tech">Streamlit {st_ver}</span>
+            <span class="badge-tech">Grad-CAM</span>
+            <span class="badge-tech">Grad-CAM++</span>
+            <span class="badge-tech">MC Dropout</span>
+            <span class="badge-tech">{model_name or 'CustomCNN'}</span>
+        </div>
+    </div>
+
+    <div class="footer-col footer-col-stats">
+        <div class="footer-col-title">Session</div>
+        <div class="footer-stats">
+            <div class="footer-stat">
+                <div class="footer-stat-val">{total_s}</div>
+                <div class="footer-stat-lbl">Scans</div>
+            </div>
+            <div class="footer-stat">
+                <div class="footer-stat-val">{avg_c_f:.1f}%</div>
+                <div class="footer-stat-lbl">Avg Conf</div>
+            </div>
+            <div class="footer-stat">
+                <div class="footer-stat-val"><span class="footer-dot"></span> {'Online' if eng_ok else 'Offline'}</div>
+                <div class="footer-stat-lbl">Status</div>
+            </div>
+        </div>
     </div>
 </div>"""), unsafe_allow_html=True)
 
