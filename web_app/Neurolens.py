@@ -1,5 +1,9 @@
 import warnings
 import time
+import io
+import hashlib
+import platform
+from importlib import metadata
 from datetime import datetime
 from pathlib import Path
 from textwrap import dedent
@@ -32,8 +36,6 @@ st.set_page_config(
 
 STYLES = """
 <style>
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
-
 :root {
     --bg-primary: #0f172a;
     --bg-secondary: #1e293b;
@@ -854,7 +856,9 @@ IMG_SIZE = 224
 BASE_DIR = Path(__file__).resolve().parent
 MODEL_PATH = BASE_DIR / "brain_tumor_detector.pth"
 if not MODEL_PATH.exists():
-    MODEL_PATH = BASE_DIR.parent / "brain_tumor_detector.pth"
+    root_checkpoint = BASE_DIR.parent / "brain_tumor_detector.pth"
+    best_checkpoint = BASE_DIR / "neurolens_best.pth"
+    MODEL_PATH = root_checkpoint if root_checkpoint.exists() else best_checkpoint
 
 DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
@@ -950,10 +954,22 @@ def load_model(model_path):
     if not model_path.exists():
         raise FileNotFoundError(f"Model file not found:\n{model_path}")
 
-    checkpoint = torch.load(model_path, map_location=DEVICE)
+    try:
+        checkpoint = torch.load(model_path, map_location=DEVICE, weights_only=False)
+    except TypeError:  # Compatibility with older PyTorch releases.
+        checkpoint = torch.load(model_path, map_location=DEVICE)
+    if not isinstance(checkpoint, dict):
+        raise ValueError("Checkpoint must contain a state dictionary or checkpoint dictionary.")
     class_names = checkpoint.get("class_names", ["Glioma", "Meningioma", "No Tumor", "Pituitary"])
+    expected_classes = ["Glioma", "Meningioma", "No Tumor", "Pituitary"]
+    if list(class_names) != expected_classes:
+        raise ValueError(f"Checkpoint class order must be {expected_classes}.")
     num_classes = checkpoint.get("num_classes", len(class_names))
     best_model_name = checkpoint.get("best_model_name", "CustomCNN")
+    if best_model_name == "Custom CNN":
+        best_model_name = "CustomCNN"
+    if best_model_name not in {"CustomCNN", "ResNet50", "EfficientNet-B0"}:
+        raise ValueError(f"Unsupported model architecture in checkpoint: {best_model_name}")
 
     if best_model_name == "ResNet50":
         model = build_resnet50(num_classes)
@@ -995,10 +1011,30 @@ for key, value in defaults.items():
     if key not in st.session_state:
         st.session_state[key] = value
 
+
+def clear_prediction_history():
+    old_fig = st.session_state.get("gradcam_image")
+    if old_fig is not None:
+        plt.close(old_fig)
+    st.session_state.prediction_history = []
+    st.session_state.last_result = None
+    st.session_state.last_image = None
+    st.session_state.gradcam_image = None
+    st.session_state.live_predictions_count = 0
+    st.session_state.live_avg_confidence = 0.0
+    st.session_state.live_last_confidence = 0.0
+    st.session_state.live_class_counts = {}
+    st.session_state.live_throughput = 0.0
+    st.session_state.live_latency_ms = 0.0
+
 model = None
 class_names = None
 model_name = None
 model_error = None
+try:
+    model, class_names, model_name = load_model(MODEL_PATH)
+except Exception as exc:
+    model_error = str(exc)
 
 NAV_ITEMS = [
     "🏠 Home",
@@ -1068,28 +1104,31 @@ with st.sidebar:
 
     st.markdown('<div class="sidebar-section-label">QUICK ACTIONS</div>', unsafe_allow_html=True)
     if st.button("🗑️ Clear History", key="sidebar_clear_history", use_container_width=True):
-        old_fig = st.session_state.get("gradcam_image")
-        if old_fig is not None:
-            try:
-                plt.close(old_fig)
-            except Exception:
-                pass
-        st.session_state.prediction_history = []
-        st.session_state.last_result = None
-        st.session_state.last_image = None
-        st.session_state.gradcam_image = None
-        st.rerun()
+        st.session_state.confirm_clear_history = True
+    if st.session_state.get("confirm_clear_history", False):
+        st.caption("Clear all session prediction records?")
+        yes, no = st.columns(2)
+        if yes.button("Confirm", key="sidebar_confirm_clear"):
+            clear_prediction_history()
+            st.session_state.confirm_clear_history = False
+            st.rerun()
+        if no.button("Cancel", key="sidebar_cancel_clear"):
+            st.session_state.confirm_clear_history = False
 
     if st.button("🔄 Reset Session", key="sidebar_reset_session", use_container_width=True):
-        old_fig = st.session_state.get("gradcam_image")
-        if old_fig is not None:
-            try:
+        st.session_state.confirm_reset = True
+    if st.session_state.get("confirm_reset", False):
+        st.caption("Reset all session results and history?")
+        yes, no = st.columns(2)
+        if yes.button("Confirm", key="sidebar_confirm_reset"):
+            old_fig = st.session_state.get("gradcam_image")
+            if old_fig is not None:
                 plt.close(old_fig)
-            except Exception:
-                pass
-        for key, value in defaults.items():
-            st.session_state[key] = value
-        st.rerun()
+            for key, value in defaults.items():
+                st.session_state[key] = value
+            st.rerun()
+        if no.button("Cancel", key="sidebar_cancel_reset"):
+            st.session_state.confirm_reset = False
 
 
 # ==================================================================
@@ -1155,27 +1194,30 @@ def render_sticky_header():
     )
 
 
-try:
-    model, class_names, model_name = load_model(MODEL_PATH)
-except Exception as e:
-    model_error = str(e)
-
 render_sticky_header()
 
 
 def predict_image(image, model, class_names):
     if model is None or class_names is None:
         raise RuntimeError("Neural engine unavailable — cannot run inference.")
+    preprocess_started = time.perf_counter()
     tensor = test_transforms(image).unsqueeze(0).to(DEVICE)
+    preprocessing_ms = (time.perf_counter() - preprocess_started) * 1000
     model.eval()
-    with torch.no_grad():
+    if DEVICE.type == "cuda":
+        torch.cuda.synchronize(DEVICE)
+    inference_started = time.perf_counter()
+    with torch.inference_mode():
         outputs = model(tensor)
         probs = F.softmax(outputs, dim=1)[0].detach().cpu().numpy()
+    if DEVICE.type == "cuda":
+        torch.cuda.synchronize(DEVICE)
+    inference_ms = (time.perf_counter() - inference_started) * 1000
 
     idx = int(np.argmax(probs))
     return class_names[idx], float(probs[idx] * 100), {
         class_names[i]: float(probs[i] * 100) for i in range(len(class_names))
-    }
+    }, preprocessing_ms, inference_ms
 
 
 MAX_HISTORY = 200
@@ -1422,6 +1464,10 @@ def generate_gradcam(image, model, model_name):
         ax.axis("off")
         fig.tight_layout(pad=0)
         return fig
+    except Exception:
+        if fig is not None:
+            plt.close(fig)
+        raise
     finally:
         try:
             fwd.remove()
@@ -1431,10 +1477,7 @@ def generate_gradcam(image, model, model_name):
             bwd.remove()
         except Exception:
             pass
-        if fig is None:
-            plt.close("all")
-
-
+        # A returned figure is owned by the session and closed on replacement/reset.
 
 
 def plot_confidence_trend(history):
@@ -1459,28 +1502,49 @@ def plot_confidence_trend(history):
     return fig
 
 
+def plot_latency_trend(history):
+    if len(history) < 2:
+        return None
+    fig, ax = plt.subplots(figsize=(6, 2.8))
+    latencies = [item.get("latency_ms", 0) for item in history]
+    ax.plot(range(1, len(history) + 1), latencies, marker="o", linewidth=2, color="#06b6d4")
+    ax.set_facecolor("none")
+    for side in ("top", "right"):
+        ax.spines[side].set_visible(False)
+    for side in ("left", "bottom"):
+        ax.spines[side].set_color("#3f3f5f")
+    ax.tick_params(colors="#94a3b8", labelsize=8)
+    ax.set_xlabel("Analysis #", color="#94a3b8", fontsize=9)
+    ax.set_ylabel("Inference ms", color="#94a3b8", fontsize=9)
+    ax.grid(True, alpha=0.15, linestyle="--")
+    fig.tight_layout(pad=0.5)
+    return fig
+
+
 if nav == "🏠 Home":
     render_neural_animation()
     render_live_ticker()
     st.markdown(
         dedent("""
         <div class="hero">
-            <div class="hero-badge">🧠 AI-Powered Neurodiagnostic Engine v2.0 · Live Mode</div>
+            <div class="hero-badge">🧠 AI-Powered Brain MRI Analysis · Research Prototype</div>
             <h1>🧠 NeuroLens AI</h1>
-            <p>Advanced computational neuroimaging platform utilizing deep convolutional
-            neural networks for brain MRI analysis, diagnostic classification, and
-            explainable AI visualization of oncological findings.</p>
+            <p>Deep Learning · Explainable AI · Neuroimaging<br>Explore model predictions and image regions that influenced them.</p>
         </div>
         """),
         unsafe_allow_html=True,
     )
+    if st.button("🔬 Analyze MRI Scan", type="primary", key="home_analyze_cta"):
+        st.session_state.nav = "🔬 MRI Analysis"
+        st.rerun()
+    st.caption("Research prototype for education and research. Model predictions are not medical diagnoses.")
 
     hc1, hc2, hc3, hc4 = st.columns(4)
     live_metrics = [
         ("📡", st.session_state.live_predictions_count, "Live Scans"),
         ("🎯", f"{st.session_state.live_avg_confidence:.1f}%", "Avg. Confidence"),
         ("⚡", f"{st.session_state.live_throughput:.2f}/m", "Throughput"),
-        ("⏱️", f"{st.session_state.live_latency_ms:.0f} ms", "Latency"),
+        ("⏱️", f"{np.mean([x.get('latency_ms', 0) for x in history]):.0f} ms", "Avg. Inference"),
     ]
     for col, (icon, value, label) in zip([hc1, hc2, hc3, hc4], live_metrics):
         with col:
@@ -1515,13 +1579,14 @@ if nav == "🏠 Home":
     else:
         show_live_prob = False
 
-    c1, c2, c3 = st.columns(3)
+    c1, c2, c3, c4 = st.columns(4)
     cards = [
-        ("🔬", "MRI Diagnostic Analysis", "Upload a brain MRI scan and receive AI-powered tumor classification using our trained deep neural network model."),
-        ("📊", "Probability Diagnostics", "View confidence-weighted class probability distributions with clinical diagnostic certainty scores."),
-        ("🔥", "Explainable AI (XAI)", "Grad-CAM heatmaps highlight the specific brain regions that influenced the model's diagnostic decision."),
+        ("🔬", "Brain MRI Classification", "Model predictions across four supported output classes."),
+        ("📊", "Probability Analysis", "Review model confidence values across the supported output classes."),
+        ("🔥", "Explainable AI", "Grad-CAM shows image regions that contributed more strongly to a prediction."),
+        ("⚡", "Inference Metrics", "Review preprocessing, model inference, and explanation timings."),
     ]
-    for col, (icon, title, desc) in zip([c1, c2, c3], cards):
+    for col, (icon, title, desc) in zip([c1, c2, c3, c4], cards):
         with col:
             st.markdown(
                 f"""
@@ -1535,6 +1600,9 @@ if nav == "🏠 Home":
             )
 
     st.write("")
+
+    st.subheader("How NeuroLens Works")
+    st.markdown("**1 · Upload MRI** → **2 · Resize and normalize** → **3 · Model inference** → **4 · Class probabilities** → **5 · Grad-CAM explanation** → **6 · Download report**")
 
     if model_error:
         st.markdown(
@@ -1576,8 +1644,9 @@ elif nav == "🔬 MRI Analysis":
 
     if model_error:
         st.error("🚨 Unable to load the neural diagnostic engine.")
-        st.code(model_error)
         st.info(f"Expected model location:\n{MODEL_PATH}")
+        with st.expander("Technical Details"):
+            st.code(model_error)
     else:
         uploaded_file = st.file_uploader(
             "Upload Brain MRI Scan",
@@ -1585,140 +1654,99 @@ elif nav == "🔬 MRI Analysis":
             key="mri_uploader",
         )
 
+        image_id = None
         if uploaded_file is not None:
+            upload_bytes = uploaded_file.getvalue()
+            image_id = hashlib.sha256(upload_bytes).hexdigest()
+            previous = st.session_state.last_result
+            if previous is not None and previous.get("image_id") != image_id:
+                old_fig = st.session_state.get("gradcam_image")
+                if old_fig is not None:
+                    plt.close(old_fig)
+                st.session_state.last_result = None
+                st.session_state.last_image = None
+                st.session_state.gradcam_image = None
             try:
-                image = Image.open(uploaded_file).convert("RGB")
-            except UnidentifiedImageError:
+                image = Image.open(io.BytesIO(upload_bytes)).convert("RGB")
+            except (UnidentifiedImageError, OSError, ValueError):
                 st.error("⚠️ Invalid image file. Please upload a JPG, JPEG, PNG, or WEBP scan.")
-                st.stop()
-            except Exception as e:
-                st.error(f"Unable to open the uploaded scan: {e}")
-                st.stop()
+                image = None
 
-            col1, col2 = st.columns([1, 2])
+            if image is not None:
+                col1, col2 = st.columns([1, 2])
 
-            with col1:
-                st.markdown(
-                    """
-                    <div class="image-preview-frame medical-scan">
-                        <div class="image-preview-label">MRI Scan</div>
-                    </div>
-                    """,
-                    unsafe_allow_html=True,
-                )
-                st.image(image, use_container_width=True)
+                with col1:
+                    st.markdown("### MRI Preview")
+                    st.image(image, use_container_width=True)
+                    st.caption(f"Original: {image.width} × {image.height}px · Processed: {IMG_SIZE} × {IMG_SIZE}px · RGB normalization applied")
 
-            with col2:
-                st.markdown("### 🧠 Neurodiagnostic Report")
-                st.caption(f"Neural Engine: **{model_name}** · Compute: **{DEVICE}**")
+                with col2:
+                    st.markdown("### Analysis Configuration")
+                    st.caption(f"Architecture: **{model_name}** · Device: **{DEVICE}** · Classes: {len(class_names)}")
 
-                if st.button("🔍 Run Diagnostic Analysis", type="primary",
-                             use_container_width=True, key="analyze_mri_button"):
-                    if st.session_state.live_session_start is None:
-                        st.session_state.live_session_start = datetime.now()
+                    if st.button("🔍 Run AI Analysis", type="primary", use_container_width=True, key="analyze_mri_button"):
+                        if st.session_state.live_session_start is None:
+                            st.session_state.live_session_start = datetime.now()
 
-                    st.session_state.live_inference_running = True
-                    st.session_state.live_inference_progress = 0.0
-                    st.session_state.live_inference_stage = "Initializing"
-
-                    progress_bar = st.progress(0.0, text="🧠 Stage: Initializing neural engine...")
-                    status_box = st.empty()
-
-                    try:
-                        stages = [
-                            ("Preprocessing MRI scan", 0.15, 0.18),
-                            ("Normalizing pixel values", 0.30, 0.12),
-                            ("Loading tensors onto " + str(DEVICE), 0.45, 0.10),
-                            ("Forward pass through " + str(model_name), 0.70, 0.30),
-                            ("Computing softmax probabilities", 0.85, 0.10),
-                            ("Generating Grad-CAM heatmap", 0.97, 0.15),
-                            ("Compiling diagnostic report", 1.00, 0.05),
-                        ]
-
-                        t_start = datetime.now()
-                        for stage_label, pct, sleep_s in stages:
-                            st.session_state.live_inference_stage = stage_label
-                            status_box.markdown(
-                                f"<div class='result-card'><div class='result-label'>⚡ Live Status</div>"
-                                f"<div style='font-size:1rem; margin-top:0.4rem;'>"
-                                f"<b>{stage_label}</b> — {int(pct*100)}% complete</div></div>",
-                                unsafe_allow_html=True,
-                            )
-                            progress_bar.progress(pct, text=f"🧠 Stage: {stage_label}...")
-                            log_activity(f"Pipeline → {stage_label}", level="info")
-                            time.sleep(sleep_s)
-
-                        predicted_class, confidence, probability_dict = predict_image(
-                            image, model, class_names
-                        )
-
-                        gradcam_fig = None
+                        st.session_state.live_inference_running = True
+                        status_box = st.empty()
+                        status_box.info("Preprocessing, model inference, and Grad-CAM generation in progress…")
                         try:
-                            gradcam_fig = generate_gradcam(image, model, model_name)
-                        except Exception as ge:
-                            log_activity(f"Grad-CAM unavailable: {ge}", level="warn")
-
-                        latency_ms = (datetime.now() - t_start).total_seconds() * 1000.0
-
-                        result = {
-                            "prediction": predicted_class,
-                            "confidence": confidence,
-                            "probabilities": probability_dict,
-                            "model": model_name,
-                            "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-                            "latency_ms": latency_ms,
-                        }
-                        st.session_state.last_result = result
-                        st.session_state.last_image = image
-                        # Close previous Grad-CAM figure to release memory before reassignment.
-                        old_fig = st.session_state.get("gradcam_image")
-                        if old_fig is not None:
+                            log_activity("MRI uploaded; preprocessing started", level="info")
+                            total_started = time.perf_counter()
+                            predicted_class, confidence, probability_dict, preprocessing_ms, inference_ms = predict_image(image, model, class_names)
+                            gradcam_started = time.perf_counter()
+                            gradcam_fig = None
                             try:
-                                plt.close(old_fig)
+                                gradcam_fig = generate_gradcam(image, model, model_name)
+                                log_activity("Grad-CAM generated", level="info")
                             except Exception:
-                                pass
-                        st.session_state.gradcam_image = gradcam_fig
-                        st.session_state.prediction_history.append(result)
-                        if len(st.session_state.prediction_history) > MAX_HISTORY:
-                            st.session_state.prediction_history = (
-                                st.session_state.prediction_history[-MAX_HISTORY:]
-                            )
+                                log_activity("Grad-CAM unavailable", level="warn")
+                            gradcam_ms = (time.perf_counter() - gradcam_started) * 1000
+                            result = {
+                                "prediction": predicted_class, "confidence": confidence,
+                                "probabilities": probability_dict, "model": model_name,
+                                "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+                                "latency_ms": inference_ms, "preprocessing_ms": preprocessing_ms,
+                                "gradcam_ms": gradcam_ms if gradcam_fig is not None else None,
+                                "total_ms": (time.perf_counter() - total_started) * 1000,
+                                "gradcam_available": gradcam_fig is not None, "image_id": image_id,
+                            }
+                            old_fig = st.session_state.get("gradcam_image")
+                            if old_fig is not None:
+                                plt.close(old_fig)
+                            st.session_state.gradcam_image = gradcam_fig
+                            st.session_state.last_result = result
+                            st.session_state.last_image = image.copy()
+                            st.session_state.prediction_history.append(result)
+                            st.session_state.prediction_history = st.session_state.prediction_history[-MAX_HISTORY:]
+                            update_live_stats(result, inference_ms)
+                            log_activity("Model prediction generated", level="success")
+                            status_box.success(f"Model prediction generated: {predicted_class} · {inference_ms:.0f} ms inference")
+                        except Exception as exc:
+                            message = "CUDA ran out of memory. Try CPU inference or a smaller image." if "out of memory" in str(exc).lower() else "Analysis could not be completed. Check the image and model configuration."
+                            status_box.error(message)
+                            with st.expander("Technical Details"):
+                                st.code(str(exc))
+                            log_activity("Analysis failed", level="error")
+                        finally:
+                            st.session_state.live_inference_running = False
 
-                        update_live_stats(result, latency_ms)
-                        log_activity(
-                            f"Prediction: {predicted_class} ({confidence:.1f}%) in {latency_ms:.0f}ms",
-                            level="success",
-                        )
-
-                        progress_bar.progress(1.0, text="✅ Analysis complete")
-                        status_box.success(
-                            f"✅ Diagnostic analysis complete. Prediction: **{predicted_class}** "
-                            f"(inference latency: {latency_ms:.0f} ms)"
-                        )
-                    except Exception as e:
-                        progress_bar.empty()
-                        status_box.error(f"⚠️ An error occurred during diagnostic analysis: {e}")
-                        log_activity(f"Analysis failed: {e}", level="error")
-                    finally:
-                        st.session_state.live_inference_running = False
-                        st.session_state.live_inference_progress = 0.0
-                        st.session_state.live_inference_stage = "Idle"
-
-        if st.session_state.last_result is not None and st.session_state.last_image is not None:
+        if (image_id is not None and st.session_state.last_result is not None and st.session_state.last_image is not None
+                and st.session_state.last_result.get("image_id") == image_id):
             result = st.session_state.last_result
 
-            is_tumor = result["prediction"] != "No Tumor"
-            badge_class = "badge-malignant" if result['confidence'] > 80 else "badge-uncertain"
+            confidence_band = "High" if result["confidence"] >= 80 else "Moderate" if result["confidence"] >= 60 else "Low"
 
             st.markdown(
                 f"""
                 <div class="diagnostic-panel">
                     <div class="diagnostic-header">
                         <span class="diagnostic-title">🩺 Diagnostic Report</span>
-                        <span class="medical-badge {badge_class}">{'⚠️ TUMOR DETECTED' if is_tumor else '✅ NO TUMOR DETECTED'}</span>
+                        <span class="medical-badge badge-uncertain">RESEARCH PROTOTYPE</span>
                     </div>
                     <div class="diagnostic-prediction">{result['prediction']}</div>
-                    <div class="result-label">AI Certainty Score</div>
+                    <div class="result-label">Model prediction</div>
                 </div>
                 """,
                 unsafe_allow_html=True,
@@ -1726,10 +1754,11 @@ elif nav == "🔬 MRI Analysis":
 
             m1, m2 = st.columns(2)
             with m1:
-                st.metric("Diagnostic Confidence", f"{result['confidence']:.2f}%",
-                          delta="AI certainty" if result['confidence'] > 70 else "- Low certainty")
+                st.metric("Model Confidence", f"{result['confidence']:.2f}%", delta=f"{confidence_band} confidence")
             with m2:
-                st.metric("Deep Model", result["model"])
+                st.metric("Inference latency", f"{result['latency_ms']:.1f} ms")
+            st.caption(f"Preprocessing {result.get('preprocessing_ms', 0):.1f} ms · Grad-CAM {result.get('gradcam_ms') or 0:.1f} ms · Total {result.get('total_ms', 0):.1f} ms")
+            st.warning("NeuroLens AI is an AI research prototype intended for educational and research purposes. Model predictions are not medical diagnoses and should not replace evaluation by a qualified healthcare professional.")
 
             st.write("")
             st.markdown("### 📊 Probability Distribution")
@@ -1760,16 +1789,30 @@ elif nav == "🔬 MRI Analysis":
                 st.write("")
                 st.markdown("### 🔥 Grad-CAM Visualization")
                 st.markdown('<div class="chart-container">', unsafe_allow_html=True)
-                st.pyplot(st.session_state.gradcam_image, use_container_width=False)
+                st.pyplot(st.session_state.gradcam_image, use_container_width=True)
                 st.markdown('</div>', unsafe_allow_html=True)
-                st.caption("Red/yellow regions indicate areas most influential to the model's diagnostic decision.")
+                st.caption("Highlighted regions represent image areas that contributed more strongly to the model prediction. Grad-CAM does not establish tumor location or provide medical certainty.")
+                cam_buffer = io.BytesIO()
+                st.session_state.gradcam_image.savefig(cam_buffer, format="png", bbox_inches="tight", pad_inches=0, dpi=160)
+                st.download_button("Download Grad-CAM PNG", cam_buffer.getvalue(), "neurolens_gradcam.png", "image/png")
+
+            report_lines = [
+                "NeuroLens AI — MRI Analysis Report", f"Timestamp: {result['timestamp']}",
+                f"Model architecture: {result['model']}", f"Model prediction: {result['prediction']}",
+                f"Model confidence: {result['confidence']:.2f}%", "Class probabilities:",
+                *[f"  {label}: {prob:.2f}%" for label, prob in result["probabilities"].items()],
+                f"Inference latency: {result['latency_ms']:.2f} ms",
+                f"Grad-CAM available: {'Yes' if result.get('gradcam_available') else 'No'}",
+                "Research prototype for educational and research purposes. Not a medical diagnosis.",
+            ]
+            st.download_button("Download Analysis Report (TXT)", "\n".join(report_lines), "neurolens_analysis_report.txt", "text/plain")
 
     st.write("")
 
 
 elif nav == "📊 Dashboard":
-    st.title("📊 Neurodiagnostic Dashboard · Live")
-    st.caption("🔴 Real-time clinical overview — auto-refreshing every 3 seconds")
+    st.title("📊 Neurodiagnostic Dashboard")
+    st.caption("Session analytics from completed MRI analyses")
 
     render_live_ticker()
 
@@ -1802,7 +1845,7 @@ elif nav == "📊 Dashboard":
             ("🎯", f"{avg_conf:.1f}%", "Avg. Confidence"),
             ("🧬", unique, "Classes Seen"),
             ("⚡", f"{throughput:.2f}/m", "Throughput"),
-            ("⏱️", f"{latency:.0f} ms", "Last Latency"),
+            ("⏱️", f"{np.mean([item.get('latency_ms', 0) for item in history]):.0f} ms", "Avg. Latency"),
         ]
         for col, (icon, value, label) in zip([m1, m2, m3, m4, m5], metrics):
             with col:
@@ -1843,13 +1886,21 @@ elif nav == "📊 Dashboard":
                 )
 
             st.write("")
-            st.subheader("📈 Real-Time Certainty Trend")
+            st.subheader("📈 Model Confidence Trend")
             trend_fig = plot_confidence_trend(history)
             if trend_fig is not None:
                 st.markdown('<div class="chart-container">', unsafe_allow_html=True)
                 st.pyplot(trend_fig, use_container_width=True)
                 st.markdown('</div>', unsafe_allow_html=True)
                 plt.close(trend_fig)
+            else:
+                st.caption("Need at least 2 analyses to show trend.")
+
+            st.subheader("⏱️ Inference Latency Trend")
+            latency_fig = plot_latency_trend(history)
+            if latency_fig is not None:
+                st.pyplot(latency_fig, use_container_width=True)
+                plt.close(latency_fig)
             else:
                 st.caption("Need at least 2 analyses to show trend.")
 
@@ -1867,9 +1918,9 @@ elif nav == "📊 Dashboard":
         st.markdown(
             f"""
             <div class="latest-card">
-                <div class="latest-row"><div class="latest-key">Diagnosis</div>
+                <div class="latest-row"><div class="latest-key">Model Prediction</div>
                     <div class="latest-val">{latest["prediction"]}</div></div>
-                <div class="latest-row"><div class="latest-key">AI Certainty</div>
+                <div class="latest-row"><div class="latest-key">Model Confidence</div>
                     <div class="latest-val">{latest['confidence']:.2f}%</div></div>
                 <div class="latest-row"><div class="latest-key">Neural Engine</div>
                     <div class="latest-val">{latest["model"]}</div></div>
@@ -1884,29 +1935,15 @@ elif nav == "📊 Dashboard":
             unsafe_allow_html=True,
         )
 
-    components.html(
-        """
-        <script>
-        setTimeout(function() {
-            const btn = window.parent.document.querySelector('button[aria-label="Rerun"]');
-            if (btn) btn.click();
-        }, 3000);
-        </script>
-        """,
-        height=0,
-    )
-
-
-
 elif nav == "🕘 History":
-    st.title("🕘 Diagnostic History · Live")
+    st.title("🕘 Analysis History")
     st.caption("Review past AI diagnostic reports and MRI analyses")
     render_live_ticker()
     history = st.session_state.prediction_history
 
     if not history:
         st.markdown(
-            """
+            f"""
             <div class="empty-state">
                 <div class="empty-state-icon">🕘</div>
                 <div class="empty-state-title">No diagnostic history</div>
@@ -1916,7 +1953,31 @@ elif nav == "🕘 History":
             unsafe_allow_html=True,
         )
     else:
-        for item in reversed(history):
+        filter_cols = st.columns([1, 1, 1, 2])
+        prediction_filter = filter_cols[0].selectbox("Prediction", ["All"] + ["Glioma", "Meningioma", "No Tumor", "Pituitary"])
+        confidence_filter = filter_cols[1].selectbox("Confidence", ["All", "High (≥80%)", "Moderate (60–79%)", "Low (<60%)"])
+        sort_order = filter_cols[2].selectbox("Sort", ["Newest first", "Oldest first"])
+        history_search = filter_cols[3].text_input("Search model or prediction")
+        filtered_history = []
+        for record in history:
+            conf = record["confidence"]
+            if prediction_filter != "All" and record["prediction"] != prediction_filter:
+                continue
+            if confidence_filter == "High (≥80%)" and conf < 80:
+                continue
+            if confidence_filter == "Moderate (60–79%)" and not 60 <= conf < 80:
+                continue
+            if confidence_filter == "Low (<60%)" and conf >= 60:
+                continue
+            query = history_search.strip().lower()
+            if query and query not in record["model"].lower() and query not in record["prediction"].lower():
+                continue
+            filtered_history.append(record)
+        if sort_order == "Newest first":
+            filtered_history.reverse()
+        if not filtered_history:
+            st.info("No history entries match these filters.")
+        for item in filtered_history:
             conf = item["confidence"]
             conf_class = (
                 "confidence-high" if conf >= 80
@@ -1938,33 +1999,32 @@ elif nav == "🕘 History":
                 """,
                 unsafe_allow_html=True,
             )
-            with st.expander(f"View diagnostic details — {item['model']}", expanded=False):
-                st.write(f"**Diagnosis:** {item['prediction']}")
-                st.write(f"**AI Certainty:** {item['confidence']:.2f}%")
-                st.write(f"**Neural Engine:** {item['model']}")
-                st.write(f"**Analyzed At:** {item['timestamp']}")
+            with st.expander(f"View analysis details — {item['model']}", expanded=False):
+                st.write(f"**Model prediction:** {item['prediction']}")
+                st.write(f"**Model confidence:** {item['confidence']:.2f}%")
+                st.write(f"**Inference latency:** {item.get('latency_ms', 0):.1f} ms")
+                st.write(f"**Analyzed at:** {item['timestamp']}")
                 st.write("**Class Probabilities:**")
                 for label, prob in item["probabilities"].items():
                     st.write(f"- {label}: {prob:.2f}%")
 
         st.write("")
         if st.button("🗑️ Clear History", key="clear_history_button"):
-            old_fig = st.session_state.get("gradcam_image")
-            if old_fig is not None:
-                try:
-                    plt.close(old_fig)
-                except Exception:
-                    pass
-            st.session_state.prediction_history = []
-            st.session_state.last_result = None
-            st.session_state.last_image = None
-            st.session_state.gradcam_image = None
-            st.rerun()
+            st.session_state.confirm_clear_history_page = True
+        if st.session_state.get("confirm_clear_history_page", False):
+            st.warning("Clear all prediction records from this session?")
+            confirm_col, cancel_col = st.columns(2)
+            if confirm_col.button("Confirm clear", key="confirm_history_clear"):
+                clear_prediction_history()
+                st.session_state.confirm_clear_history_page = False
+                st.rerun()
+            if cancel_col.button("Cancel", key="cancel_history_clear"):
+                st.session_state.confirm_clear_history_page = False
 
 
 
 elif nav == "🔥 Grad-CAM":
-    st.title("🔥 Grad-CAM Explainability (XAI) · Live")
+    st.title("🔥 Grad-CAM Explainability (XAI)")
     st.caption("Visualize which MRI regions influenced the AI's diagnostic decision")
     render_live_ticker()
 
@@ -1980,29 +2040,18 @@ elif nav == "🔥 Grad-CAM":
             unsafe_allow_html=True,
         )
     else:
-        tab1, tab2 = st.tabs(["🖼️ Original MRI", "🌡️ Heatmap Overlay"])
-
-        with tab1:
-            st.markdown(
-                """
-                <div class="image-preview-frame medical-scan">
-                    <div class="image-preview-label">Original MRI Scan</div>
-                </div>
-                """,
-                unsafe_allow_html=True,
-            )
-            st.image(st.session_state.last_image, width=400)
-
-        with tab2:
-            st.markdown(
-                """
-                <div class="image-preview-frame medical-scan">
-                    <div class="image-preview-label">Grad-CAM Heatmap Overlay</div>
-                </div>
-                """,
-                unsafe_allow_html=True,
-            )
-            st.pyplot(st.session_state.gradcam_image, use_container_width=False)
+        original_col, heatmap_col = st.columns(2)
+        with original_col:
+            st.subheader("Original MRI")
+            st.image(st.session_state.last_image, use_container_width=True)
+        with heatmap_col:
+            st.subheader("Grad-CAM Overlay")
+            st.pyplot(st.session_state.gradcam_image, use_container_width=True)
+        st.markdown("**Heatmap influence:** Low ░░░░░░░░ High")
+        st.info("Highlighted regions represent image areas that contributed more strongly to the model prediction. This visualization is an explanation aid, not a medically certain tumor localization.")
+        cam_buffer = io.BytesIO()
+        st.session_state.gradcam_image.savefig(cam_buffer, format="png", bbox_inches="tight", pad_inches=0, dpi=160)
+        st.download_button("Download Grad-CAM PNG", cam_buffer.getvalue(), "neurolens_gradcam.png", "image/png", key="gradcam_page_download")
 
         st.write("")
         c1, c2 = st.columns(2)
@@ -2054,7 +2103,8 @@ elif nav == "⚙️ Settings":
                 <p><b>Architecture:</b> {model_name if model_name else 'Unavailable'}</p>
                 <p><b>Model Status:</b> {'Loaded' if MODEL_PATH.exists() else 'Not found'}</p>
                 <p><b>Input Resolution:</b> {IMG_SIZE} × {IMG_SIZE}</p>
-                <p><b>Diagnostic Classes:</b> {', '.join(class_names) if class_names else 'Unavailable'}</p>
+                <p><b>Output Classes:</b> {', '.join(class_names) if class_names else 'Unavailable'}</p>
+                <p><b>Checkpoint:</b> {MODEL_PATH.name if MODEL_PATH.exists() else 'Not found'}</p>
             </div>
             """,
             unsafe_allow_html=True,
@@ -2062,16 +2112,28 @@ elif nav == "⚙️ Settings":
 
     with c2:
         st.markdown(
-            """
+            f"""
             <div class="info-card">
                 <h3>🖥️ System Information</h3>
                 <p><b>Platform:</b> Streamlit</p>
                 <p><b>Framework:</b> PyTorch (Neural Network)</p>
-                <p><b>Backend:</b> CPU / CUDA</p>
+                <p><b>PyTorch:</b> {torch.__version__}</p>
+                <p><b>Torchvision:</b> {metadata.version('torchvision')}</p>
+                <p><b>Streamlit:</b> {st.__version__}</p>
+                <p><b>Python:</b> {platform.python_version()}</p>
             </div>
             """,
             unsafe_allow_html=True,
         )
+
+        show_technical = st.toggle("Show technical details", key="show_technical_details")
+        if show_technical:
+            with st.expander("Checkpoint and runtime details", expanded=True):
+                st.write(f"Checkpoint path: `{MODEL_PATH}`")
+                st.write(f"Device: `{DEVICE}` · Input: `{IMG_SIZE} × {IMG_SIZE}`")
+                if model_error:
+                    st.code(model_error)
+                st.caption("Expected checkpoint keys: model_state_dict, class_names, num_classes, best_model_name. Raw state dictionaries are also supported.")
 
         st.write("")
         st.markdown(
@@ -2086,16 +2148,21 @@ elif nav == "⚙️ Settings":
 
         if st.button("🧹 Reset Session", key="reset_session_button",
                      use_container_width=True, type="primary"):
-            old_fig = st.session_state.get("gradcam_image")
-            if old_fig is not None:
-                try:
+            st.session_state.confirm_reset_page = True
+        if st.session_state.get("confirm_reset_page", False):
+            st.warning("Reset all session results and history?")
+            confirm_col, cancel_col = st.columns(2)
+            if confirm_col.button("Confirm reset", key="confirm_reset_page"):
+                old_fig = st.session_state.get("gradcam_image")
+                if old_fig is not None:
                     plt.close(old_fig)
-                except Exception:
-                    pass
-            for key, value in defaults.items():
-                st.session_state[key] = value
-            st.success("Session cleared. All diagnostic reports reset.")
-            st.rerun()
+                for key, value in defaults.items():
+                    st.session_state[key] = value
+                st.session_state.confirm_reset_page = False
+                st.success("Session cleared. All diagnostic reports reset.")
+                st.rerun()
+            if cancel_col.button("Cancel", key="cancel_reset_page"):
+                st.session_state.confirm_reset_page = False
 
 
 def render_footer():
@@ -2131,7 +2198,7 @@ def render_footer():
         """,
         unsafe_allow_html=True,
     )
+    st.caption("NeuroLens AI is an AI research prototype intended for educational and research purposes. Model predictions are not medical diagnoses and should not replace evaluation by a qualified healthcare professional.")
 
 
 render_footer()
-
