@@ -243,7 +243,7 @@ header[data-testid="stHeader"] { background: transparent; }
 .sidebar-mini-value { margin-top: 0.2rem; font-size: 0.78rem; font-weight: 700; color: var(--text-primary); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .sidebar-footer { margin-top: 1rem; padding: 0.75rem; border-radius: 12px; background: rgba(245,158,11,.06); border: 1px solid rgba(245,158,11,.18); font-size: .7rem; color: var(--text-secondary); text-align: center; line-height: 1.45; }
 
-/* ── STICKY HEADER (redesigned) ── */
+/* ── STICKY HEADER ── */
 .sticky-header {
     position: fixed; top: 0.5rem; left: calc(300px + 0.4rem); right: 0.4rem; z-index: 9999;
     display: flex; align-items: center; gap: 0.85rem; padding: 0.7rem 1rem;
@@ -534,6 +534,21 @@ hr { border-color: var(--border-subtle) !important; margin: 1.25rem 0 !important
     background: var(--success); box-shadow: 0 0 8px var(--success);
     display: inline-block;
 }
+
+/* ── COPYRIGHT LINE ── */
+.copyright-line {
+    text-align: center;
+    padding: 1.2rem 0.5rem 0.5rem;
+    font-size: 0.78rem;
+    color: var(--text-muted);
+    letter-spacing: 0.02em;
+    line-height: 1.7;
+}
+.copyright-brand { color: var(--accent-light); font-weight: 700; }
+.copyright-sep { color: var(--text-muted); margin: 0 0.5rem; }
+.copyright-dev-label { font-size: 0.75rem; color: var(--text-secondary); }
+.copyright-dev-name { color: var(--text-primary); font-weight: 700; }
+.copyright-dev-amp { color: var(--text-muted); margin: 0 0.4rem; }
 
 /* ── RESPONSIVE ── */
 @media (max-width: 768px) {
@@ -1160,7 +1175,7 @@ def render_live_ticker():
 
 
 # ─────────────────────────────────────────────────────────────────────────────
-# STICKY HEADER  (clock removed)
+# STICKY HEADER
 # ─────────────────────────────────────────────────────────────────────────────
 
 def render_sticky_header():
@@ -2394,7 +2409,7 @@ st.markdown(safe_html(f"""
             </div>
         </div>
         <div class="footer-copy">
-            © {year} NeuroLens Research<br>
+            © {year} NeuroLens AI<br>
             Build {build_time}
         </div>
     </div>
@@ -2428,4 +2443,18 @@ st.markdown(safe_html(f"""
             </div>
         </div>
     </div>
+</div>"""), unsafe_allow_html=True)
+
+st.markdown(safe_html(f"""
+<div class="copyright-line">
+    <span class="copyright-brand">© {year} NeuroLens AI</span>
+    <span class="copyright-sep">·</span>
+    All Rights Reserved
+    <br>
+    <span class="copyright-dev-label">
+        Developed by
+        <span class="copyright-dev-name">MD. Atique Shahriar</span>
+        <span class="copyright-dev-amp">&amp;</span>
+        <span class="copyright-dev-name">Aronna Das</span>
+    </span>
 </div>"""), unsafe_allow_html=True)
