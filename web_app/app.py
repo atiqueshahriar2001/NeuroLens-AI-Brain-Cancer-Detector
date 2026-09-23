@@ -111,466 +111,1052 @@ def uncertainty_band(uncertainty: float) -> tuple[str, str]:
 
 
 # ─────────────────────────────────────────────────────────────────────────────
-# CSS
+# CSS — Design System v3.1 (Vercel/Linear-grade dark UI)
 # ─────────────────────────────────────────────────────────────────────────────
 STYLES = """
 <style>
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Sora:wght@500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap');
 
 :root {
-    --bg-primary:    #0b1120;
-    --bg-secondary:  #111827;
-    --bg-card:       rgba(17, 24, 39, 0.80);
-    --bg-glass:      rgba(255, 255, 255, 0.03);
-    --border-subtle: rgba(255, 255, 255, 0.07);
-    --border-hover:  rgba(14, 165, 233, 0.45);
-    --accent:        #0ea5e9;
-    --accent-light:  #38bdf8;
-    --accent-glow:   rgba(14, 165, 233, 0.15);
-    --text-primary:  #f1f5f9;
-    --text-secondary:#94a3b8;
-    --text-muted:    #64748b;
-    --success:       #10b981;
-    --warning:       #f59e0b;
-    --error:         #ef4444;
-    --purple:        #8b5cf6;
-    --cyan:          #06b6d4;
-    --gradient-1:    linear-gradient(135deg, #0ea5e9 0%, #06b6d4 100%);
-    --gradient-purple: linear-gradient(135deg, #8b5cf6 0%, #a78bfa 100%);
-    --shadow-glow:   0 0 28px rgba(14, 165, 233, 0.18);
-    --radius-lg:     20px;
-    --radius-md:     14px;
-    --radius-sm:     10px;
+    /* Surfaces */
+    --bg:           #0a0e1a;
+    --surface:      #0f1524;
+    --surface-2:    #131a2c;
+    --surface-3:    #1a2338;
+
+    /* Borders */
+    --line:         rgba(255,255,255,0.06);
+    --line-strong:  rgba(255,255,255,0.12);
+
+    /* Brand */
+    --accent:       #0ea5e9;
+    --accent-hi:    #38bdf8;
+    --accent-soft:  rgba(14,165,233,0.10);
+    --accent-line:  rgba(14,165,233,0.32);
+
+    /* Semantic */
+    --success:      #10b981;
+    --warning:      #f59e0b;
+    --danger:       #ef4444;
+    --violet:       #8b5cf6;
+
+    /* Text */
+    --text-1:       #e8edf5;
+    --text-2:       #a4b0c0;
+    --text-3:       #6b7789;
+
+    /* Type */
+    --font-display: 'Sora', 'Inter', sans-serif;
+    --font-body:    'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    --font-mono:    'JetBrains Mono', ui-monospace, monospace;
+
+    /* Radius */
+    --r-sm: 10px;
+    --r-md: 14px;
+    --r-lg: 18px;
+    --r-pill: 999px;
+
+    /* Shadow */
+    --sh-1: 0 1px 2px rgba(0,0,0,.25);
+    --sh-2: 0 4px 14px rgba(0,0,0,.30);
+    --sh-3: 0 12px 32px rgba(0,0,0,.35);
+    --sh-focus: 0 0 0 3px rgba(14,165,233,.28);
+
+    /* Legacy aliases — keep existing inline HTML resolving */
+    --bg-primary: var(--bg);
+    --bg-secondary: var(--surface);
+    --bg-card: var(--surface-2);
+    --bg-glass: rgba(255,255,255,0.03);
+    --border-subtle: var(--line);
+    --border-hover: var(--accent-line);
+    --accent-light: var(--accent-hi);
+    --accent-glow: var(--accent-soft);
+    --text-primary: var(--text-1);
+    --text-secondary: var(--text-2);
+    --text-muted: var(--text-3);
+    --error: var(--danger);
+    --warning: var(--warning);
+    --success-var: var(--success);
+    --radius-lg: var(--r-lg);
+    --radius-md: var(--r-md);
+    --radius-sm: var(--r-sm);
 }
 
-* { font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif; box-sizing: border-box; }
-.stApp { background: var(--bg-primary); color: var(--text-primary); }
+/* ── BASE ── */
+* { font-family: var(--font-body); box-sizing: border-box; }
+.stApp { background: var(--bg); color: var(--text-1); }
 header[data-testid="stHeader"] { background: transparent; }
 #MainMenu, footer { visibility: hidden; }
 
-/* ── SIDEBAR ── */
-[data-testid="stSidebar"] {
-    background: var(--bg-secondary) !important;
-    border-right: 1px solid var(--border-subtle) !important;
-    min-width: 300px !important; max-width: 300px !important; width: 300px !important;
-}
-[data-testid="stSidebar"] > div:first-child {
-    width: 300px !important; padding: 1.2rem 0.75rem 1rem !important;
-}
-[data-testid="stSidebar"] ::-webkit-scrollbar { width: 4px; }
-[data-testid="stSidebar"] ::-webkit-scrollbar-thumb { background: rgba(14,165,233,.25); border-radius: 10px; }
-
-.sidebar-brand-title {
-    font-size: 1.35rem; font-weight: 800;
-    background: var(--gradient-1);
-    -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+h1, h2, h3, .metric-value, .diagnostic-prediction,
+.uncertainty-value, .hero h1, .sticky-brand-name, .footer-brand {
+    font-family: var(--font-display);
     letter-spacing: -0.02em;
 }
-.sidebar-brand-subtitle { font-size: 0.65rem; color: var(--text-muted); font-weight: 500; letter-spacing: 0.07em; text-transform: uppercase; }
-.sidebar-section-label {
-    margin: 1rem 0 0.4rem; padding-left: 0.2rem;
-    font-size: 0.65rem; font-weight: 800; letter-spacing: 0.14em;
-    color: var(--text-muted); text-transform: uppercase;
+
+code, pre, .activity-feed, .activity-time {
+    font-family: var(--font-mono);
 }
-[data-testid="stSidebar"] .stButton { margin: 0.18rem 0 !important; }
+
+/* ── SIDEBAR ── */
+[data-testid="stSidebar"] {
+    background: var(--surface) !important;
+    border-right: 1px solid var(--line) !important;
+    min-width: 288px !important;
+    max-width: 288px !important;
+    width: 288px !important;
+}
+[data-testid="stSidebar"] > div:first-child {
+    width: 288px !important;
+    padding: 1.1rem 0.75rem 1rem !important;
+}
+[data-testid="stSidebar"] ::-webkit-scrollbar { width: 4px; }
+[data-testid="stSidebar"] ::-webkit-scrollbar-thumb {
+    background: rgba(255,255,255,0.08); border-radius: 10px;
+}
+
+.sidebar-brand-title {
+    font-family: var(--font-display);
+    font-size: 1.15rem;
+    font-weight: 700;
+    color: var(--text-1);
+    letter-spacing: -0.02em;
+}
+.sidebar-brand-subtitle {
+    font-size: 0.65rem;
+    color: var(--text-3);
+    font-weight: 500;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    margin-top: 2px;
+}
+.sidebar-section-label {
+    margin: 1.25rem 0 0.5rem;
+    padding-left: 0.5rem;
+    font-size: 0.62rem;
+    font-weight: 700;
+    letter-spacing: 0.14em;
+    color: var(--text-3);
+    text-transform: uppercase;
+}
+
+/* Sidebar buttons = nav items */
+[data-testid="stSidebar"] .stButton { margin: 0.1rem 0 !important; }
 [data-testid="stSidebar"] .stButton > button {
-    width: 100% !important; min-height: 44px !important;
-    display: flex !important; align-items: center !important; justify-content: flex-start !important;
-    padding: 0.6rem 0.85rem !important; border-radius: 12px !important;
-    background: rgba(255,255,255,.025) !important; border: 1px solid rgba(255,255,255,.055) !important;
-    color: var(--text-secondary) !important; font-size: 0.85rem !important; font-weight: 600 !important;
-    transition: all 0.22s ease !important;
+    width: 100% !important;
+    min-height: 40px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: flex-start !important;
+    padding: 0.5rem 0.8rem !important;
+    border-radius: var(--r-sm) !important;
+    background: transparent !important;
+    border: 1px solid transparent !important;
+    color: var(--text-2) !important;
+    font-size: 0.85rem !important;
+    font-weight: 500 !important;
+    transition: background 140ms ease, color 140ms ease, border-color 140ms ease !important;
+    box-shadow: none !important;
 }
 [data-testid="stSidebar"] .stButton > button:hover {
-    background: rgba(14,165,233,.10) !important; border-color: rgba(14,165,233,.35) !important;
-    color: var(--text-primary) !important; transform: translateX(4px) !important;
-    box-shadow: 0 4px 14px rgba(14,165,233,.10) !important;
+    background: rgba(255,255,255,0.035) !important;
+    border-color: var(--line) !important;
+    color: var(--text-1) !important;
+    transform: none !important;
+}
+[data-testid="stSidebar"] .stButton > button:focus-visible {
+    box-shadow: var(--sh-focus) !important;
+    outline: none !important;
 }
 [data-testid="stSidebar"] .stButton > button p {
     line-height: 1 !important;
     margin: 0 !important;
-    display: flex; align-items: center; gap: 0.35rem;
 }
+
+/* Nav active — replaces the old markdown wrapper hack (fixed phantom spacing) */
 .nav-active {
-    position: relative !important; border-radius: 12px !important;
-    background: linear-gradient(135deg, rgba(14,165,233,.20), rgba(6,182,212,.07)) !important;
-    border: 1px solid rgba(14,165,233,.42) !important;
-    box-shadow: 0 0 22px rgba(14,165,233,.12) !important;
+    position: relative !important;
+    border-radius: var(--r-sm) !important;
+    background: var(--accent-soft) !important;
+    border: 1px solid var(--accent-line) !important;
+    box-shadow: none !important;
+    margin: -0.1rem 0 !important;
+    padding: 0 !important;
+    line-height: 0 !important;
 }
 .nav-active::before {
-    content: ""; position: absolute; left: 0; top: 20%; width: 3px; height: 60%;
-    border-radius: 0 4px 4px 0; background: var(--accent-light); box-shadow: 0 0 10px var(--accent);
+    content: "";
+    position: absolute;
+    left: 0; top: 22%;
+    width: 2px; height: 56%;
+    border-radius: 0 2px 2px 0;
+    background: var(--accent);
+}
+.nav-active + [data-testid="stButton"] > button {
+    background: transparent !important;
+    border: none !important;
+    color: var(--text-1) !important;
+    font-weight: 600 !important;
 }
 
 .sidebar-active-indicator {
     display: flex;
     align-items: center;
-    justify-content: flex-start;
-    gap: 0.6rem;
-    height: 40px;
-    padding: 0 0.85rem;
-    margin: 0.2rem 0 0.5rem;
-    border-radius: 10px;
-    background: var(--accent-glow);
-    border: 1px solid var(--border-hover);
-    color: var(--accent-light);
-    font-size: 0.75rem;
-    font-weight: 700;
-    line-height: 1;
+    gap: 0.5rem;
+    height: 34px;
+    padding: 0 0.75rem;
+    margin: 0.1rem 0 0.6rem;
+    border-radius: var(--r-sm);
+    background: rgba(255,255,255,0.025);
+    border: 1px solid var(--line);
+    color: var(--text-2);
+    font-size: 0.72rem;
+    font-weight: 600;
     letter-spacing: 0.02em;
-    box-shadow: var(--shadow-glow);
 }
 .sidebar-active-dot {
-    flex: 0 0 8px;
-    width: 8px;
-    height: 8px;
+    flex: 0 0 6px; width: 6px; height: 6px;
     border-radius: 50%;
     background: var(--success);
-    box-shadow: 0 0 8px var(--success);
-    align-self: center;
 }
-.sidebar-active-text {
-    display: inline-flex;
-    align-items: center;
-    height: 100%;
-    line-height: 1;
-    vertical-align: middle;
-}
+.sidebar-active-text { line-height: 1; }
 
-.sidebar-engine-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0.45rem; margin-top: 0.75rem; }
-.sidebar-mini-stat { padding: 0.6rem; border-radius: 9px; background: rgba(255,255,255,.025); border: 1px solid var(--border-subtle); }
-.sidebar-mini-label { font-size: 0.6rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: .07em; }
-.sidebar-mini-value { margin-top: 0.2rem; font-size: 0.78rem; font-weight: 700; color: var(--text-primary); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.sidebar-footer { margin-top: 1rem; padding: 0.75rem; border-radius: 12px; background: rgba(245,158,11,.06); border: 1px solid rgba(245,158,11,.18); font-size: .7rem; color: var(--text-secondary); text-align: center; line-height: 1.45; }
+/* Sidebar engine panel */
+.sidebar-engine-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.5rem;
+    margin-top: 0.6rem;
+}
+.sidebar-mini-stat {
+    padding: 0.55rem 0.65rem;
+    border-radius: var(--r-sm);
+    background: rgba(255,255,255,0.02);
+    border: 1px solid var(--line);
+}
+.sidebar-mini-label {
+    font-size: 0.58rem;
+    color: var(--text-3);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    font-weight: 600;
+}
+.sidebar-mini-value {
+    margin-top: 0.25rem;
+    font-family: var(--font-mono);
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: var(--text-1);
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.sidebar-footer {
+    margin-top: 1rem;
+    padding: 0.7rem 0.8rem;
+    border-radius: var(--r-sm);
+    background: rgba(245,158,11,0.05);
+    border: 1px solid rgba(245,158,11,0.18);
+    font-size: 0.68rem;
+    color: var(--text-2);
+    text-align: center;
+    line-height: 1.5;
+}
 
 /* ── STICKY HEADER ── */
 .sticky-header {
-    position: fixed; top: 0.5rem; left: calc(300px + 0.4rem); right: 0.4rem; z-index: 9999;
-    display: flex; align-items: center; gap: 0.85rem; padding: 0.7rem 1rem;
-    border-radius: 16px;
-    background: linear-gradient(135deg, rgba(11,17,32,.92), rgba(17,24,39,.82));
-    backdrop-filter: blur(24px) saturate(160%); -webkit-backdrop-filter: blur(24px) saturate(160%);
-    border: 1px solid rgba(56,189,248,.20);
-    box-shadow: 0 8px 32px rgba(0,0,0,.4), 0 0 24px rgba(14,165,233,.06), inset 0 1px 0 rgba(255,255,255,.04);
-    transition: all 0.3s ease;
+    position: fixed; top: 0.5rem;
+    left: calc(288px + 0.5rem); right: 0.5rem;
+    z-index: 9999;
+    display: flex; align-items: center; gap: 0.85rem;
+    padding: 0.6rem 0.9rem;
+    border-radius: var(--r-md);
+    background: rgba(15,21,36,0.85);
+    backdrop-filter: blur(20px) saturate(160%);
+    -webkit-backdrop-filter: blur(20px) saturate(160%);
+    border: 1px solid var(--line);
+    box-shadow: var(--sh-2);
+    transition: border-color 200ms ease;
 }
+.sticky-header:hover { border-color: var(--line-strong); }
 
-.sticky-brand { display: flex; align-items: center; gap: 0.6rem; padding-right: 0.85rem; flex-shrink: 0; }
+.sticky-brand { display: flex; align-items: center; gap: 0.55rem; flex-shrink: 0; }
 .sticky-brand-logo {
     position: relative;
-    width: 42px; height: 42px; border-radius: 11px;
-    background: var(--gradient-1);
+    width: 36px; height: 36px;
+    border-radius: 10px;
+    background: var(--accent-soft);
+    border: 1px solid var(--accent-line);
     display: flex; align-items: center; justify-content: center;
-    font-size: 1.35rem;
-    box-shadow: 0 0 18px rgba(14,165,233,.5), inset 0 1px 0 rgba(255,255,255,.2);
+    font-size: 1.1rem;
 }
 .sticky-brand-pulse {
-    position: absolute; top: -3px; right: -3px;
-    width: 11px; height: 11px; border-radius: 50%;
-    background: var(--success); border: 2px solid #0b1120;
-    box-shadow: 0 0 8px var(--success);
-    animation: brand-pulse 2s infinite;
+    position: absolute; top: -2px; right: -2px;
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    background: var(--success);
+    border: 2px solid var(--surface);
+    animation: brand-pulse 2.4s ease-in-out infinite;
 }
 @keyframes brand-pulse {
-    0%, 100% { box-shadow: 0 0 8px var(--success); }
-    50%      { box-shadow: 0 0 14px var(--success), 0 0 0 4px rgba(16,185,129,.22); }
+    0%,100% { opacity: 1; }
+    50%     { opacity: 0.4; }
 }
-.sticky-brand-text { display: flex; flex-direction: column; gap: 0.1rem; }
+.sticky-brand-text { display: flex; flex-direction: column; gap: 1px; }
 .sticky-brand-name {
-    font-size: 1.05rem; font-weight: 800; color: var(--text-primary);
+    font-size: 0.98rem; font-weight: 700; color: var(--text-1);
     letter-spacing: -0.015em; line-height: 1.1;
 }
 .sticky-brand-version {
-    font-size: 0.6rem; color: var(--accent-light); font-weight: 700;
-    letter-spacing: .12em; text-transform: uppercase; opacity: 0.85;
+    font-size: 0.6rem; color: var(--text-3); font-weight: 500;
+    letter-spacing: 0.06em; text-transform: uppercase;
 }
 
-.sticky-divider { width: 1px; height: 26px; background: rgba(255,255,255,.08); flex-shrink: 0; }
+.sticky-divider { width: 1px; height: 22px; background: var(--line); flex-shrink: 0; }
 
 .sticky-ticker {
-    flex: 1; overflow: hidden; border-radius: 10px;
-    border: 1px solid rgba(56,189,248,.16);
-    background: linear-gradient(90deg, rgba(14,165,233,.06), rgba(6,182,212,.02));
-    padding: 0.5rem 0; min-width: 0;
+    flex: 1; overflow: hidden;
+    border-radius: var(--r-sm);
+    background: rgba(255,255,255,0.02);
+    padding: 0.4rem 0.75rem;
+    min-width: 0;
+    border: 1px solid var(--line);
 }
 .sticky-ticker-inner {
-    display: inline-flex; align-items: center; gap: 1.2rem;
-    white-space: nowrap; padding-left: 100%;
-    color: #7dd3fc; font: 600 0.78rem Inter, sans-serif;
-    letter-spacing: .03em;
-    animation: ticker-scroll 30s linear infinite;
+    display: flex; align-items: center; gap: 1rem;
+    white-space: nowrap; overflow: hidden;
+    color: var(--text-2);
+    font-family: var(--font-mono);
+    font-size: 0.72rem; font-weight: 500;
+    letter-spacing: 0.01em;
+    mask-image: linear-gradient(to right, #000 0%, #000 92%, transparent 100%);
+    -webkit-mask-image: linear-gradient(to right, #000 0%, #000 92%, transparent 100%);
 }
 .tick-badge {
-    padding: 0.2rem 0.55rem; border-radius: 6px;
-    background: rgba(16,185,129,.15); color: #34d399;
-    border: 1px solid rgba(16,185,129,.3);
-    font-size: 0.68rem; font-weight: 800; letter-spacing: 0.1em;
-    margin-right: 0.3rem;
+    padding: 0.15rem 0.5rem; border-radius: 6px;
+    background: rgba(16,185,129,0.12);
+    color: #34d399;
+    border: 1px solid rgba(16,185,129,0.28);
+    font-size: 0.65rem; font-weight: 700; letter-spacing: 0.08em;
+    font-family: var(--font-body);
 }
-.tick-item { color: #94a3b8; }
-.tick-item b { color: #e2e8f0; font-weight: 700; }
-.tick-idle { color: #64748b; font-style: italic; }
-@keyframes ticker-scroll { 0% { transform: translateX(0); } 100% { transform: translateX(-100%); } }
+.tick-item { color: var(--text-2); font-family: var(--font-mono); font-size: 0.72rem; }
+.tick-item b { color: var(--text-1); font-weight: 600; }
+.tick-idle { color: var(--text-3); font-style: italic; }
 
 .sticky-status {
     display: inline-flex; align-items: center; gap: 0.4rem;
-    padding: 0.35rem 0.75rem; border-radius: 8px;
-    font-size: 0.68rem; font-weight: 800; letter-spacing: 0.08em;
+    padding: 0.3rem 0.65rem; border-radius: var(--r-sm);
+    font-size: 0.66rem; font-weight: 700; letter-spacing: 0.08em;
     white-space: nowrap; flex-shrink: 0;
 }
 .status-ok {
-    background: rgba(16,185,129,.10); color: #34d399;
-    border: 1px solid rgba(16,185,129,.28);
+    background: rgba(16,185,129,0.10);
+    color: #34d399;
+    border: 1px solid rgba(16,185,129,0.24);
 }
 .status-err {
-    background: rgba(239,68,68,.10); color: #f87171;
-    border: 1px solid rgba(239,68,68,.28);
+    background: rgba(239,68,68,0.10);
+    color: #f87171;
+    border: 1px solid rgba(239,68,68,0.24);
 }
 .sticky-status-dot {
     width: 6px; height: 6px; border-radius: 50%;
-    background: currentColor; box-shadow: 0 0 6px currentColor;
+    background: currentColor;
 }
 
 .sticky-page {
-    display: inline-flex; align-items: center; gap: 0.5rem;
-    padding: 0.4rem 0.85rem; border-radius: 9px;
-    background: rgba(14,165,233,.10);
-    border: 1px solid rgba(56,189,248,.30);
-    font-size: 0.82rem; font-weight: 700; color: var(--text-primary);
+    display: inline-flex; align-items: center; gap: 0.45rem;
+    padding: 0.35rem 0.7rem; border-radius: var(--r-sm);
+    background: transparent;
+    border: 1px solid var(--line);
+    font-size: 0.76rem; font-weight: 600; color: var(--text-1);
     white-space: nowrap; flex-shrink: 0;
 }
 .sticky-page-dot {
-    width: 7px; height: 7px; border-radius: 50%;
-    background: var(--success); box-shadow: 0 0 8px var(--success);
-    animation: dot-pulse 1.6s infinite;
+    width: 6px; height: 6px; border-radius: 50%;
+    background: var(--accent);
 }
-@keyframes dot-pulse { 0%,100% { opacity: 1; } 50% { opacity: .35; } }
 
-.main .block-container { padding-top: 6.5rem !important; padding-left: 1.5rem !important; padding-right: 1.5rem !important; }
+.main .block-container {
+    padding-top: 5.75rem !important;
+    padding-left: 1.5rem !important;
+    padding-right: 1.5rem !important;
+    max-width: 1320px;
+}
 
-/* ── CARDS ── */
+/* ── UNIVERSAL CARD PRIMITIVES ── */
+.info-card, .metric-card, .uncertainty-card, .xai-card,
+.probability-card, .dist-card, .latest-card, .thumbnail-card,
+.chart-container, .empty-state, .diagnostic-panel {
+    background: var(--surface-2);
+    border: 1px solid var(--line);
+    border-radius: var(--r-lg);
+    box-shadow: var(--sh-1);
+    transition: border-color 160ms ease, background 160ms ease, transform 160ms ease;
+}
+
+/* ── HERO ── */
+.hero {
+    padding: 3rem 2rem;
+    border-radius: var(--r-lg);
+    text-align: center;
+    margin-bottom: 1.5rem;
+    background: var(--surface-2);
+    border: 1px solid var(--line);
+    position: relative;
+    overflow: hidden;
+}
+.hero::before {
+    content: "";
+    position: absolute; inset: 0;
+    background:
+      radial-gradient(circle at 20% 0%, rgba(14,165,233,0.08), transparent 55%),
+      radial-gradient(circle at 80% 100%, rgba(14,165,233,0.05), transparent 55%);
+    pointer-events: none;
+}
+.hero h1 {
+    font-size: 3rem;
+    font-weight: 800;
+    letter-spacing: -0.035em;
+    margin-bottom: 0.75rem;
+    color: var(--text-1);
+    position: relative;
+}
+.hero p {
+    color: var(--text-2);
+    font-size: 1rem;
+    line-height: 1.6;
+    max-width: 620px;
+    margin: 0 auto;
+    position: relative;
+}
+.hero-badge {
+    display: inline-flex; align-items: center; gap: 0.4rem;
+    padding: 0.35rem 0.75rem;
+    border-radius: var(--r-pill);
+    background: var(--accent-soft);
+    border: 1px solid var(--accent-line);
+    font-size: 0.7rem; font-weight: 600;
+    color: var(--accent-hi);
+    margin-bottom: 1rem;
+    position: relative;
+}
+
+/* ── DIAGNOSTIC PANEL (result hero) ── */
+.diagnostic-panel {
+    padding: 2rem 2.25rem;
+    border-radius: var(--r-lg);
+    background: var(--surface-2);
+    border: 1px solid var(--accent-line);
+    box-shadow: var(--sh-2);
+    margin-top: 1.5rem;
+    position: relative;
+    overflow: hidden;
+}
+.diagnostic-panel::before {
+    content: "";
+    position: absolute;
+    left: 0; top: 0; bottom: 0;
+    width: 3px;
+    background: var(--accent);
+}
+.diagnostic-header {
+    display: flex; justify-content: space-between; align-items: center;
+    margin-bottom: 1rem;
+    padding-bottom: 0.75rem;
+    border-bottom: 1px solid var(--line);
+}
+.diagnostic-title {
+    font-size: 0.7rem; color: var(--text-3);
+    text-transform: uppercase; letter-spacing: 0.12em; font-weight: 700;
+}
+.diagnostic-prediction {
+    font-size: 2.75rem;
+    font-weight: 800;
+    color: var(--text-1);
+    letter-spacing: -0.03em;
+    line-height: 1.05;
+}
+.diagnostic-confidence {
+    font-family: var(--font-mono);
+    font-size: 1rem; font-weight: 500;
+    color: var(--accent-hi);
+    margin-top: 0.5rem;
+    letter-spacing: 0;
+}
+
+/* ── BADGES ── */
+.medical-badge {
+    display: inline-flex; align-items: center; gap: 0.3rem;
+    padding: 0.28rem 0.65rem;
+    border-radius: 6px;
+    font-size: 0.68rem; font-weight: 600;
+    letter-spacing: 0.02em;
+}
+.badge-research { background: rgba(245,158,11,0.10); color: #fbbf24; border: 1px solid rgba(245,158,11,0.24); }
+.badge-high     { background: rgba(16,185,129,0.10); color: #34d399; border: 1px solid rgba(16,185,129,0.24); }
+.badge-moderate { background: rgba(245,158,11,0.10); color: #fbbf24; border: 1px solid rgba(245,158,11,0.24); }
+.badge-low      { background: rgba(239,68,68,0.10);  color: #f87171; border: 1px solid rgba(239,68,68,0.24); }
+
+/* ── METRIC CARDS ── */
+.metric-card {
+    padding: 1.25rem;
+    border-radius: var(--r-md);
+    background: var(--surface-2);
+    border: 1px solid var(--line);
+    text-align: left;
+}
+.metric-card:hover {
+    border-color: var(--line-strong);
+    background: var(--surface-3);
+}
+.metric-icon {
+    font-size: 1.1rem;
+    margin-bottom: 0.5rem;
+    opacity: 0.85;
+}
+.metric-value {
+    font-size: 2rem;
+    font-weight: 700;
+    color: var(--text-1);
+    margin: 0.15rem 0;
+    letter-spacing: -0.025em;
+    font-variant-numeric: tabular-nums;
+}
+.metric-label {
+    font-size: 0.66rem;
+    color: var(--text-3);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    font-weight: 600;
+}
+
+/* ── INFO CARD ── */
 .info-card {
-    padding: 1.5rem; min-height: 150px; border-radius: var(--radius-lg);
-    background: var(--bg-card); border: 1px solid var(--border-subtle);
-    transition: all 0.25s ease;
+    padding: 1.5rem;
+    min-height: 140px;
+    border-radius: var(--r-lg);
+    background: var(--surface-2);
+    border: 1px solid var(--line);
 }
-.info-card:hover { border-color: var(--border-hover); box-shadow: var(--shadow-glow); transform: translateY(-2px); }
-.info-card h3 { margin-top: 0; color: var(--text-primary); font-size: 1rem; font-weight: 700; }
-.info-card p { color: var(--text-secondary); line-height: 1.6; font-size: 0.88rem; margin: 0.25rem 0; }
+.info-card:hover { border-color: var(--line-strong); transform: translateY(-1px); }
+.info-card h3 {
+    margin-top: 0;
+    margin-bottom: 0.5rem;
+    color: var(--text-1);
+    font-size: 0.95rem;
+    font-weight: 600;
+    font-family: var(--font-display);
+    letter-spacing: -0.01em;
+}
+.info-card p {
+    color: var(--text-2);
+    line-height: 1.55;
+    font-size: 0.85rem;
+    margin: 0.25rem 0;
+}
 
-.metric-card { padding: 1.4rem; border-radius: var(--radius-lg); background: var(--bg-card); border: 1px solid var(--border-subtle); text-align: center; transition: all 0.25s ease; }
-.metric-card:hover { border-color: var(--border-hover); box-shadow: var(--shadow-glow); transform: translateY(-2px); }
-.metric-value { font-size: 2.2rem; font-weight: 800; color: var(--text-primary); margin: 0.4rem 0; }
-.metric-label { font-size: 0.7rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: .1em; font-weight: 600; }
-.metric-icon { font-size: 1.8rem; margin-bottom: 0.35rem; }
+/* ── UNCERTAINTY CARD ── */
+.uncertainty-card {
+    padding: 1.25rem 1.5rem;
+    border-radius: var(--r-md);
+    background: var(--surface-2);
+    border: 1px solid var(--line);
+    border-left: 3px solid var(--violet);
+    margin-top: 1rem;
+    transition: border-left-color 300ms ease, background 300ms ease;
+}
+.uncertainty-title {
+    font-size: 0.68rem;
+    color: var(--violet);
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    font-weight: 700;
+    margin-bottom: 0.6rem;
+    opacity: 0.9;
+}
+.uncertainty-value {
+    font-family: var(--font-display);
+    font-size: 1.6rem;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    font-variant-numeric: tabular-nums;
+    line-height: 1.1;
+}
+.uncertainty-band {
+    font-size: 0.82rem;
+    font-weight: 600;
+    margin-top: 0.2rem;
+    opacity: 0.9;
+}
 
-.hero { padding: 3rem 2.5rem; border-radius: 24px; text-align: center; margin-bottom: 1.75rem;
-    background: linear-gradient(135deg, rgba(14,165,233,.10) 0%, rgba(6,182,212,.05) 50%, rgba(139,92,246,.08) 100%);
-    border: 1px solid rgba(56,189,248,.22); position: relative; overflow: hidden; }
-.hero::before { content: ""; position: absolute; top: -50%; left: -50%; width: 200%; height: 200%; background: radial-gradient(circle at 60% 40%, rgba(14,165,233,.08), transparent 60%); pointer-events: none; }
-.hero h1 { font-size: 3rem; font-weight: 900; letter-spacing: -0.03em; margin-bottom: .5rem; background: var(--gradient-1); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
-.hero p { color: var(--text-secondary); font-size: 1.05rem; line-height: 1.7; max-width: 680px; margin: 0 auto; }
-.hero-badge { display: inline-flex; align-items: center; gap: .4rem; padding: .4rem .9rem; border-radius: 8px; background: var(--accent-glow); border: 1px solid var(--border-hover); font-size: .72rem; font-weight: 700; color: var(--accent-light); margin-bottom: .85rem; }
+/* ── PROBABILITY GRID ── */
+.probability-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 0.75rem;
+    margin-top: 1rem;
+}
+.probability-card {
+    padding: 1rem;
+    border-radius: var(--r-md);
+    background: var(--surface-2);
+    border: 1px solid var(--line);
+    text-align: left;
+    position: relative;
+    overflow: hidden;
+}
+.probability-card:hover {
+    border-color: var(--line-strong);
+    background: var(--surface-3);
+}
+.probability-value {
+    font-family: var(--font-display);
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--text-1);
+    margin-bottom: 0.25rem;
+    letter-spacing: -0.02em;
+    font-variant-numeric: tabular-nums;
+}
+.probability-label {
+    font-size: 0.75rem;
+    color: var(--text-2);
+    font-weight: 500;
+}
+.probability-card.predicted {
+    border-color: var(--accent-line);
+    background: var(--accent-soft);
+}
+.probability-card.predicted::before {
+    content: "";
+    position: absolute;
+    left: 0; top: 0; bottom: 0;
+    width: 3px;
+    background: var(--accent);
+}
+.probability-card.predicted .probability-value { color: var(--accent-hi); }
 
-.diagnostic-panel { padding: 1.75rem; border-radius: 22px; background: var(--bg-card); border: 1px solid var(--border-hover); box-shadow: var(--shadow-glow); margin-top: 1.5rem; }
-.diagnostic-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; padding-bottom: .75rem; border-bottom: 1px solid var(--border-subtle); }
-.diagnostic-title { font-size: .78rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: .1em; font-weight: 700; }
-.diagnostic-prediction { font-size: 2rem; font-weight: 900; color: var(--text-primary); letter-spacing: -0.02em; }
-.diagnostic-confidence { font-size: 1.2rem; font-weight: 800; color: var(--accent-light); margin-top: .2rem; }
+/* ── CHARTS ── */
+.chart-container {
+    padding: 1.25rem;
+    border-radius: var(--r-md);
+    background: var(--surface-2);
+    border: 1px solid var(--line);
+    margin-top: 1rem;
+}
 
-.medical-badge { display: inline-flex; align-items: center; gap: .3rem; padding: .3rem .75rem; border-radius: 6px; font-size: .72rem; font-weight: 700; }
-.badge-research { background: rgba(245,158,11,.12); color: var(--warning); border: 1px solid rgba(245,158,11,.3); }
-.badge-high { background: rgba(16,185,129,.12); color: var(--success); border: 1px solid rgba(16,185,129,.3); }
-.badge-moderate { background: rgba(245,158,11,.12); color: var(--warning); border: 1px solid rgba(245,158,11,.3); }
-.badge-low { background: rgba(239,68,68,.12); color: var(--error); border: 1px solid rgba(239,68,68,.3); }
-
-.uncertainty-card { padding: 1.25rem 1.5rem; border-radius: var(--radius-md); background: rgba(139,92,246,.08); border: 1px solid rgba(139,92,246,.25); margin-top: 1.2rem; }
-.uncertainty-title { font-size: .72rem; color: #a78bfa; text-transform: uppercase; letter-spacing: .1em; font-weight: 700; margin-bottom: .6rem; }
-.uncertainty-value { font-size: 1.5rem; font-weight: 800; }
-.uncertainty-band { font-size: .8rem; font-weight: 600; margin-top: .15rem; }
-
-.probability-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: .75rem; margin-top: 1rem; }
-.probability-card { padding: 1rem; border-radius: 12px; background: var(--bg-glass); border: 1px solid var(--border-subtle); text-align: center; transition: all .2s ease; }
-.probability-card:hover { border-color: var(--border-hover); transform: translateY(-2px); }
-.probability-value { font-size: 1.5rem; font-weight: 800; color: var(--accent-light); margin-bottom: .2rem; }
-.probability-label { font-size: .72rem; color: var(--text-secondary); font-weight: 500; }
-.probability-card.predicted { border-color: rgba(14,165,233,.5); background: rgba(14,165,233,.08); }
-.probability-card.predicted .probability-value { color: var(--accent); }
-
-.chart-container { padding: 1.25rem; border-radius: 16px; background: var(--bg-card); border: 1px solid var(--border-subtle); margin-top: 1rem; }
-
-.thumbnail-card { display: flex; align-items: center; gap: .85rem; padding: .9rem 1rem; border-radius: 14px; background: var(--bg-card); border: 1px solid var(--border-subtle); transition: all .2s ease; margin-bottom: .6rem; }
-.thumbnail-card:hover { border-color: var(--border-hover); box-shadow: 0 4px 16px rgba(14,165,233,.08); }
-.thumbnail-img { width: 54px; height: 54px; border-radius: 10px; background: var(--bg-glass); display: flex; align-items: center; justify-content: center; font-size: 1.4rem; border: 1px solid var(--border-subtle); flex-shrink: 0; }
+/* ── THUMBNAILS (history rows) ── */
+.thumbnail-card {
+    display: flex; align-items: center; gap: 0.85rem;
+    padding: 0.85rem 1rem;
+    border-radius: var(--r-md);
+    background: var(--surface-2);
+    border: 1px solid var(--line);
+    margin-bottom: 0.5rem;
+}
+.thumbnail-card:hover {
+    border-color: var(--line-strong);
+    background: var(--surface-3);
+}
+.thumbnail-img {
+    width: 44px; height: 44px;
+    border-radius: var(--r-sm);
+    background: var(--accent-soft);
+    border: 1px solid var(--accent-line);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1.15rem;
+    flex-shrink: 0;
+}
 .thumbnail-info { flex: 1; min-width: 0; }
-.thumbnail-title { font-size: .9rem; font-weight: 700; color: var(--text-primary); margin-bottom: .18rem; }
-.thumbnail-meta { font-size: .72rem; color: var(--text-muted); }
-.confidence-badge { display: inline-block; padding: .3rem .7rem; border-radius: 8px; font-size: .8rem; font-weight: 700; }
-.confidence-high { background: rgba(16,185,129,.12); color: #10b981; border: 1px solid rgba(16,185,129,.3); }
-.confidence-medium { background: rgba(245,158,11,.12); color: #f59e0b; border: 1px solid rgba(245,158,11,.3); }
-.confidence-low { background: rgba(239,68,68,.12); color: #ef4444; border: 1px solid rgba(239,68,68,.3); }
+.thumbnail-title {
+    font-family: var(--font-display);
+    font-size: 0.92rem;
+    font-weight: 600;
+    color: var(--text-1);
+    margin-bottom: 0.15rem;
+    letter-spacing: -0.01em;
+}
+.thumbnail-meta {
+    font-family: var(--font-mono);
+    font-size: 0.7rem;
+    color: var(--text-3);
+}
+.confidence-badge {
+    display: inline-block;
+    padding: 0.28rem 0.6rem;
+    border-radius: 6px;
+    font-family: var(--font-mono);
+    font-size: 0.76rem;
+    font-weight: 600;
+}
+.confidence-high   { background: rgba(16,185,129,0.10); color: #34d399; border: 1px solid rgba(16,185,129,0.22); }
+.confidence-medium { background: rgba(245,158,11,0.10); color: #fbbf24; border: 1px solid rgba(245,158,11,0.22); }
+.confidence-low    { background: rgba(239,68,68,0.10);  color: #f87171; border: 1px solid rgba(239,68,68,0.22); }
 
-.empty-state { padding: 3.5rem 2rem; border-radius: var(--radius-lg); background: var(--bg-card); border: 1px solid var(--border-subtle); text-align: center; }
-.empty-state-icon { font-size: 3rem; margin-bottom: 1rem; opacity: .55; }
-.empty-state-title { font-size: 1.1rem; font-weight: 700; color: var(--text-primary); margin-bottom: .5rem; }
-.empty-state-text { font-size: .88rem; color: var(--text-secondary); }
+/* ── EMPTY STATES ── */
+.empty-state {
+    padding: 3rem 2rem;
+    border-radius: var(--r-lg);
+    background: var(--surface-2);
+    border: 1px dashed var(--line-strong);
+    text-align: center;
+}
+.empty-state-icon { font-size: 2.25rem; margin-bottom: 1rem; opacity: 0.5; }
+.empty-state-title {
+    font-family: var(--font-display);
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--text-1);
+    margin-bottom: 0.4rem;
+    letter-spacing: -0.01em;
+}
+.empty-state-text {
+    font-size: 0.85rem;
+    color: var(--text-2);
+    max-width: 380px;
+    margin: 0 auto;
+    line-height: 1.55;
+}
 
-.activity-feed { border-radius: 12px; border: 1px solid rgba(255,255,255,.06); background: rgba(11,17,32,.65); max-height: 340px; overflow-y: auto; font-family: 'JetBrains Mono', monospace; font-size: .76rem; }
-.activity-row { display: flex; gap: .7rem; padding: .42rem .8rem; border-bottom: 1px solid rgba(255,255,255,.04); }
+/* ── ACTIVITY FEED ── */
+.activity-feed {
+    border-radius: var(--r-md);
+    border: 1px solid var(--line);
+    background: rgba(0,0,0,0.20);
+    max-height: 340px;
+    overflow-y: auto;
+    font-family: var(--font-mono);
+    font-size: 0.72rem;
+}
+.activity-row {
+    display: flex; gap: 0.7rem;
+    padding: 0.4rem 0.8rem;
+    border-bottom: 1px solid rgba(255,255,255,0.03);
+}
 .activity-row:last-child { border-bottom: none; }
-.activity-time { color: #64748b; min-width: 68px; }
-.activity-msg { color: #cbd5e1; }
+.activity-time { color: var(--text-3); min-width: 62px; }
+.activity-msg  { color: var(--text-2); }
 .activity-success .activity-msg { color: #6ee7b7; }
 .activity-warn    .activity-msg { color: #fbbf24; }
 .activity-error   .activity-msg { color: #fca5a5; }
 
-.dist-card { padding: .9rem 1.1rem; border-radius: 12px; background: var(--bg-card); border: 1px solid var(--border-subtle); margin-bottom: .65rem; transition: all .2s ease; }
-.dist-card:hover { border-color: var(--border-hover); }
-.dist-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: .45rem; }
-.dist-name { font-size: .88rem; font-weight: 700; color: var(--text-primary); }
-.dist-count { font-size: .78rem; color: var(--accent-light); font-weight: 700; }
-.dist-bar-bg { height: 6px; border-radius: 3px; background: rgba(255,255,255,.06); overflow: hidden; }
-.dist-bar-fill { height: 100%; border-radius: 3px; background: var(--gradient-1); transition: width .5s cubic-bezier(.4,0,.2,1); }
+/* ── DISTRIBUTION CARDS ── */
+.dist-card {
+    padding: 0.85rem 1rem;
+    border-radius: var(--r-md);
+    background: var(--surface-2);
+    border: 1px solid var(--line);
+    margin-bottom: 0.5rem;
+}
+.dist-card:hover { border-color: var(--line-strong); }
+.dist-header {
+    display: flex; justify-content: space-between; align-items: center;
+    margin-bottom: 0.5rem;
+}
+.dist-name { font-size: 0.85rem; font-weight: 600; color: var(--text-1); }
+.dist-count {
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
+    color: var(--accent-hi);
+    font-weight: 500;
+}
+.dist-bar-bg {
+    height: 4px;
+    border-radius: 2px;
+    background: rgba(255,255,255,0.05);
+    overflow: hidden;
+}
+.dist-bar-fill {
+    height: 100%;
+    border-radius: 2px;
+    background: var(--accent);
+    transition: width 600ms cubic-bezier(.4,0,.2,1);
+}
 
-.latest-card { padding: 1.25rem; border-radius: 16px; background: var(--bg-card); border: 1px solid var(--border-subtle); }
-.latest-row { display: flex; justify-content: space-between; align-items: center; padding: .65rem 0; border-bottom: 1px solid var(--border-subtle); }
+/* ── LATEST RESULT CARD ── */
+.latest-card {
+    padding: 0.75rem 1.15rem;
+    border-radius: var(--r-md);
+    background: var(--surface-2);
+    border: 1px solid var(--line);
+}
+.latest-row {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 0.55rem 0;
+    border-bottom: 1px solid var(--line);
+}
 .latest-row:last-child { border-bottom: none; }
-.latest-key { font-size: .82rem; color: var(--text-secondary); font-weight: 500; }
-.latest-val { font-size: .82rem; color: var(--text-primary); font-weight: 700; }
+.latest-key { font-size: 0.78rem; color: var(--text-2); font-weight: 500; }
+.latest-val {
+    font-family: var(--font-mono);
+    font-size: 0.78rem;
+    color: var(--text-1);
+    font-weight: 500;
+}
 
-[data-testid="stFileUploader"] { background: var(--bg-card); border-radius: 16px; padding: 1.25rem; border: 2px dashed var(--border-subtle); }
-[data-testid="stFileUploader"]:hover { border-color: var(--accent); background: var(--accent-glow); }
+/* ── STREAMLIT NATIVE OVERRIDES ── */
+[data-testid="stFileUploader"] {
+    background: var(--surface-2);
+    border-radius: var(--r-md);
+    padding: 1rem;
+    border: 1px dashed var(--line-strong);
+}
+[data-testid="stFileUploader"]:hover {
+    border-color: var(--accent-line);
+    background: var(--accent-soft);
+}
+[data-testid="stExpander"] {
+    border-radius: var(--r-md) !important;
+    border: 1px solid var(--line) !important;
+    background: var(--surface-2) !important;
+}
+[data-testid="stExpander"]:hover { border-color: var(--line-strong) !important; }
 
-[data-testid="stExpander"] { border-radius: 14px !important; border: 1px solid var(--border-subtle) !important; background: var(--bg-card) !important; }
+.stButton > button {
+    border-radius: var(--r-sm) !important;
+    font-weight: 600 !important;
+    font-size: 0.85rem !important;
+    transition: background 140ms ease, border-color 140ms ease, box-shadow 140ms ease !important;
+    box-shadow: none !important;
+    min-height: 40px !important;
+}
+.stButton > button:hover { transform: none !important; box-shadow: var(--sh-1) !important; }
+.stButton > button:focus-visible {
+    box-shadow: var(--sh-focus) !important;
+    outline: none !important;
+}
+.stButton > button[kind="primary"] {
+    background: var(--accent) !important;
+    border: 1px solid var(--accent) !important;
+    color: #041018 !important;
+}
+.stButton > button[kind="primary"]:hover {
+    background: var(--accent-hi) !important;
+    border-color: var(--accent-hi) !important;
+}
 
-.disclaimer { margin-top: 1.5rem; padding: 1rem 1.25rem; border-radius: 12px; background: rgba(245,158,11,.07); border: 1px solid rgba(245,158,11,.22); color: var(--text-secondary); font-size: .84rem; line-height: 1.65; }
+[data-testid="stMetricValue"] {
+    font-family: var(--font-display) !important;
+    font-size: 1.5rem !important;
+    font-weight: 700 !important;
+    letter-spacing: -0.02em !important;
+    font-variant-numeric: tabular-nums !important;
+}
+[data-testid="stMetricLabel"] {
+    font-size: 0.68rem !important;
+    color: var(--text-3) !important;
+    text-transform: uppercase !important;
+    letter-spacing: 0.08em !important;
+    font-weight: 600 !important;
+}
+.stProgress > div > div > div > div {
+    background: var(--accent) !important;
+    border-radius: 4px !important;
+}
+.stAlert { border-radius: var(--r-sm) !important; }
+hr { border-color: var(--line) !important; margin: 1.25rem 0 !important; }
+.stImage {
+    border-radius: var(--r-md) !important;
+    overflow: hidden !important;
+    border: 1px solid var(--line) !important;
+}
+.stTabs [data-baseweb="tab-list"] {
+    gap: 4px;
+    background: transparent;
+    border-bottom: 1px solid var(--line);
+}
+.stTabs [data-baseweb="tab"] {
+    background: transparent !important;
+    border-radius: var(--r-sm) var(--r-sm) 0 0 !important;
+    padding: 0.6rem 1rem !important;
+    font-size: 0.85rem !important;
+    font-weight: 500 !important;
+    color: var(--text-2) !important;
+}
+.stTabs [aria-selected="true"] {
+    color: var(--text-1) !important;
+    border-bottom: 2px solid var(--accent) !important;
+}
 
-.stButton > button { border-radius: 12px !important; font-weight: 700 !important; transition: all .2s ease !important; }
-.stButton > button:hover { transform: translateY(-1px); }
-[data-testid="stMetricValue"] { font-size: 1.65rem !important; font-weight: 800 !important; }
-[data-testid="stMetricLabel"] { font-size: .72rem !important; color: var(--text-muted) !important; text-transform: uppercase !important; letter-spacing: .05em !important; }
-.stProgress > div > div > div > div { background: var(--gradient-1) !important; border-radius: 4px !important; }
-.stAlert { border-radius: 12px !important; }
-hr { border-color: var(--border-subtle) !important; margin: 1.25rem 0 !important; }
-.stImage { border-radius: 16px !important; overflow: hidden !important; border: 1px solid var(--border-subtle) !important; }
+/* ── XAI CARD ── */
+.xai-card {
+    padding: 1.25rem 1.5rem;
+    border-radius: var(--r-md);
+    background: var(--surface-2);
+    border: 1px solid var(--line);
+    margin-top: 1rem;
+}
+.xai-title {
+    font-size: 0.68rem;
+    color: var(--accent-hi);
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    font-weight: 700;
+    margin-bottom: 0.5rem;
+}
+.xai-text {
+    font-size: 0.85rem;
+    color: var(--text-2);
+    line-height: 1.6;
+}
 
-.xai-card { padding: 1.25rem 1.5rem; border-radius: var(--radius-md); background: rgba(14,165,233,.06); border: 1px solid rgba(14,165,233,.22); margin-top: 1.2rem; }
-.xai-title { font-size: .72rem; color: var(--accent-light); text-transform: uppercase; letter-spacing: .1em; font-weight: 700; margin-bottom: .5rem; }
-.xai-text { font-size: .85rem; color: var(--text-secondary); line-height: 1.65; }
-
-/* ── APP FOOTER ── */
+/* ── FOOTER ── */
 .app-footer {
     display: flex;
     justify-content: space-between;
     align-items: stretch;
     gap: 1.5rem;
     padding: 1.25rem 1.5rem;
-    border-radius: 18px;
-    background: linear-gradient(135deg, rgba(17,24,39,.85), rgba(11,17,32,.75));
-    border: 1px solid var(--border-subtle);
-    margin-top: 2rem;
-    font-size: .8rem;
-    color: var(--text-secondary);
+    border-radius: var(--r-lg);
+    background: var(--surface-2);
+    border: 1px solid var(--line);
+    margin-top: 2.5rem;
+    font-size: 0.8rem;
+    color: var(--text-2);
     flex-wrap: wrap;
 }
-
 .footer-col { display: flex; flex-direction: column; gap: 0.5rem; }
-.footer-col-brand { flex: 1; min-width: 220px; }
-.footer-col-stack { flex: 1.2; min-width: 220px; }
-.footer-col-stats { flex: 0 0 auto; min-width: 260px; }
+.footer-col-brand { flex: 1; min-width: 200px; }
+.footer-col-stack { flex: 1.2; min-width: 200px; }
+.footer-col-stats { flex: 0 0 auto; min-width: 240px; }
 
-.footer-brand-row { display: flex; align-items: center; gap: 0.65rem; }
+.footer-brand-row { display: flex; align-items: center; gap: 0.6rem; }
 .footer-brand-logo {
-    width: 36px; height: 36px; border-radius: 9px;
-    background: var(--gradient-1);
+    width: 32px; height: 32px;
+    border-radius: var(--r-sm);
+    background: var(--accent-soft);
+    border: 1px solid var(--accent-line);
     display: flex; align-items: center; justify-content: center;
-    font-size: 1.1rem;
-    box-shadow: 0 0 14px rgba(14,165,233,.4);
+    font-size: 1rem;
 }
-.footer-brand {
-    font-weight: 800; color: var(--text-primary);
-    font-size: 0.95rem; letter-spacing: -0.01em;
-}
+.footer-brand { font-size: 0.92rem; font-weight: 700; color: var(--text-1); letter-spacing: -0.015em; }
 .footer-tagline {
-    font-size: 0.68rem; color: var(--text-muted);
-    letter-spacing: 0.05em; font-weight: 500;
+    font-size: 0.66rem; color: var(--text-3);
+    letter-spacing: 0.04em; font-weight: 500;
 }
-.footer-copy { font-size: 0.7rem; color: var(--text-muted); line-height: 1.5; margin-top: 0.3rem; }
+.footer-copy {
+    font-family: var(--font-mono);
+    font-size: 0.68rem;
+    color: var(--text-3);
+    line-height: 1.6;
+    margin-top: 0.35rem;
+}
 
 .footer-col-title {
-    font-size: 0.62rem; color: var(--text-muted);
-    text-transform: uppercase; letter-spacing: 0.14em;
-    font-weight: 800; margin-bottom: 0.2rem;
+    font-size: 0.6rem;
+    color: var(--text-3);
+    text-transform: uppercase;
+    letter-spacing: 0.14em;
+    font-weight: 700;
+    margin-bottom: 0.25rem;
 }
 .footer-badges { display: flex; flex-wrap: wrap; gap: 0.4rem; }
 .badge-tech {
-    padding: 0.28rem 0.65rem; border-radius: 7px;
-    background: rgba(56,189,248,.08);
-    border: 1px solid rgba(56,189,248,.18);
-    color: #7dd3fc; font-size: 0.68rem; font-weight: 700;
-    letter-spacing: 0.02em;
-    transition: all .2s ease;
+    padding: 0.25rem 0.6rem;
+    border-radius: 6px;
+    background: rgba(255,255,255,0.03);
+    border: 1px solid var(--line);
+    color: var(--text-2);
+    font-family: var(--font-mono);
+    font-size: 0.66rem;
+    font-weight: 500;
+    transition: border-color 140ms ease, color 140ms ease;
 }
-.badge-tech:hover {
-    background: rgba(56,189,248,.15);
-    border-color: rgba(56,189,248,.35);
-    transform: translateY(-1px);
-}
+.badge-tech:hover { border-color: var(--line-strong); color: var(--text-1); }
 
-.footer-stats { display: flex; gap: 1.2rem; margin-top: 0.2rem; }
+.footer-stats { display: flex; gap: 1.5rem; margin-top: 0.25rem; }
 .footer-stat { display: flex; flex-direction: column; gap: 0.15rem; }
 .footer-stat-val {
-    font-size: 0.95rem; font-weight: 800; color: var(--text-primary);
-    display: inline-flex; align-items: center; gap: 0.35rem;
-    letter-spacing: -0.01em;
+    font-family: var(--font-display);
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: var(--text-1);
+    display: inline-flex; align-items: center; gap: 0.4rem;
+    letter-spacing: -0.015em;
+    font-variant-numeric: tabular-nums;
 }
 .footer-stat-lbl {
-    font-size: 0.6rem; color: var(--text-muted);
-    text-transform: uppercase; letter-spacing: 0.1em;
+    font-size: 0.58rem;
+    color: var(--text-3);
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
     font-weight: 700;
 }
 .footer-dot {
-    width: 7px; height: 7px; border-radius: 50%;
-    background: var(--success); box-shadow: 0 0 8px var(--success);
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: var(--success);
     display: inline-block;
 }
 
-/* ── COPYRIGHT LINE ── */
+/* ── COPYRIGHT ── */
 .copyright-line {
     text-align: center;
-    padding: 1.2rem 0.5rem 0.5rem;
-    font-size: 0.78rem;
-    color: var(--text-muted);
+    padding: 1.5rem 0.5rem 0.5rem;
+    font-size: 0.75rem;
+    color: var(--text-3);
     letter-spacing: 0.02em;
     line-height: 1.7;
 }
-.copyright-brand { color: var(--accent-light); font-weight: 700; }
-.copyright-sep { color: var(--text-muted); margin: 0 0.5rem; }
-.copyright-dev-label { font-size: 0.75rem; color: var(--text-secondary); }
-.copyright-dev-name { color: var(--text-primary); font-weight: 700; }
-.copyright-dev-amp { color: var(--text-muted); margin: 0 0.4rem; }
+.copyright-brand { color: var(--text-2); font-weight: 600; }
+.copyright-sep { color: var(--text-3); margin: 0 0.5rem; }
+.copyright-dev-label { font-size: 0.72rem; color: var(--text-3); }
+.copyright-dev-name  { color: var(--text-1); font-weight: 600; }
+.copyright-dev-amp   { color: var(--text-3); margin: 0 0.4rem; }
+
+/* ── DISCLAIMER ── */
+.disclaimer {
+    margin-top: 1.5rem;
+    padding: 1rem 1.25rem;
+    border-radius: var(--r-md);
+    background: rgba(245,158,11,0.05);
+    border: 1px solid rgba(245,158,11,0.18);
+    color: var(--text-2);
+    font-size: 0.82rem;
+    line-height: 1.65;
+}
 
 /* ── RESPONSIVE ── */
 @media (max-width: 768px) {
-    .sticky-header { left: .3rem !important; right: .3rem !important; padding: .55rem .75rem !important; gap: 0.5rem !important; }
+    .sticky-header {
+        left: 0.4rem !important; right: 0.4rem !important;
+        padding: 0.5rem 0.7rem !important;
+        gap: 0.5rem !important;
+    }
     .sticky-ticker, .sticky-brand-version { display: none; }
     .sticky-status { display: none; }
-    .sticky-brand-logo { width: 36px; height: 36px; font-size: 1.1rem; }
-    .sticky-brand-name { font-size: 0.92rem; }
-    [data-testid="stSidebar"] { min-width: 100% !important; max-width: 100% !important; }
-    .main .block-container { padding-top: 5rem !important; }
+    .sticky-brand-logo { width: 32px; height: 32px; font-size: 1rem; }
+    .sticky-brand-name { font-size: 0.88rem; }
+    [data-testid="stSidebar"] {
+        min-width: 100% !important; max-width: 100% !important;
+    }
+    .main .block-container { padding-top: 4.5rem !important; }
     .hero h1 { font-size: 1.85rem !important; }
+    .hero { padding: 2rem 1.25rem; }
     .probability-grid { grid-template-columns: 1fr 1fr !important; }
     .app-footer { flex-direction: column; gap: 1rem; }
-    .footer-col-brand, .footer-col-stack, .footer-col-stats { flex: 1 1 100% !important; min-width: 0 !important; }
+    .footer-col-brand, .footer-col-stack, .footer-col-stats {
+        flex: 1 1 100% !important; min-width: 0 !important;
+    }
+    .diagnostic-prediction { font-size: 2rem !important; }
 }
+
 @media (min-width: 769px) and (max-width: 1024px) {
-    .sticky-header { left: calc(260px + .3rem) !important; }
-    [data-testid="stSidebar"] { min-width: 260px !important; max-width: 260px !important; width: 260px !important; }
+    .sticky-header { left: calc(260px + 0.4rem) !important; }
+    [data-testid="stSidebar"] {
+        min-width: 260px !important;
+        max-width: 260px !important;
+        width: 260px !important;
+    }
     [data-testid="stSidebar"] > div:first-child { width: 260px !important; }
 }
+
 @media (prefers-reduced-motion: reduce) {
-    *, *::before, *::after { animation-duration: .01ms !important; transition-duration: .01ms !important; }
+    *, *::before, *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+    }
 }
 </style>
 """
@@ -960,18 +1546,18 @@ def explanation_agreement(image, model, model_name):
 
 
 # ─────────────────────────────────────────────────────────────────────────────
-# CHARTING
+# CHARTING  (retuned to new design system)
 # ─────────────────────────────────────────────────────────────────────────────
 
 def _dark_fig(w=6, h=2.8):
     fig, ax = plt.subplots(figsize=(w, h))
-    fig.patch.set_facecolor("#111827")
-    ax.set_facecolor("#111827")
+    fig.patch.set_facecolor("#131a2c")           # --surface-2
+    ax.set_facecolor("#131a2c")
     for side in ("top", "right"):
         ax.spines[side].set_visible(False)
     for side in ("left", "bottom"):
-        ax.spines[side].set_color("#374151")
-    ax.tick_params(colors="#94a3b8", labelsize=8)
+        ax.spines[side].set_color("#1f2937")
+    ax.tick_params(colors="#a4b0c0", labelsize=8)  # --text-2
     return fig, ax
 
 
@@ -981,12 +1567,12 @@ def plot_confidence_trend(history):
     fig, ax = _dark_fig()
     confs = [h["confidence"] for h in history]
     xs    = list(range(1, len(history) + 1))
-    ax.plot(xs, confs, marker="o", lw=2, ms=4, color="#6366f1")
-    ax.fill_between(xs, confs, alpha=0.12, color="#6366f1")
+    ax.plot(xs, confs, marker="o", lw=2, ms=4, color="#0ea5e9")   # --accent
+    ax.fill_between(xs, confs, alpha=0.10, color="#0ea5e9")
     ax.set_ylim(0, 105)
-    ax.set_xlabel("Analysis #", color="#94a3b8", fontsize=9)
-    ax.set_ylabel("Confidence %", color="#94a3b8", fontsize=9)
-    ax.grid(True, alpha=0.12, linestyle="--")
+    ax.set_xlabel("Analysis #", color="#a4b0c0", fontsize=9)
+    ax.set_ylabel("Confidence %", color="#a4b0c0", fontsize=9)
+    ax.grid(True, alpha=0.10, linestyle="--")
     fig.tight_layout(pad=0.5)
     return fig
 
@@ -996,10 +1582,10 @@ def plot_latency_trend(history):
         return None
     fig, ax = _dark_fig()
     lats = [h.get("latency_ms", 0) for h in history]
-    ax.plot(range(1, len(history) + 1), lats, marker="o", lw=2, color="#06b6d4")
-    ax.set_xlabel("Analysis #", color="#94a3b8", fontsize=9)
-    ax.set_ylabel("Latency ms", color="#94a3b8", fontsize=9)
-    ax.grid(True, alpha=0.12, linestyle="--")
+    ax.plot(range(1, len(history) + 1), lats, marker="o", lw=2, color="#0ea5e9")
+    ax.set_xlabel("Analysis #", color="#a4b0c0", fontsize=9)
+    ax.set_ylabel("Latency ms", color="#a4b0c0", fontsize=9)
+    ax.grid(True, alpha=0.10, linestyle="--")
     fig.tight_layout(pad=0.5)
     return fig
 
@@ -1010,14 +1596,14 @@ def plot_uncertainty_history(history):
         return None
     fig, ax = _dark_fig()
     xs, ys = zip(*unc_data)
-    ax.plot(xs, ys, marker="s", lw=2, ms=4, color="#8b5cf6")
+    ax.plot(xs, ys, marker="s", lw=2, ms=4, color="#8b5cf6")   # violet = σ
     ax.fill_between(xs, ys, alpha=0.10, color="#8b5cf6")
     ax.axhline(0.12, color="#f59e0b", lw=1, ls="--", alpha=0.55, label="Moderate threshold")
     ax.axhline(0.22, color="#ef4444", lw=1, ls="--", alpha=0.55, label="Low reliability threshold")
-    ax.set_xlabel("Analysis #", color="#94a3b8", fontsize=9)
-    ax.set_ylabel("MC Uncertainty σ", color="#94a3b8", fontsize=9)
-    ax.grid(True, alpha=0.12, linestyle="--")
-    ax.legend(fontsize=7, labelcolor="#94a3b8", facecolor="#111827", edgecolor="#374151")
+    ax.set_xlabel("Analysis #", color="#a4b0c0", fontsize=9)
+    ax.set_ylabel("MC Uncertainty σ", color="#a4b0c0", fontsize=9)
+    ax.grid(True, alpha=0.10, linestyle="--")
+    ax.legend(fontsize=7, labelcolor="#a4b0c0", facecolor="#131a2c", edgecolor="#1f2937")
     fig.tight_layout(pad=0.5)
     return fig
 
@@ -1112,20 +1698,18 @@ except Exception as exc:
 
 
 # ─────────────────────────────────────────────────────────────────────────────
-# NEURAL ANIMATION
+# NEURAL ANIMATION (retained but no longer called on Home — kept for reuse)
 # ─────────────────────────────────────────────────────────────────────────────
 
 def render_neural_animation():
     _render_html("""
     <div id="nw" style="position:relative;width:100%;height:160px;overflow:hidden;border-radius:20px;
-    background:radial-gradient(circle at 50% 50%,rgba(14,165,233,.12),rgba(11,17,32,.15) 55%,rgba(11,17,32,.7));
+    background:radial-gradient(circle at 50% 50%,rgba(14,165,233,.12),rgba(10,14,26,.15) 55%,rgba(10,14,26,.7));
     border:1px solid rgba(56,189,248,.2)">
     <canvas id="nc" style="width:100%;height:100%;display:block"></canvas>
     <div style="position:absolute;left:18px;bottom:12px;display:flex;align-items:center;gap:8px;
-    font:700 11px Inter,sans-serif;letter-spacing:.14em;color:#7dd3fc;text-shadow:0 0 12px rgba(56,189,248,.8)">
-    <div style="width:8px;height:8px;border-radius:50%;background:#22d3ee;
-    box-shadow:0 0 0 0 rgba(34,211,238,.6);animation:p 1.5s infinite"></div>LIVE NEURAL NETWORK</div></div>
-    <style>@keyframes p{70%{box-shadow:0 0 0 10px rgba(34,211,238,0)}100%{box-shadow:0 0 0 0 rgba(34,211,238,0)}}</style>
+    font:700 11px Inter,sans-serif;letter-spacing:.14em;color:#7dd3fc">
+    <div style="width:8px;height:8px;border-radius:50%;background:#22d3ee"></div>LIVE NEURAL NETWORK</div></div>
     <script>
     const c=document.getElementById('nc'),ctx=c.getContext('2d');let ps=[];
     function rs(){const r=c.getBoundingClientRect(),d=window.devicePixelRatio||1;
@@ -1134,9 +1718,9 @@ def render_neural_animation():
     function dr(){const r=c.getBoundingClientRect();ctx.clearRect(0,0,r.width,r.height);
     for(const p of ps){p.x+=p.vx;p.y+=p.vy;if(p.x<0||p.x>r.width)p.vx*=-1;if(p.y<0||p.y>r.height)p.vy*=-1}
     for(let i=0;i<ps.length;i++)for(let j=i+1;j<ps.length;j++){const a=ps[i],b=ps[j],d=Math.hypot(a.x-b.x,a.y-b.y);
-    if(d<110){ctx.strokeStyle=`rgba(56,189,248,${(1-d/110)*.24})`;ctx.lineWidth=.65;ctx.beginPath();ctx.moveTo(a.x,a.y);ctx.lineTo(b.x,b.y);ctx.stroke()}}
-    for(const p of ps){ctx.beginPath();ctx.arc(p.x,p.y,p.r,0,Math.PI*2);ctx.fillStyle='#38bdf8';ctx.shadowBlur=10;ctx.shadowColor='#0ea5e9';ctx.fill()}
-    ctx.shadowBlur=0;requestAnimationFrame(dr)}
+    if(d<110){ctx.strokeStyle=`rgba(56,189,248,${(1-d/110)*.22})`;ctx.lineWidth=.65;ctx.beginPath();ctx.moveTo(a.x,a.y);ctx.lineTo(b.x,b.y);ctx.stroke()}}
+    for(const p of ps){ctx.beginPath();ctx.arc(p.x,p.y,p.r,0,Math.PI*2);ctx.fillStyle='#38bdf8';ctx.fill()}
+    requestAnimationFrame(dr)}
     window.addEventListener('resize',rs);rs();dr();
     </script>""", height=160, scrolling=False)
 
@@ -1157,21 +1741,18 @@ def render_live_ticker():
         unc_str = f" · Uncertainty σ={u_val:.3f} ({band})"
     _render_html(f"""
     <style>
-    @keyframes mq{{0%{{transform:translateX(100%);}}100%{{transform:translateX(-100%);}}}}
-    .tw{{overflow:hidden;border-radius:11px;border:1px solid rgba(56,189,248,.28);
-    background:linear-gradient(90deg,rgba(14,165,233,.10),rgba(6,182,212,.03));padding:.55rem 0;
-    box-shadow:0 0 18px rgba(14,165,233,.07)}}
+    .tw{{overflow:hidden;border-radius:11px;border:1px solid rgba(255,255,255,0.06);
+    background:rgba(19,26,44,0.9);padding:.55rem 0;}}
     .tt{{display:inline-block;white-space:nowrap;padding-left:100%;
-    animation:mq 26s linear infinite;color:#7dd3fc;font:600 .82rem Inter,sans-serif;letter-spacing:.04em}}
-    .lp{{display:inline-block;width:7px;height:7px;border-radius:50%;background:#22d3ee;margin-right:9px;
-    box-shadow:0 0 0 0 rgba(34,211,238,.7);animation:tp 1.4s infinite;vertical-align:middle}}
-    @keyframes tp{{70%{{box-shadow:0 0 0 9px rgba(34,211,238,0);}}100%{{box-shadow:0 0 0 0 rgba(34,211,238,0);}}}}
+    animation:mq 26s linear infinite;color:#a4b0c0;font:500 .8rem 'JetBrains Mono',monospace;letter-spacing:.02em}}
+    .lp{{display:inline-block;width:6px;height:6px;border-radius:50%;background:#0ea5e9;margin-right:9px;vertical-align:middle}}
+    @keyframes mq{{0%{{transform:translateX(0);}}100%{{transform:translateX(-100%);}}}}
     </style>
     <div class="tw"><div class="tt"><span class="lp"></span>LIVE ·
     {text} · Throughput: {st.session_state.live_throughput:.2f}/min ·
     Last Conf: {st.session_state.live_last_confidence:.1f}% ·
     Avg Conf: {st.session_state.live_avg_confidence:.1f}%{unc_str}
-    </div></div>""", height=44)
+    </div></div>""", height=40)
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -1215,7 +1796,7 @@ def render_sticky_header():
 
         <div class="sticky-ticker">
             <div class="sticky-ticker-inner">
-                <span class="tick-badge">⚡ LIVE</span>
+                <span class="tick-badge">LIVE</span>
                 {ticker_items}
                 <span class="tick-item">Engine: <b>{eng}</b></span>
                 <span class="tick-item">Device: <b>{device_tag}</b></span>
@@ -1269,7 +1850,7 @@ def render_live_probability_animation(result, mc_result=None):
         mc_items = list(mc_result["mean_probs"].items())
         mc_std   = mc_result["std_probs"]
         mc_rows = "".join(
-            f'<div class="lp-row"><div class="lp-label">{n} <span style="color:#8b5cf6">±{mc_std.get(n,0):.1f}%</span></div>'
+            f'<div class="lp-row"><div class="lp-label">{n} <span style="color:#8b5cf6;font-family:\'JetBrains Mono\',monospace">±{mc_std.get(n,0):.1f}%</span></div>'
             f'<div class="lp-track"><div class="lp-fill lp-mc" style="width:0%" data-target="{p:.2f}"></div></div>'
             f'<div class="lp-val">{p:.1f}%</div></div>'
             for n, p in mc_items
@@ -1287,28 +1868,28 @@ def render_live_probability_animation(result, mc_result=None):
         band  = mc_result["band"]
         uval  = mc_result["uncertainty"]
         color = mc_result["color"]
-        unc_html = f'<div style="margin-top:.75rem;padding:.6rem .85rem;border-radius:9px;background:rgba(139,92,246,.08);border:1px solid rgba(139,92,246,.22)"><span style="font-size:.7rem;color:#a78bfa;text-transform:uppercase;letter-spacing:.1em;font-weight:700">MC Uncertainty</span><span style="float:right;font-weight:800;color:{color}">σ={uval:.4f} · {band}</span></div>'
+        unc_html = f'<div style="margin-top:.85rem;padding:.65rem .85rem;border-radius:10px;background:rgba(139,92,246,0.06);border:1px solid rgba(139,92,246,0.20)"><span style="font-size:.66rem;color:#8b5cf6;text-transform:uppercase;letter-spacing:.12em;font-weight:700;font-family:\'Inter\',sans-serif">MC Uncertainty</span><span style="float:right;font-weight:700;color:{color};font-family:\'JetBrains Mono\',monospace;font-size:.82rem">σ={uval:.4f} · {band}</span></div>'
 
     _render_html(f"""
     <style>
-    .live-prob{{padding:1.2rem 1.5rem;border-radius:18px;border:1px solid rgba(56,189,248,.32);
-    background:linear-gradient(135deg,rgba(14,165,233,.09),rgba(6,182,212,.03));font-family:Inter,sans-serif;color:#e2e8f0}}
+    .live-prob{{padding:1.25rem 1.5rem;border-radius:16px;border:1px solid rgba(255,255,255,0.06);
+    background:#131a2c;font-family:Inter,sans-serif;color:#e8edf5}}
     .live-prob-head{{display:flex;justify-content:space-between;align-items:center;margin-bottom:.85rem;
-    padding-bottom:.55rem;border-bottom:1px solid rgba(255,255,255,.06)}}
-    .live-prob-title{{font-size:.72rem;color:#7dd3fc;text-transform:uppercase;letter-spacing:.12em;font-weight:700}}
-    .live-prob-pred{{font-size:1rem;font-weight:800;color:#f8fafc}}
-    .lp-row{{display:flex;align-items:center;gap:.7rem;margin:.4rem 0}}
-    .lp-label{{min-width:130px;font-size:.8rem;color:#cbd5e1;font-weight:600}}
-    .lp-track{{flex:1;height:9px;border-radius:999px;background:rgba(255,255,255,.06);overflow:hidden;position:relative}}
-    .lp-fill{{height:100%;width:0%;background:linear-gradient(90deg,#0ea5e9,#06b6d4);border-radius:999px;
-    box-shadow:0 0 10px rgba(14,165,233,.5);transition:width 1.4s cubic-bezier(.2,.8,.2,1)}}
-    .lp-mc{{background:linear-gradient(90deg,#8b5cf6,#a78bfa) !important;box-shadow:0 0 10px rgba(139,92,246,.5) !important}}
-    .lp-val{{min-width:55px;text-align:right;font-weight:700;color:#38bdf8;font-size:.82rem}}
-    .lp-section{{font-size:.68rem;color:#64748b;text-transform:uppercase;letter-spacing:.1em;font-weight:700;margin:.85rem 0 .3rem}}
+    padding-bottom:.6rem;border-bottom:1px solid rgba(255,255,255,0.06)}}
+    .live-prob-title{{font-size:.68rem;color:#38bdf8;text-transform:uppercase;letter-spacing:.12em;font-weight:700}}
+    .live-prob-pred{{font-family:Sora,sans-serif;font-size:.95rem;font-weight:700;color:#e8edf5;letter-spacing:-.01em}}
+    .lp-row{{display:flex;align-items:center;gap:.75rem;margin:.45rem 0}}
+    .lp-label{{min-width:140px;font-size:.8rem;color:#a4b0c0;font-weight:500}}
+    .lp-track{{flex:1;height:6px;border-radius:999px;background:rgba(255,255,255,0.05);overflow:hidden;position:relative}}
+    .lp-fill{{height:100%;width:0%;background:#0ea5e9;border-radius:999px;
+    transition:width 1.2s cubic-bezier(.2,.8,.2,1)}}
+    .lp-mc{{background:#8b5cf6 !important}}
+    .lp-val{{min-width:60px;text-align:right;font-family:'JetBrains Mono',monospace;font-weight:600;color:#e8edf5;font-size:.78rem}}
+    .lp-section{{font-size:.62rem;color:#6b7789;text-transform:uppercase;letter-spacing:.12em;font-weight:700;margin:.9rem 0 .35rem}}
     </style>
     <div class="live-prob">
         <div class="live-prob-head">
-            <span class="live-prob-title">⚡ Live Probability Stream</span>
+            <span class="live-prob-title">Live Probability Stream</span>
             <span class="live-prob-pred">{top} · {conf:.1f}%</span>
         </div>
         <div class="lp-section">Standard Inference</div>
@@ -1373,10 +1954,10 @@ with st.sidebar:
     mc_badge   = ""
     if st.session_state.mc_result:
         mc = st.session_state.mc_result
-        mc_badge = f"<br><div style='margin-top:.4rem;font-size:.68rem;color:#a78bfa'>σ={mc['uncertainty']:.4f} · {mc['band']}</div>"
+        mc_badge = f"<br><div style='margin-top:.4rem;font-size:.68rem;color:#8b5cf6;font-family:\"JetBrains Mono\",monospace'>σ={mc['uncertainty']:.4f} · {mc['band']}</div>"
 
     st.markdown(safe_html(f"""
-    <div style="margin-top:.5rem;padding:.8rem;border-radius:12px;background:rgba(255,255,255,.025);border:1px solid rgba(255,255,255,.06)">
+    <div style="margin-top:.5rem;padding:.8rem;border-radius:12px;background:rgba(255,255,255,.02);border:1px solid rgba(255,255,255,.06)">
         <div class="sidebar-mini-label">NEURAL ENGINE</div>
         <div style="margin-top:.3rem;font-size:.82rem;font-weight:700;color:{'#10b981' if engine_online else '#ef4444'}">{eng_status}</div>
         {mc_badge}
@@ -1437,7 +2018,6 @@ nav = st.session_state.nav
 # ══════════════════════════════════════════════════════════════════════════════
 
 if nav == "🏠 Home":
-    render_neural_animation()
     render_live_ticker()
 
     st.markdown(safe_html(dedent("""
@@ -1474,7 +2054,7 @@ if nav == "🏠 Home":
     ]
     for col, (icon, title, desc) in zip([c1, c2, c3, c4], cards):
         with col:
-            st.markdown(f'<div class="info-card"><div style="font-size:2rem;margin-bottom:.65rem">{icon}</div><h3>{title}</h3><p>{desc}</p></div>', unsafe_allow_html=True)
+            st.markdown(f'<div class="info-card"><div style="font-size:1.6rem;margin-bottom:.6rem;opacity:.9">{icon}</div><h3>{title}</h3><p>{desc}</p></div>', unsafe_allow_html=True)
 
     st.write("")
     st.subheader("How NeuroLens Works")
@@ -1482,7 +2062,7 @@ if nav == "🏠 Home":
         ("1", "Upload MRI", "JPG, PNG, WEBP"),
         ("2", "Preprocess", "Resize → Normalize"),
         ("3", "Inference", "Deep CNN forward pass"),
-        ("4", "MC Dropout", "20 stochastic passes → uncertainty σ"),
+        ("4", "MC Dropout", "20 stochastic passes → σ"),
         ("5", "Dual XAI", "Grad-CAM + Grad-CAM++"),
         ("6", "Agreement", "Explanation Agreement Score"),
         ("7", "Report", "Download TXT/PNG"),
@@ -1491,16 +2071,16 @@ if nav == "🏠 Home":
     for col, (num, title, desc) in zip(step_cols, steps):
         with col:
             st.markdown(safe_html(f"""
-            <div style="text-align:center;padding:.85rem .5rem;border-radius:14px;background:rgba(14,165,233,.06);border:1px solid rgba(14,165,233,.18)">
-                <div style="font-size:1.4rem;font-weight:900;color:var(--accent-light)">{num}</div>
-                <div style="font-size:.78rem;font-weight:700;color:var(--text-primary);margin:.2rem 0">{title}</div>
-                <div style="font-size:.68rem;color:var(--text-muted)">{desc}</div>
+            <div style="text-align:center;padding:.9rem .5rem;border-radius:14px;background:#131a2c;border:1px solid rgba(255,255,255,.06)">
+                <div style="font-family:Sora,sans-serif;font-size:1.3rem;font-weight:700;color:#38bdf8">{num}</div>
+                <div style="font-size:.78rem;font-weight:600;color:var(--text-primary);margin:.3rem 0">{title}</div>
+                <div style="font-size:.66rem;color:var(--text-muted)">{desc}</div>
             </div>"""), unsafe_allow_html=True)
 
     st.write("")
     if model_error:
         st.markdown(safe_html(f"""
-        <div class="info-card" style="border-color:rgba(239,68,68,.3);background:rgba(239,68,68,.06)">
+        <div class="info-card" style="border-color:rgba(239,68,68,.3);background:rgba(239,68,68,.05)">
             <h3 style="color:var(--error)">⚠️ Neural Engine Unavailable</h3>
             <p>Expected: <code>{MODEL_PATH}</code></p>
         </div>"""), unsafe_allow_html=True)
@@ -1508,8 +2088,8 @@ if nav == "🏠 Home":
             st.code(model_error)
     else:
         st.markdown(safe_html(f"""
-        <div class="info-card" style="border-color:rgba(16,185,129,.3);background:rgba(16,185,129,.06)">
-            <h3 style="color:var(--success)">✅ Neural Engine Ready</h3>
+        <div class="info-card" style="border-color:rgba(16,185,129,.3);background:rgba(16,185,129,.05)">
+            <h3 style="color:var(--success-var)">✅ Neural Engine Ready</h3>
             <p>Architecture: <b>{model_name}</b> · Device: <b>{DEVICE}</b></p>
             <p>Classes: <b style="color:var(--accent-light)">{', '.join(class_names)}</b></p>
             <p>MC Dropout Passes: <b>{MC_SAMPLES}</b> · Dual XAI: <b>Grad-CAM + Grad-CAM++</b></p>
@@ -1517,7 +2097,7 @@ if nav == "🏠 Home":
 
     if st.session_state.last_result:
         st.write("")
-        st.subheader("⚡ Last Analysis — Live Probability Stream")
+        st.subheader("Last Analysis — Live Probability Stream")
         render_live_probability_animation(
             st.session_state.last_result,
             mc_result=st.session_state.mc_result
@@ -1738,12 +2318,12 @@ elif nav == "🔬 MRI Analysis":
             st.markdown(safe_html(f"""
             <div class="diagnostic-panel">
                 <div class="diagnostic-header">
-                    <span class="diagnostic-title">🩺 AI Classification Result</span>
+                    <span class="diagnostic-title">AI Classification Result</span>
                     <span class="medical-badge badge-research">RESEARCH PROTOTYPE</span>
                 </div>
                 <div class="diagnostic-prediction">{result['prediction']}</div>
                 <div class="diagnostic-confidence">{conf_val:.2f}% model confidence</div>
-                <div style="margin-top:.75rem">
+                <div style="margin-top:.85rem">
                     <span class="medical-badge badge-{conf_cls}">{conf_lbl} Confidence</span>
                 </div>
             </div>"""), unsafe_allow_html=True)
@@ -1760,14 +2340,14 @@ elif nav == "🔬 MRI Analysis":
                 color = mc_res["color"]
                 st.markdown(safe_html(f"""
                 <div class="uncertainty-card">
-                    <div class="uncertainty-title">🎯 MC Dropout Uncertainty Estimation ({MC_SAMPLES} passes)</div>
+                    <div class="uncertainty-title">MC Dropout Uncertainty Estimation ({MC_SAMPLES} passes)</div>
                     <div style="display:flex;justify-content:space-between;align-items:center">
                         <div>
                             <div class="uncertainty-value" style="color:{color}">σ = {unc:.4f}</div>
                             <div class="uncertainty-band" style="color:{color}">{band}</div>
                         </div>
-                        <div style="text-align:right;font-size:.82rem;color:var(--text-secondary)">
-                            MC Confidence: <b style="color:var(--accent-light)">{mc_res['confidence']:.2f}%</b><br>
+                        <div style="text-align:right;font-size:.8rem;color:var(--text-secondary)">
+                            MC Confidence: <b style="color:var(--accent-light);font-family:'JetBrains Mono',monospace">{mc_res['confidence']:.2f}%</b><br>
                             Prediction: <b>{mc_res['prediction']}</b>
                         </div>
                     </div>
@@ -1779,15 +2359,15 @@ elif nav == "🔬 MRI Analysis":
                 a_label = "High Agreement" if agree >= 0.7 else "Moderate Agreement" if agree >= 0.5 else "Low Agreement"
                 st.markdown(safe_html(f"""
                 <div class="xai-card">
-                    <div class="xai-title">🔗 Explanation Agreement Score</div>
+                    <div class="xai-title">Explanation Agreement Score</div>
                     <div style="display:flex;justify-content:space-between;align-items:center">
                         <div class="xai-text">
                             Pearson correlation between Grad-CAM and Grad-CAM++ heatmaps.<br>
                             A high score (&gt;0.70) means both methods highlight similar regions. Similarity alone does not verify that an explanation is correct.
                         </div>
                         <div style="text-align:right;min-width:90px">
-                            <div style="font-size:1.5rem;font-weight:800;color:{a_color}">{agree:.3f}</div>
-                            <div style="font-size:.72rem;color:{a_color};font-weight:700">{a_label}</div>
+                            <div style="font-family:'Sora',sans-serif;font-size:1.5rem;font-weight:700;color:{a_color};letter-spacing:-.02em">{agree:.3f}</div>
+                            <div style="font-size:.7rem;color:{a_color};font-weight:600">{a_label}</div>
                         </div>
                     </div>
                 </div>"""), unsafe_allow_html=True)
@@ -1795,24 +2375,24 @@ elif nav == "🔬 MRI Analysis":
             st.warning("⚠️ NeuroLens AI is a research prototype for educational use. Model outputs are not medical diagnoses and must not replace evaluation by a qualified healthcare professional.")
 
             st.write("")
-            st.markdown("### 📊 Probability Distribution")
+            st.markdown("### Probability Distribution")
             prob_html = '<div class="probability-grid">' + "".join(
                 f'<div class="probability-card {"predicted" if label == result["prediction"] else ""}">'
                 f'<div class="probability-value">{prob:.1f}%</div>'
                 f'<div class="probability-label">{label}</div>'
-                f'{"<div style=\"font-size:.65rem;color:var(--accent);margin-top:.2rem;font-weight:700\">▲ TOP</div>" if label == result["prediction"] else ""}'
+                f'{"<div style=\"font-size:.62rem;color:var(--accent-light);margin-top:.3rem;font-weight:700;letter-spacing:.08em\">▲ TOP</div>" if label == result["prediction"] else ""}'
                 f'</div>'
                 for label, prob in result["probabilities"].items()
             ) + '</div>'
             st.markdown(prob_html, unsafe_allow_html=True)
 
             st.write("")
-            st.markdown("### ⚡ Live Probability Stream")
+            st.markdown("### Live Probability Stream")
             render_live_probability_animation(result, mc_result=mc_res)
 
             if st.session_state.gradcam_image is not None or st.session_state.gradcam_pp_image is not None:
                 st.write("")
-                st.markdown("### 🔥 Dual XAI Visualization")
+                st.markdown("### Dual XAI Visualization")
                 gc_col, pp_col = st.columns(2)
                 with gc_col:
                     st.markdown("**Grad-CAM**")
@@ -1827,7 +2407,7 @@ elif nav == "🔬 MRI Analysis":
 
                 st.markdown(safe_html("""
                 <div class="xai-card">
-                    <div class="xai-title">🔥 Why This Prediction?</div>
+                    <div class="xai-title">Why This Prediction?</div>
                     <div class="xai-text">
                         Highlighted regions represent image areas that contributed more strongly to the model's classification.
                         Grad-CAM uses weighted class activations; Grad-CAM++ uses second-order gradients for sharper localization.
@@ -1945,16 +2525,16 @@ elif nav == "📊 Dashboard":
 
         if avg_agree is not None:
             st.markdown(safe_html(f"""
-            <div style="margin:.75rem 0;padding:.85rem 1.25rem;border-radius:12px;background:rgba(14,165,233,.07);border:1px solid rgba(14,165,233,.22);display:flex;justify-content:space-between;align-items:center">
-                <span style="font-size:.78rem;color:var(--accent-light);font-weight:700;text-transform:uppercase;letter-spacing:.08em">Average Explanation Agreement Score</span>
-                <span style="font-size:1.35rem;font-weight:800;color:var(--text-primary)">{avg_agree:.3f}</span>
+            <div style="margin:.75rem 0;padding:.85rem 1.25rem;border-radius:14px;background:#131a2c;border:1px solid rgba(14,165,233,.22);display:flex;justify-content:space-between;align-items:center">
+                <span style="font-size:.72rem;color:var(--accent-light);font-weight:700;text-transform:uppercase;letter-spacing:.1em">Average Explanation Agreement Score</span>
+                <span style="font-family:'Sora',sans-serif;font-size:1.3rem;font-weight:700;color:var(--text-primary);letter-spacing:-.02em">{avg_agree:.3f}</span>
             </div>"""), unsafe_allow_html=True)
 
         st.write("")
         col_left, col_right = st.columns([2, 1])
 
         with col_left:
-            st.subheader("📊 Prediction Distribution")
+            st.subheader("Prediction Distribution")
             counts  = st.session_state.live_class_counts
             max_cnt = max(counts.values()) if counts else 1
             for label, count in counts.items():
@@ -1970,7 +2550,7 @@ elif nav == "📊 Dashboard":
                 </div>"""), unsafe_allow_html=True)
 
             st.write("")
-            st.subheader("📈 Model Confidence Trend")
+            st.subheader("Model Confidence Trend")
             cf = plot_confidence_trend(history)
             if cf:
                 st.markdown('<div class="chart-container">', unsafe_allow_html=True)
@@ -1980,7 +2560,7 @@ elif nav == "📊 Dashboard":
             else:
                 st.caption("Need ≥2 analyses.")
 
-            st.subheader("⏱️ Inference Latency Trend")
+            st.subheader("Inference Latency Trend")
             lf = plot_latency_trend(history)
             if lf:
                 st.markdown('<div class="chart-container">', unsafe_allow_html=True)
@@ -1991,7 +2571,7 @@ elif nav == "📊 Dashboard":
                 st.caption("Need ≥2 analyses.")
 
             if unc_data:
-                st.subheader("🎯 MC Dropout Uncertainty Trend")
+                st.subheader("MC Dropout Uncertainty Trend")
                 uf = plot_uncertainty_history(history)
                 if uf:
                     st.markdown('<div class="chart-container">', unsafe_allow_html=True)
@@ -2000,11 +2580,11 @@ elif nav == "📊 Dashboard":
                     plt.close(uf)
 
         with col_right:
-            st.subheader("📡 Live Activity Feed")
+            st.subheader("Live Activity Feed")
             render_activity_feed()
 
             st.write("")
-            st.subheader("🧠 Latest Result")
+            st.subheader("Latest Result")
             latest = history[-1]
             elapsed = "—"
             if st.session_state.live_session_start:
@@ -2154,22 +2734,22 @@ elif nav == "🔥 Grad-CAM":
             a_label = "High Agreement" if agree >= 0.7 else "Moderate" if agree >= 0.5 else "Low Agreement"
             st.markdown(safe_html(f"""
             <div class="xai-card">
-                <div class="xai-title">🔗 Explanation Agreement Score</div>
+                <div class="xai-title">Explanation Agreement Score</div>
                 <div style="display:flex;justify-content:space-between;align-items:center">
                     <div class="xai-text">
                         Correlation between Grad-CAM and Grad-CAM++ attention regions.<br>
                         High scores (&gt;0.70) indicate similar heatmaps, but do not establish that the explanation is correct.
                     </div>
                     <div style="text-align:right">
-                        <div style="font-size:1.6rem;font-weight:900;color:{a_color}">{agree:.3f}</div>
-                        <div style="font-size:.72rem;color:{a_color};font-weight:700">{a_label}</div>
+                        <div style="font-family:'Sora',sans-serif;font-size:1.5rem;font-weight:700;color:{a_color};letter-spacing:-.02em">{agree:.3f}</div>
+                        <div style="font-size:.7rem;color:{a_color};font-weight:600">{a_label}</div>
                     </div>
                 </div>
             </div>"""), unsafe_allow_html=True)
 
         st.markdown(safe_html("""
         <div class="xai-card">
-            <div class="xai-title">🧠 About These Visualizations</div>
+            <div class="xai-title">About These Visualizations</div>
             <div class="xai-text">
                 <b>Grad-CAM</b> computes weighted class activation maps from the last convolutional layer's gradients.
                 Highlighted regions contributed more strongly to the model's output.<br><br>
@@ -2216,7 +2796,7 @@ elif nav == "🎯 XAI Lab":
             <div class="empty-state-text">Run analyses with MC Dropout and dual XAI enabled to populate this lab.</div>
         </div>"""), unsafe_allow_html=True)
     else:
-        st.subheader("📊 Uncertainty Distribution")
+        st.subheader("Uncertainty Distribution")
         unc_data = [(i+1, h["uncertainty"]) for i, h in enumerate(history) if h.get("uncertainty") is not None]
         if len(unc_data) >= 2:
             fig = plot_uncertainty_history(history)
@@ -2233,10 +2813,10 @@ elif nav == "🎯 XAI Lab":
                 bands[b] = bands.get(b, 0) + 1
         if bands:
             st.write("")
-            st.subheader("🏷️ Reliability Band Distribution")
+            st.subheader("Reliability Band Distribution")
             bc1, bc2, bc3, bc4 = st.columns(4)
             band_cols = {"Very High Reliability": (bc1, "#10b981"),
-                         "High Reliability":      (bc2, "#22d3ee"),
+                         "High Reliability":      (bc2, "#0ea5e9"),
                          "Moderate Reliability":  (bc3, "#f59e0b"),
                          "Low Reliability":       (bc4, "#ef4444")}
             for band, (col, color) in band_cols.items():
@@ -2244,14 +2824,14 @@ elif nav == "🎯 XAI Lab":
                 with col:
                     st.markdown(safe_html(f"""
                     <div class="metric-card" style="border-color:{color}30">
-                        <div class="metric-value" style="color:{color};font-size:1.8rem">{cnt}</div>
+                        <div class="metric-value" style="color:{color};font-size:1.7rem">{cnt}</div>
                         <div class="metric-label">{band.replace(' Reliability', '')}</div>
                     </div>"""), unsafe_allow_html=True)
 
         agree_hist = [(i+1, h["agreement_score"]) for i, h in enumerate(history) if h.get("agreement_score") is not None]
         if len(agree_hist) >= 2:
             st.write("")
-            st.subheader("🔗 Explanation Agreement Score Over Time")
+            st.subheader("Explanation Agreement Score Over Time")
             fig2, ax2 = _dark_fig()
             xs, ys = zip(*agree_hist)
             ax2.plot(xs, ys, marker="D", lw=2, ms=4, color="#0ea5e9")
@@ -2259,10 +2839,10 @@ elif nav == "🎯 XAI Lab":
             ax2.axhline(0.7, color="#10b981", lw=1, ls="--", alpha=0.6, label="High agreement threshold")
             ax2.axhline(0.5, color="#f59e0b", lw=1, ls="--", alpha=0.6, label="Moderate threshold")
             ax2.set_ylim(0, 1.05)
-            ax2.set_xlabel("Analysis #", color="#94a3b8", fontsize=9)
-            ax2.set_ylabel("Agreement Score", color="#94a3b8", fontsize=9)
-            ax2.legend(fontsize=7, labelcolor="#94a3b8", facecolor="#111827", edgecolor="#374151")
-            ax2.grid(True, alpha=0.12, linestyle="--")
+            ax2.set_xlabel("Analysis #", color="#a4b0c0", fontsize=9)
+            ax2.set_ylabel("Agreement Score", color="#a4b0c0", fontsize=9)
+            ax2.legend(fontsize=7, labelcolor="#a4b0c0", facecolor="#131a2c", edgecolor="#1f2937")
+            ax2.grid(True, alpha=0.10, linestyle="--")
             fig2.tight_layout(pad=0.5)
             st.markdown('<div class="chart-container">', unsafe_allow_html=True)
             st.pyplot(fig2, width="stretch")
@@ -2270,7 +2850,7 @@ elif nav == "🎯 XAI Lab":
             plt.close(fig2)
 
         st.write("")
-        st.subheader("📋 Per-Class Uncertainty Analysis")
+        st.subheader("Per-Class Uncertainty Analysis")
         class_unc = {c: [] for c in CLASS_NAMES}
         for h in history:
             if h.get("uncertainty") is not None and h.get("prediction") in class_unc:
@@ -2330,7 +2910,7 @@ elif nav == "⚙️ Settings":
         except Exception: tv = "—"
         st.markdown(safe_html(f"""
         <div class="info-card">
-            <h3>📋 Neural Engine</h3>
+            <h3>Neural Engine</h3>
             <p><b>Architecture:</b> {model_name or 'Unavailable'}</p>
             <p><b>Status:</b> {'✅ Loaded' if not model_error else '❌ Failed'}</p>
             <p><b>Device:</b> {DEVICE}</p>
@@ -2343,7 +2923,7 @@ elif nav == "⚙️ Settings":
     with c2:
         st.markdown(safe_html(f"""
         <div class="info-card">
-            <h3>🖥️ System Information</h3>
+            <h3>System Information</h3>
             <p><b>PyTorch:</b> {torch.__version__}</p>
             <p><b>Torchvision:</b> {tv}</p>
             <p><b>Streamlit:</b> {st.__version__}</p>
