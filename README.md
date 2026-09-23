@@ -14,7 +14,7 @@ A deep learning-powered brain tumor detection and classification system. The pro
   - Prediction session history with dashboard analytics
   - Context-aware AI assistant for common MRI/Grad-CAM questions
   - Settings page with system info and session reset
-- **Model checkpoint** — place the compatible `brain_tumor_detector.pth` in `web_app/` for inference
+- **Model checkpoint** — place the compatible `neurolens_best.pth` in `web_app/` for inference
 - **Training notebook** — `Notebooks/Brain_Tumor_Detection_PyTorch.ipynb` with full training, evaluation, and visualization pipeline
 - **Results** — confusion matrices, ROC curves, training curves, and model comparison plots in `Results/`
 
@@ -39,7 +39,7 @@ Brain Cancer Detector/
 ├── web_app/
 │   ├── app.py                      # Streamlit entry point
 │   ├── Neurolens.py                # Main Streamlit application
-│   └── [local model checkpoint]    # brain_tumor_detector.pth or neurolens_best.pth
+│   └── [local model checkpoint]    # neurolens_best.pth
 ├── requirements.txt
 ├── .gitignore
 └── README.md
@@ -78,13 +78,13 @@ cd web_app
 streamlit run app.py
 ```
 
-The app loads `web_app/brain_tumor_detector.pth` first, then checks the repository root and `web_app/neurolens_best.pth`. Keep one compatible checkpoint at one of those paths. The application also starts without a checkpoint and reports that the model is unavailable. MRI images are processed in memory and are not persisted to disk.
+The app loads `web_app/neurolens_best.pth` first, then checks the repository root for the same filename. Keep one compatible checkpoint at one of those paths. The application also starts without a checkpoint and reports that the model is unavailable. MRI images are processed in memory and are not persisted to disk.
 
 ### Streamlit Community Cloud
 
 1. Push the project and `requirements.txt` to a GitHub repository.
 2. Create an app in Streamlit Community Cloud and select `web_app/app.py` as the entry point.
-3. Make a compatible checkpoint available at `web_app/brain_tumor_detector.pth` or `web_app/neurolens_best.pth` before startup. Verify its architecture and class order in Settings after deployment.
+3. Make a compatible `neurolens_best.pth` checkpoint available before startup. Verify its architecture and class order in Settings after deployment.
 
 Cloud deployments need the checkpoint available when the app starts. Do not commit a large or restricted checkpoint unless its licensing and repository constraints allow it.
 
@@ -99,7 +99,7 @@ Open `Notebooks/Brain_Tumor_Detection_PyTorch.ipynb` and run all cells to:
 
 ### Model Checkpoint Format
 
-`brain_tumor_detector.pth` contains:
+`neurolens_best.pth` contains:
 - `model_state_dict` — model weights
 - `class_names` — class label list (Glioma, Meningioma, No Tumor, Pituitary)
 - `num_classes` — number of output classes

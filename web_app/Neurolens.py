@@ -58,12 +58,9 @@ MAX_HISTORY  = 200
 CLASS_NAMES  = ["Glioma", "Meningioma", "No Tumor", "Pituitary"]
 
 BASE_DIR   = Path(__file__).resolve().parent
-MODEL_PATH = BASE_DIR / "brain_tumor_detector.pth"
+MODEL_PATH = BASE_DIR / "neurolens_best.pth"
 if not MODEL_PATH.exists():
-    for candidate in [
-        BASE_DIR.parent / "brain_tumor_detector.pth",
-        BASE_DIR / "neurolens_best.pth",
-    ]:
+    for candidate in [BASE_DIR.parent / "neurolens_best.pth"]:
         if candidate.exists():
             MODEL_PATH = candidate
             break
