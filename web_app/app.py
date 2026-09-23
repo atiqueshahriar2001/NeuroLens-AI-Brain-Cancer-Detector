@@ -61,7 +61,7 @@ st.set_page_config(
 NORM_MEAN    = [0.485, 0.456, 0.406]
 NORM_STD     = [0.229, 0.224, 0.225]
 IMG_SIZE     = 224
-MC_SAMPLES   = 20          # Monte Carlo Dropout forward passes
+MC_SAMPLES   = 20
 MAX_HISTORY  = 200
 CLASS_NAMES  = ["Glioma", "Meningioma", "No Tumor", "Pituitary"]
 
@@ -83,7 +83,6 @@ test_transforms = transforms.Compose([
     transforms.Normalize(NORM_MEAN, NORM_STD),
 ])
 
-# Uncertainty reliability bands
 def uncertainty_band(uncertainty: float) -> tuple[str, str]:
     if uncertainty < 0.05:
         return "Very High Reliability", "#10b981"
@@ -172,7 +171,7 @@ header[data-testid="stHeader"] { background: transparent; }
 [data-testid="stSidebar"] .stButton > button p {
     line-height: 1 !important;
     margin: 0 !important;
-    display: flex; align-items: center;
+    display: flex; align-items: center; gap: 0.35rem;
 }
 .nav-active {
     position: relative !important; border-radius: 12px !important;
@@ -185,29 +184,40 @@ header[data-testid="stHeader"] { background: transparent; }
     border-radius: 0 4px 4px 0; background: var(--accent-light); box-shadow: 0 0 10px var(--accent);
 }
 
-/* ── ACTIVE INDICATOR (vertically centered) ── */
+/* ── ACTIVE INDICATOR — perfect vertical centering ── */
 .sidebar-active-indicator {
-    display: flex; align-items: center; justify-content: flex-start;
-    gap: 0.55rem;
-    padding: 0.55rem 0.85rem; margin: 0.2rem 0 0.5rem;
-    min-height: 38px;
-    border-radius: 10px; background: var(--accent-glow);
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 0.6rem;
+    height: 40px;                            /* fixed height = predictable centering */
+    padding: 0 0.85rem;
+    margin: 0.2rem 0 0.5rem;
+    border-radius: 10px;
+    background: var(--accent-glow);
     border: 1px solid var(--border-hover);
-    color: var(--accent-light); font-size: 0.75rem; font-weight: 700;
-    line-height: 1;
+    color: var(--accent-light);
+    font-size: 0.75rem;
+    font-weight: 700;
+    line-height: 1;                          /* kill default line-height jump */
     letter-spacing: 0.02em;
     box-shadow: var(--shadow-glow);
 }
 .sidebar-active-dot {
-    width: 8px; height: 8px; border-radius: 50%;
+    flex: 0 0 8px;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
     background: var(--success);
     box-shadow: 0 0 8px var(--success);
-    flex-shrink: 0; display: block;
+    align-self: center;
 }
 .sidebar-active-text {
-    display: inline-flex; align-items: center;
+    display: inline-flex;
+    align-items: center;
+    height: 100%;
     line-height: 1;
-    transform: translateY(0.5px);
+    vertical-align: middle;
 }
 
 .sidebar-engine-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0.45rem; margin-top: 0.75rem; }
@@ -527,7 +537,6 @@ def load_model(model_path):
 # ─────────────────────────────────────────────────────────────────────────────
 
 def predict_image(image, model, class_names):
-    """Standard single-pass inference with timing."""
     if model is None:
         raise RuntimeError("Neural engine unavailable.")
     model.eval()
@@ -556,7 +565,6 @@ def predict_image(image, model, class_names):
 
 
 def mc_dropout_predict(image, model, class_names, n_samples: int = MC_SAMPLES):
-    """MC Dropout uncertainty estimation."""
     if model is None:
         return None
 
@@ -619,7 +627,6 @@ def _cam_to_heatmap(cam_raw, original_np):
 
 
 def generate_gradcam(image, model, model_name):
-    """Standard Grad-CAM."""
     if model is None:
         raise RuntimeError("Neural engine unavailable.")
     model.eval()
@@ -665,7 +672,6 @@ def generate_gradcam(image, model, model_name):
 
 
 def generate_gradcam_pp(image, model, model_name):
-    """Grad-CAM++ (improved localization)."""
     if model is None:
         raise RuntimeError("Neural engine unavailable.")
     model.eval()
@@ -721,7 +727,6 @@ def generate_gradcam_pp(image, model, model_name):
 
 
 def explanation_agreement(image, model, model_name):
-    """Pixel-wise correlation between Grad-CAM and Grad-CAM++ heatmaps."""
     hook_handles = []
     try:
         model.eval()
