@@ -301,7 +301,7 @@ def _render_html(content: str, height: int = 200, scrolling: bool = False):
 # ─────────────────────────────────────────────────────────────────────────────
 st.set_page_config(
     page_title="NeuroLens AI",
-    page_icon=":material/psychology:",
+    page_icon=":material/neurology:",
     layout="wide",
     initial_sidebar_state="expanded",
 )
