@@ -3819,9 +3819,3 @@ st.markdown(safe_html(f"""
         <span class="copyright-dev-name">Aronna Das</span>
     </span>
 </div>"""), unsafe_allow_html=True)                                                                                                                        
-
-Grad-CAM · PNG
-Grad-CAM++ · PNG
-Analysis Report · TXT
-
-ei tinti label download button gulor sathe align kora nei. Adjust kore dao.
