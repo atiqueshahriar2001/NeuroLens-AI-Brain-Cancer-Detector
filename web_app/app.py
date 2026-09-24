@@ -2027,10 +2027,22 @@ if nav == "🏠 Home":
         <p>Deep Learning · Dual XAI (Grad-CAM + Grad-CAM++) · MC Dropout Uncertainty Estimation · Neuroimaging</p>
     </div>""")), unsafe_allow_html=True)
 
-    if st.button("🔬 Analyze MRI Scan", type="primary", key="home_cta"):
-        st.session_state.nav = "🔬 MRI Analysis"
-        st.rerun()
-    st.caption("Research prototype for education and research. Model predictions are not medical diagnoses.")
+    # ── Centered CTA button ──────────────────────────────────────────────
+    _cta_l, _cta_c, _cta_r = st.columns([1, 1, 1])
+    with _cta_c:
+        if st.button("🔬 Analyze MRI Scan", type="primary", key="home_cta", width="stretch"):
+            st.session_state.nav = "🔬 MRI Analysis"
+            st.rerun()
+
+    # ── Centered caption ─────────────────────────────────────────────────
+    st.markdown(
+        "<div style='text-align:center;color:var(--text-3);"
+        "font-size:.82rem;margin-top:.55rem;line-height:1.5'>"
+        "Research prototype for education and research. "
+        "Model predictions are not medical diagnoses."
+        "</div>",
+        unsafe_allow_html=True,
+    )
 
     h2 = st.session_state.prediction_history
     hc1, hc2, hc3, hc4 = st.columns(4)
