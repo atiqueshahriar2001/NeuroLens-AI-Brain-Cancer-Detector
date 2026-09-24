@@ -1189,7 +1189,7 @@ code, pre, .activity-feed, .activity-time {
 }
 
 /* ── COMPACT DOWNLOAD BUTTONS ── */
-[data-testid="stDownloadButton"] { margin-bottom: 0.2rem !important; }
+[data-testid="stDownloadButton"] { margin-bottom: 0.85rem !important; }
 [data-testid="stDownloadButton"] > button {
     width: 220px !important;
     min-width: 220px !important;
@@ -3247,6 +3247,8 @@ elif nav == "🔬 MRI Analysis":
                 width="stretch",
                 type="primary",
             )
+
+            st.markdown('<div style="height: 1.75rem;"></div>', unsafe_allow_html=True)
 
     st.write("")
 
