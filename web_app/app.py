@@ -12,7 +12,6 @@ import platform
 from importlib import metadata
 from datetime import datetime
 from pathlib import Path
-from textwrap import dedent
 
 import numpy as np
 import streamlit as st
@@ -22,7 +21,6 @@ from PIL import Image, UnidentifiedImageError
 import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
-import matplotlib.cm as cm
 
 import torch
 import torch.nn as nn
@@ -219,24 +217,6 @@ class Icons:
         )
 
     @staticmethod
-    def trash(size=16, color="currentColor"):
-        return Icons._wrap(
-            '<polyline points="3 6 5 6 21 6"/>'
-            '<path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>'
-            '<line x1="10" y1="11" x2="10" y2="17"/>'
-            '<line x1="14" y1="11" x2="14" y2="17"/>',
-            size, color
-        )
-
-    @staticmethod
-    def refresh(size=16, color="currentColor"):
-        return Icons._wrap(
-            '<polyline points="23 4 23 10 17 10"/>'
-            '<path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/>',
-            size, color
-        )
-
-    @staticmethod
     def eye(size=16, color="currentColor"):
         return Icons._wrap(
             '<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>'
@@ -288,7 +268,7 @@ def safe_html(html: str) -> str:
 
 
 def _render_html(content: str, height: int = 200, scrolling: bool = False):
-    """Render arbitrary HTML via components.html (safe fallback)."""
+    """Render arbitrary HTML via components.html."""
     components.html(content, height=height, scrolling=scrolling)
 
 
@@ -301,6 +281,35 @@ st.set_page_config(
     layout="wide",
     initial_sidebar_state="expanded",
 )
+
+# ─────────────────────────────────────────────────────────────────────────────
+# STREAMLIT WIDTH COMPATIBILITY HELPER
+# ─────────────────────────────────────────────────────────────────────────────
+def _st_width_arg(container: bool) -> dict:
+    """
+    Return the correct width kwarg dict for the current Streamlit version.
+    - Streamlit >= 1.37: uses new width="stretch" / "content" API.
+    - Streamlit  < 1.37: falls back to legacy use_container_width bool.
+    """
+    try:
+        parts = st.__version__.split(".")[:2]
+        major, minor = int(parts[0]), int(parts[1])
+        if (major, minor) >= (1, 37):
+            return {"width": "stretch" if container else "content"}
+    except Exception:
+        pass
+    return {"use_container_width": bool(container)}
+
+
+def _stretch() -> dict:
+    """Container-full width for buttons, images, dataframes, etc."""
+    return _st_width_arg(True)
+
+
+def _content() -> dict:
+    """Content-fit width (default behaviour)."""
+    return _st_width_arg(False)
+
 
 # ─────────────────────────────────────────────────────────────────────────────
 # CONSTANTS
@@ -1981,7 +1990,7 @@ def plot_uncertainty_history(history):
 
 
 # ─────────────────────────────────────────────────────────────────────────────
-# SESSION STATE — FIX #1: use deepcopy to avoid shared mutable references
+# SESSION STATE — deepcopy to avoid shared mutable references
 # ─────────────────────────────────────────────────────────────────────────────
 
 DEFAULTS = {
@@ -2359,7 +2368,7 @@ with st.sidebar:
             is_active = active_nav == key
             slug = key.lower().replace("-", "").replace(" ", "_")
 
-            if st.button(label, key=f"nav_{slug}", use_container_width=True):
+            if st.button(label, key=f"nav_{slug}", **_stretch()):
                 st.session_state.nav = key
                 st.rerun()
 
@@ -2443,7 +2452,7 @@ with st.sidebar:
     # ── Quick Actions ──
     st.markdown('<div class="sb-nav-group">Quick Actions</div>', unsafe_allow_html=True)
 
-    if st.button("Clear History", key="sb_clear", use_container_width=True):
+    if st.button("Clear History", key="sb_clear", **_stretch()):
         st.session_state.confirm_clear = True
     if st.session_state.get("confirm_clear", False):
         st.markdown(safe_html(f"""
@@ -2452,14 +2461,14 @@ with st.sidebar:
             <div class="sb-confirm-text">All session diagnostic history will be removed.</div>
         </div>"""), unsafe_allow_html=True)
         c1, c2 = st.columns(2)
-        if c1.button("Confirm", key="sb_clear_yes", use_container_width=True):
+        if c1.button("Confirm", key="sb_clear_yes", **_stretch()):
             clear_prediction_history()
             st.session_state.confirm_clear = False
             st.rerun()
-        if c2.button("Cancel", key="sb_clear_no", use_container_width=True):
+        if c2.button("Cancel", key="sb_clear_no", **_stretch()):
             st.session_state.confirm_clear = False
 
-    if st.button("Reset Session", key="sb_reset", use_container_width=True):
+    if st.button("Reset Session", key="sb_reset", **_stretch()):
         st.session_state.confirm_reset = True
     if st.session_state.get("confirm_reset", False):
         st.markdown(safe_html(f"""
@@ -2468,14 +2477,14 @@ with st.sidebar:
             <div class="sb-confirm-text">This clears all results, history, and logs.</div>
         </div>"""), unsafe_allow_html=True)
         c1, c2 = st.columns(2)
-        if c1.button("Confirm", key="sb_reset_yes", use_container_width=True):
+        if c1.button("Confirm", key="sb_reset_yes", **_stretch()):
             for fk in ("gradcam_image", "gradcam_pp_image"):
                 old = st.session_state.get(fk)
                 if old: plt.close(old)
             for k, v in DEFAULTS.items():
                 st.session_state[k] = copy.deepcopy(v)
             st.rerun()
-        if c2.button("Cancel", key="sb_reset_no", use_container_width=True):
+        if c2.button("Cancel", key="sb_reset_no", **_stretch()):
             st.session_state.confirm_reset = False
 
     # ── Footer warning ──
@@ -2515,7 +2524,7 @@ if nav == "Home":
 
     _l, _c, _r = st.columns([1.8, 1, 1.8])
     with _c:
-        if st.button("Run MRI Analysis", type="primary", key="home_cta", use_container_width=True):
+        if st.button("Run MRI Analysis", type="primary", key="home_cta", **_stretch()):
             st.session_state.nav = "MRI Analysis"
             st.rerun()
 
@@ -2695,7 +2704,7 @@ elif nav == "MRI Analysis":
                 col1, col2 = st.columns([1, 2])
                 with col1:
                     st.markdown("#### MRI Preview")
-                    st.image(image, use_container_width=True)
+                    st.image(image, **_stretch())
                     st.caption(f"Original: {image.width}×{image.height}px · Processed: {IMG_SIZE}×{IMG_SIZE}px")
 
                 with col2:
@@ -2709,7 +2718,7 @@ elif nav == "MRI Analysis":
                     run_xai   = st.checkbox("Enable Dual XAI (Grad-CAM + Grad-CAM++)", value=True, key="run_xai_cb")
                     run_agree = st.checkbox("Compute Explanation Agreement Score", value=True, key="run_agree_cb")
 
-                    if st.button("Run AI Analysis", type="primary", key="analyze_btn", use_container_width=False):
+                    if st.button("Run AI Analysis", type="primary", key="analyze_btn", **_content()):
                         if st.session_state.live_session_start is None:
                             st.session_state.live_session_start = datetime.now()
                         st.session_state.live_inference_running = True
@@ -2916,12 +2925,12 @@ elif nav == "MRI Analysis":
                 with gc_col:
                     st.markdown("**Grad-CAM** · Jet colormap")
                     if st.session_state.gradcam_image:
-                        st.pyplot(st.session_state.gradcam_image, use_container_width=True)
+                        st.pyplot(st.session_state.gradcam_image, **_stretch())
                         st.caption("Weighted class activations · α=0.44")
                 with pp_col:
                     st.markdown("**Grad-CAM++** · Inferno colormap")
                     if st.session_state.gradcam_pp_image:
-                        st.pyplot(st.session_state.gradcam_pp_image, use_container_width=True)
+                        st.pyplot(st.session_state.gradcam_pp_image, **_stretch())
                         st.caption("Second-order gradients · α=0.46")
 
                 st.markdown(safe_html("""
@@ -2959,16 +2968,16 @@ elif nav == "MRI Analysis":
                 dc1, dc2 = st.columns(2)
                 with dc1:
                     st.markdown('<div class="export-item-label">Grad-CAM · PNG</div>', unsafe_allow_html=True)
-                    st.download_button("Download Grad-CAM", gc_buf, "gradcam.png", "image/png", key="dl_gc", use_container_width=True)
+                    st.download_button("Download Grad-CAM", gc_buf, "gradcam.png", "image/png", key="dl_gc", **_stretch())
                 with dc2:
                     st.markdown('<div class="export-item-label">Grad-CAM++ · PNG</div>', unsafe_allow_html=True)
-                    st.download_button("Download Grad-CAM++", pp_buf, "gradcam_pp.png", "image/png", key="dl_pp", use_container_width=True)
+                    st.download_button("Download Grad-CAM++", pp_buf, "gradcam_pp.png", "image/png", key="dl_pp", **_stretch())
             elif gc_buf:
                 st.markdown('<div class="export-item-label">Grad-CAM · PNG</div>', unsafe_allow_html=True)
-                st.download_button("Download Grad-CAM", gc_buf, "gradcam.png", "image/png", key="dl_gc", use_container_width=True)
+                st.download_button("Download Grad-CAM", gc_buf, "gradcam.png", "image/png", key="dl_gc", **_stretch())
             elif pp_buf:
                 st.markdown('<div class="export-item-label">Grad-CAM++ · PNG</div>', unsafe_allow_html=True)
-                st.download_button("Download Grad-CAM++", pp_buf, "gradcam_pp.png", "image/png", key="dl_pp", use_container_width=True)
+                st.download_button("Download Grad-CAM++", pp_buf, "gradcam_pp.png", "image/png", key="dl_pp", **_stretch())
 
             st.markdown('<div class="export-item-label" style="margin-top:.85rem">Analysis Report · TXT</div>', unsafe_allow_html=True)
             st.download_button(
@@ -3013,7 +3022,7 @@ elif nav == "MRI Analysis":
                     "  Outputs do NOT constitute medical diagnoses.",
                     "═══════════════════════════════════════════════════════",
                 ]),
-                "neurolens_report.txt", "text/plain", key="dl_report", type="primary", use_container_width=True,
+                "neurolens_report.txt", "text/plain", key="dl_report", type="primary", **_stretch(),
             )
 
 
@@ -3093,7 +3102,7 @@ elif nav == "Dashboard":
             st.subheader("Confidence Trend")
             cf = plot_confidence_trend(history)
             if cf:
-                st.pyplot(cf, use_container_width=True)
+                st.pyplot(cf, **_stretch())
                 plt.close(cf)
             else:
                 st.caption("Need ≥2 analyses.")
@@ -3101,7 +3110,7 @@ elif nav == "Dashboard":
             st.subheader("Inference Latency")
             lf = plot_latency_trend(history)
             if lf:
-                st.pyplot(lf, use_container_width=True)
+                st.pyplot(lf, **_stretch())
                 plt.close(lf)
             else:
                 st.caption("Need ≥2 analyses.")
@@ -3110,7 +3119,7 @@ elif nav == "Dashboard":
                 st.subheader("Uncertainty Trend")
                 uf = plot_uncertainty_history(history)
                 if uf:
-                    st.pyplot(uf, use_container_width=True)
+                    st.pyplot(uf, **_stretch())
                     plt.close(uf)
 
         with col_r:
@@ -3222,11 +3231,11 @@ elif nav == "History":
         if st.session_state.get("confirm_clear_hist", False):
             st.warning("Clear all session records?")
             cc1, cc2, _ = st.columns([1, 1, 4])
-            if cc1.button("Confirm", key="confirm_hist", use_container_width=True):
+            if cc1.button("Confirm", key="confirm_hist", **_stretch()):
                 clear_prediction_history()
                 st.session_state.confirm_clear_hist = False
                 st.rerun()
-            if cc2.button("Cancel", key="cancel_hist", use_container_width=True):
+            if cc2.button("Cancel", key="cancel_hist", **_stretch()):
                 st.session_state.confirm_clear_hist = False
 
 
@@ -3253,15 +3262,15 @@ elif nav == "Grad-CAM":
         with oc:
             st.subheader("Original MRI")
             if st.session_state.last_image:
-                st.image(st.session_state.last_image, use_container_width=True)
+                st.image(st.session_state.last_image, **_stretch())
         with gc:
             st.subheader("Grad-CAM · Jet")
             if st.session_state.gradcam_image:
-                st.pyplot(st.session_state.gradcam_image, use_container_width=True)
+                st.pyplot(st.session_state.gradcam_image, **_stretch())
         with pc:
             st.subheader("Grad-CAM++ · Inferno")
             if st.session_state.gradcam_pp_image:
-                st.pyplot(st.session_state.gradcam_pp_image, use_container_width=True)
+                st.pyplot(st.session_state.gradcam_pp_image, **_stretch())
 
         st.markdown("<div style='font-size:.72rem;color:#4b5869;margin:.5rem 0'>Heatmap influence: Low (dark) ░░░▒▒▒████ High (bright)</div>", unsafe_allow_html=True)
 
@@ -3301,11 +3310,11 @@ elif nav == "Grad-CAM":
         if st.session_state.gradcam_image:
             buf = io.BytesIO()
             st.session_state.gradcam_image.savefig(buf, format="png", bbox_inches="tight", dpi=160)
-            dl1.download_button("Download Grad-CAM", buf.getvalue(), "gradcam.png", "image/png", key="gradcam_dl", use_container_width=True)
+            dl1.download_button("Download Grad-CAM", buf.getvalue(), "gradcam.png", "image/png", key="gradcam_dl", **_stretch())
         if st.session_state.gradcam_pp_image:
             buf2 = io.BytesIO()
             st.session_state.gradcam_pp_image.savefig(buf2, format="png", bbox_inches="tight", dpi=160)
-            dl2.download_button("Download Grad-CAM++", buf2.getvalue(), "gradcam_pp.png", "image/png", key="gradcam_pp_dl", use_container_width=True)
+            dl2.download_button("Download Grad-CAM++", buf2.getvalue(), "gradcam_pp.png", "image/png", key="gradcam_pp_dl", **_stretch())
 
 
 # ══════════════════════════════════════════════════════════════════════════════
@@ -3333,7 +3342,7 @@ elif nav == "XAI Lab":
         if len(unc_data) >= 2:
             uf = plot_uncertainty_history(history)
             if uf:
-                st.pyplot(uf, use_container_width=True)
+                st.pyplot(uf, **_stretch())
                 plt.close(uf)
 
         bands = {}
@@ -3376,7 +3385,7 @@ elif nav == "XAI Lab":
             ax2.legend(fontsize=7, labelcolor="#94a3b8", facecolor="#0f172a", edgecolor="#1e2d42")
             ax2.grid(True, alpha=0.09, ls="--")
             fig2.tight_layout(pad=0.5)
-            st.pyplot(fig2, use_container_width=True)
+            st.pyplot(fig2, **_stretch())
             plt.close(fig2)
 
         st.write("")
@@ -3397,7 +3406,7 @@ elif nav == "XAI Lab":
                 })
         if rows:
             import pandas as pd
-            st.dataframe(pd.DataFrame(rows), use_container_width=True, hide_index=True)
+            st.dataframe(pd.DataFrame(rows), hide_index=True, **_stretch())
         else:
             st.caption("No per-class uncertainty data yet.")
 
@@ -3485,7 +3494,7 @@ elif nav == "Settings":
         if st.session_state.get("settings_confirm_reset", False):
             st.warning("Reset all session results?")
             rc1, rc2, _ = st.columns([1, 1, 4])
-            if rc1.button("Confirm", key="settings_confirm_yes", use_container_width=True):
+            if rc1.button("Confirm", key="settings_confirm_yes", **_stretch()):
                 for fk in ("gradcam_image", "gradcam_pp_image"):
                     old = st.session_state.get(fk)
                     if old:
@@ -3495,7 +3504,7 @@ elif nav == "Settings":
                 st.session_state.settings_confirm_reset = False
                 st.success("Session cleared.")
                 st.rerun()
-            if rc2.button("Cancel", key="settings_confirm_no", use_container_width=True):
+            if rc2.button("Cancel", key="settings_confirm_no", **_stretch()):
                 st.session_state.settings_confirm_reset = False
 
 
