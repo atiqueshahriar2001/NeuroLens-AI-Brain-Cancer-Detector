@@ -1,7 +1,24 @@
-streamlit>=1.35.0
+# =============================================================================
+# NeuroLens AI — Neurodiagnostic Intelligence Platform
+# Runtime Requirements
+# =============================================================================
+
+# Core web framework
+streamlit>=1.37.0
+
+# Deep learning
 torch>=2.0.0
 torchvision>=0.15.0
-Pillow>=10.0.0
+
+# Numerical / image processing
 numpy>=1.24.0
+Pillow>=10.0.0
+
+# Visualization
 matplotlib>=3.7.0
+
+# Dataframes (used in XAI Lab per-class analysis table)
 pandas>=2.0.0
+
+# Fonts are loaded from Google Fonts via CSS — no Python dependency.
+# Model checkpoint file required at runtime: neurolens_best.pth
