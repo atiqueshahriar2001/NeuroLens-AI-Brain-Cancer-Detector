@@ -1144,7 +1144,8 @@ code, pre, .activity-feed, .activity-time {
 /* ── COMPACT DOWNLOAD BUTTONS ── */
 [data-testid="stDownloadButton"] { margin-bottom: 0.25rem !important; }
 [data-testid="stDownloadButton"] > button {
-    width: 100% !important;
+    width: 240px !important;
+    min-width: 240px !important;
     min-height: 40px !important;
     padding: 0.55rem 0.9rem !important;
     border-radius: var(--r-sm) !important;
@@ -1501,8 +1502,8 @@ hr { border-color: var(--line) !important; margin: 1.25rem 0 !important; }
 }
 
 [data-testid="stDownloadButton"] > button {
-    width: 100% !important;
-    min-width: 100% !important;
+    width: 240px !important;      /* Changed from 100% to 240px */
+    min-width: 240px !important;  /* Changed from 100% to 240px */
     height: 40px !important;
     min-height: 40px !important;
     padding: 4px 10px !important;
