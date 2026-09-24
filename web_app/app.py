@@ -1,15 +1,14 @@
 # =============================================================================
 # NeuroLens AI — Neurodiagnostic Intelligence Platform
-# Production SaaS Edition v3.4 — Enhanced UI + Premium Sidebar v5.3
+# Production SaaS Edition v3.5 — Enhanced UI + Premium Sidebar v5.4
 # =============================================================================
-# FIX SUMMARY (v3.4):
-#   - Fixed st.pyplot width kwarg incompatibility (added _stretch_pyplot)
-#   - Fixed None-value leakage in plot_uncertainty_history
-#   - Fixed XAI Lab uncertainty count check
-#   - Removed unnecessary retain_graph=True in XAI backward passes
-#   - Cleaned _cam_to_heatmap signature (removed unused param)
-#   - Improved torch.load weights_only fallback
-#   - Fixed height calc in live probability animation
+# FIX SUMMARY (v3.5):
+#   - Added Google Fonts import (Inter, Sora, JetBrains Mono)
+#   - Added --font-display and --font-mono CSS variables
+#   - Added all missing page-content CSS (.hero, .metric-card, .info-card,
+#     .step-card, .upload-hero, .diagnostic-panel, .prob-grid, .empty-state,
+#     .dist-card, .thumb-card, .act-feed, .export-head, .app-footer, etc.)
+#   - Improved responsive breakpoints
 #   - No changes to ML / inference / core logic
 # =============================================================================
 
@@ -486,11 +485,6 @@ st.set_page_config(
 # ─────────────────────────────────────────────────────────────────────────────
 
 def _st_width_arg(container: bool) -> dict:
-    """
-    Return the correct width kwarg dict for the current Streamlit version.
-    - Streamlit >= 1.37: uses new width="stretch" / "content" API.
-    - Streamlit  < 1.37: falls back to legacy use_container_width bool.
-    """
     try:
         parts = st.__version__.split(".")[:2]
         major, minor = int(parts[0]), int(parts[1])
@@ -502,20 +496,14 @@ def _st_width_arg(container: bool) -> dict:
 
 
 def _stretch() -> dict:
-    """Container-full width for buttons, images, dataframes, etc."""
     return _st_width_arg(True)
 
 
 def _content() -> dict:
-    """Content-fit width (default behaviour)."""
     return _st_width_arg(False)
 
 
 def _stretch_pyplot() -> dict:
-    """
-    FIX: st.pyplot does NOT accept width= (it forwards **kwargs to
-    matplotlib.savefig). Always use use_container_width=True.
-    """
     return {"use_container_width": True}
 
 
@@ -560,6 +548,19 @@ def uncertainty_band(uncertainty: float) -> tuple[str, str]:
 
 
 # ─────────────────────────────────────────────────────────────────────────────
+# FONT IMPORT  (NEW in v3.5)
+# ─────────────────────────────────────────────────────────────────────────────
+st.markdown(
+    '<link rel="preconnect" href="https://fonts.googleapis.com">'
+    '<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>'
+    '<link href="https://fonts.googleapis.com/css2?'
+    'family=Inter:wght@400;500;600;700;800&'
+    'family=Sora:wght@600;700;800&'
+    'family=JetBrains+Mono:wght@400;500;600;700&display=swap" '
+    'rel="stylesheet">',
+    unsafe_allow_html=True,
+)
+
 
 # ─────────────────────────────────────────────────────────────────────────────
 # RESPONSIVE UI / DESIGN SYSTEM
@@ -569,12 +570,16 @@ UI_CSS = r"""
   --bg:#060b18; --surface:#0b1120; --surface-2:#0f172a; --surface-3:#162032;
   --surface-4:#1d2d44; --accent:#0891b2; --accent-hi:#22d3ee;
   --success:#10b981; --success-hi:#34d399; --warning:#f59e0b;
-  --danger:#ef4444; --violet:#7c3aed; --text:#e2e8f0; --text-2:#94a3b8;
+  --danger:#ef4444; --danger-hi:#f87171; --violet:#7c3aed;
+  --text:#e2e8f0; --text-2:#94a3b8;
   --text-3:#64748b; --line:rgba(148,163,184,.12); --line-strong:rgba(148,163,184,.20);
+  --font-display:'Sora','Inter',system-ui,sans-serif;
+  --font-mono:'JetBrains Mono',ui-monospace,SFMono-Regular,Menlo,monospace;
   --sb-w:270px; --hd-h:54px;
 }
 html, body, [data-testid="stAppViewContainer"], [data-testid="stApp"] {
   background:var(--bg) !important;
+  font-family:'Inter',system-ui,sans-serif;
 }
 [data-testid="stAppViewContainer"] > .main {
   background:
@@ -647,9 +652,9 @@ html, body, [data-testid="stAppViewContainer"], [data-testid="stApp"] {
   flex:0 0 auto;
 }
 .sb-brand-text { min-width:0; }
-.sb-brand-name { color:#e2e8f0; font:800 .96rem/1.1 Sora,Inter,sans-serif; white-space:nowrap; }
+.sb-brand-name { color:#e2e8f0; font:800 .96rem/1.1 var(--font-display); white-space:nowrap; }
 .sb-brand-ai { color:#22d3ee; }
-.sb-brand-ver { margin-left:.35rem; color:#475569; font:600 .55rem/1 JetBrains Mono,monospace; }
+.sb-brand-ver { margin-left:.35rem; color:#475569; font:600 .55rem/1 var(--font-mono); }
 .sb-brand-sub { margin-top:.22rem; color:#64748b; font:500 .59rem/1.2 Inter,sans-serif; }
 .sb-brand-pulse {
   position:absolute; right:-1px; top:-1px; width:7px; height:7px; border-radius:50%;
@@ -661,7 +666,7 @@ html, body, [data-testid="stAppViewContainer"], [data-testid="stApp"] {
   background:rgba(15,23,42,.72); color:#94a3b8;
 }
 .sb-session-txt { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font:600 .66rem Inter,sans-serif; }
-.sb-session-time { margin-left:auto; color:#475569; font:600 .58rem JetBrains Mono,monospace; }
+.sb-session-time { margin-left:auto; color:#475569; font:600 .58rem var(--font-mono); }
 .sb-session-dot { width:6px; height:6px; border-radius:50%; flex:0 0 auto; }
 .sb-engine {
   margin:.8rem .05rem .9rem; padding:.75rem; border:1px solid var(--line);
@@ -670,17 +675,17 @@ html, body, [data-testid="stAppViewContainer"], [data-testid="stApp"] {
 .sb-engine-head,.sb-engine-status,.sb-engine-confbar { display:flex; align-items:center; gap:.45rem; }
 .sb-engine-head { margin-bottom:.55rem; }
 .sb-engine-title { color:#cbd5e1; font:700 .68rem Inter,sans-serif; }
-.sb-engine-live { margin-left:auto; color:#34d399; font:700 .55rem JetBrains Mono,monospace; letter-spacing:.08em; }
+.sb-engine-live { margin-left:auto; color:#34d399; font:700 .55rem var(--font-mono); letter-spacing:.08em; }
 .sb-engine-live-dot { display:inline-block; width:5px; height:5px; margin-right:4px; border-radius:50%; background:#34d399; }
 .sb-engine-status { color:#94a3b8; font:600 .6rem Inter,sans-serif; }
 .sb-engine-confbar { margin-top:.65rem; }
 .sb-engine-confbar-track { height:4px; flex:1; overflow:hidden; border-radius:99px; background:#1e293b; }
 .sb-engine-confbar-fill { height:100%; border-radius:99px; background:linear-gradient(90deg,#0891b2,#22d3ee); }
-.sb-engine-confbar-lbl { min-width:34px; text-align:right; color:#cbd5e1; font:700 .58rem JetBrains Mono,monospace; }
+.sb-engine-confbar-lbl { min-width:34px; text-align:right; color:#cbd5e1; font:700 .58rem var(--font-mono); }
 .sb-engine-grid { display:grid; grid-template-columns:1fr 1fr; gap:.4rem; margin-top:.65rem; }
 .sb-mini { padding:.48rem .5rem; border:1px solid var(--line); border-radius:7px; background:rgba(255,255,255,.018); }
 .sb-mini-lbl { color:#475569; font:700 .48rem Inter,sans-serif; letter-spacing:.1em; }
-.sb-mini-val { margin-top:.14rem; color:#cbd5e1; font:700 .65rem JetBrains Mono,monospace; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.sb-mini-val { margin-top:.14rem; color:#cbd5e1; font:700 .65rem var(--font-mono); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
 .sb-confirm { margin:.45rem 0; padding:.65rem; border:1px solid rgba(245,158,11,.22); border-radius:8px; background:rgba(245,158,11,.05); }
 .sb-confirm-danger { border-color:rgba(239,68,68,.22); background:rgba(239,68,68,.05); }
 .sb-confirm-title { color:#e2e8f0; font:700 .65rem Inter,sans-serif; }
@@ -720,9 +725,7 @@ html, body, [data-testid="stAppViewContainer"], [data-testid="stApp"] {
 }
 .stTabs [aria-selected="true"] { color:#22d3ee !important; }
 
-.stFileUploader {
-  border-radius:12px !important;
-}
+.stFileUploader { border-radius:12px !important; }
 .stFileUploader section {
   border:1px dashed rgba(34,211,238,.28) !important;
   background:rgba(8,145,178,.025) !important;
@@ -746,10 +749,10 @@ html, body, [data-testid="stAppViewContainer"], [data-testid="stApp"] {
 .hd-brand { display:flex; align-items:center; gap:.5rem; flex:0 0 auto; }
 .hd-brand-icon { position:relative; width:30px; height:30px; display:grid; place-items:center; border:1px solid rgba(34,211,238,.2); border-radius:8px; }
 .hd-brand-dot { position:absolute; width:5px; height:5px; right:-2px; top:-2px; border-radius:50%; background:#22d3ee; }
-.hd-brand-name { color:#e2e8f0; font:800 .78rem Sora,Inter,sans-serif; white-space:nowrap; }
+.hd-brand-name { color:#e2e8f0; font:800 .78rem var(--font-display); white-space:nowrap; }
 .hd-divider { width:1px; height:22px; background:var(--line); flex:0 0 auto; }
 .hd-ticker { min-width:0; flex:1 1 auto; overflow:hidden; }
-.hd-ticker-inner { display:flex; align-items:center; gap:.55rem; overflow:hidden; white-space:nowrap; color:#64748b; font:.59rem JetBrains Mono,monospace; }
+.hd-ticker-inner { display:flex; align-items:center; gap:.55rem; overflow:hidden; white-space:nowrap; color:#64748b; font:.59rem var(--font-mono); }
 .hd-tick { flex:0 0 auto; }
 .hd-live-badge { color:#34d399; font-weight:800; font-size:.55rem; letter-spacing:.08em; }
 .hd-status { flex:0 0 auto; display:flex; align-items:center; gap:.35rem; font:700 .6rem Inter,sans-serif; }
@@ -758,11 +761,389 @@ html, body, [data-testid="stAppViewContainer"], [data-testid="stApp"] {
 .hd-page { flex:0 0 auto; color:#94a3b8; font:700 .61rem Inter,sans-serif; }
 .hd-page-dot { display:inline-block; width:5px; height:5px; margin-right:5px; border-radius:50%; background:#22d3ee; }
 
+/* ═══════════════════════════════════════════════════════════════════════
+   PAGE CONTENT CLASSES  (NEW in v3.5)
+   ═══════════════════════════════════════════════════════════════════════ */
+
+/* ── HERO ── */
+.hero { padding:1.5rem 0 1rem; }
+.hero-eyebrow {
+  display:inline-flex; align-items:center; gap:.45rem;
+  padding:.3rem .7rem; border-radius:999px;
+  background:rgba(8,145,178,.08); border:1px solid rgba(34,211,238,.22);
+  color:#22d3ee; font:600 .68rem Inter,sans-serif;
+  letter-spacing:.02em; margin-bottom:.9rem;
+}
+.hero h1 {
+  font:800 2.6rem/1.05 var(--font-display);
+  letter-spacing:-.03em; margin:0 0 .6rem;
+  background:linear-gradient(135deg,#e2e8f0 30%,#22d3ee 100%);
+  -webkit-background-clip:text; -webkit-text-fill-color:transparent;
+  background-clip:text;
+}
+.hero-sub { color:#94a3b8; font:400 .95rem/1.55 Inter,sans-serif; max-width:68ch; margin:0; }
+.hero-divider {
+  height:1px; max-width:480px; margin:1.2rem 0 0;
+  background:linear-gradient(90deg,rgba(34,211,238,.35),transparent);
+}
+
+/* ── METRIC CARDS ── */
+.metric-card {
+  background:rgba(15,23,42,.72); border:1px solid rgba(148,163,184,.12);
+  border-radius:12px; padding:1rem; height:100%;
+  transition:border-color .16s,transform .16s;
+}
+.metric-card:hover { border-color:rgba(34,211,238,.28); transform:translateY(-1px); }
+.metric-icon-wrap {
+  width:32px; height:32px; display:grid; place-items:center;
+  border-radius:8px; background:rgba(8,145,178,.08);
+  border:1px solid rgba(34,211,238,.16); margin-bottom:.65rem;
+}
+.metric-value {
+  font:800 1.55rem/1 var(--font-display);
+  color:#e2e8f0; letter-spacing:-.02em;
+}
+.metric-label {
+  margin-top:.3rem; color:#64748b;
+  font:600 .68rem Inter,sans-serif;
+  text-transform:uppercase; letter-spacing:.08em;
+}
+
+/* ── INFO CARDS ── */
+.info-card {
+  background:rgba(15,23,42,.72); border:1px solid rgba(148,163,184,.12);
+  border-radius:12px; padding:1.1rem; height:100%;
+}
+.info-card-icon {
+  width:40px; height:40px; display:grid; place-items:center;
+  border-radius:10px; background:rgba(8,145,178,.08);
+  border:1px solid rgba(34,211,238,.18); margin-bottom:.8rem;
+}
+.info-card h3 { color:#e2e8f0; font:700 .95rem var(--font-display); margin:0 0 .5rem; }
+.info-card p  { color:#94a3b8; font:400 .78rem/1.55 Inter,sans-serif; margin:.25rem 0; }
+.info-card code { font-family:var(--font-mono); font-size:.72rem; color:#22d3ee; background:rgba(8,145,178,.08); padding:.08rem .3rem; border-radius:4px; }
+
+/* ── STEP CARDS ── */
+.step-card {
+  text-align:center; padding:.9rem .5rem; border-radius:10px;
+  background:rgba(15,23,42,.55); border:1px solid rgba(148,163,184,.10);
+  height:100%;
+}
+.step-num {
+  width:28px; height:28px; margin:0 auto .5rem; display:grid; place-items:center;
+  border-radius:50%; background:linear-gradient(135deg,#0891b2,#22d3ee);
+  color:#fff; font:800 .78rem var(--font-display);
+}
+.step-title { color:#e2e8f0; font:700 .76rem Inter,sans-serif; margin-bottom:.2rem; }
+.step-desc  { color:#64748b; font:500 .62rem Inter,sans-serif; }
+
+/* ── UPLOAD HERO ── */
+.upload-hero {
+  padding:1.5rem 1rem 1rem; text-align:center; border-radius:14px;
+  background:linear-gradient(180deg,rgba(8,145,178,.05),transparent);
+  border:1px solid rgba(34,211,238,.14); margin-bottom:1rem;
+}
+.upload-icon-wrap {
+  width:56px; height:56px; margin:0 auto .8rem; display:grid; place-items:center;
+  border-radius:14px; background:rgba(8,145,178,.10);
+  border:1px solid rgba(34,211,238,.24);
+  box-shadow:0 0 26px rgba(8,145,178,.14);
+}
+.upload-title { color:#e2e8f0; font:700 1.05rem var(--font-display); }
+.upload-sub   { color:#94a3b8; font:400 .78rem Inter,sans-serif; margin:.25rem 0 .8rem; }
+.upload-formats { display:flex; gap:.35rem; justify-content:center; flex-wrap:wrap; }
+.fmt-badge {
+  padding:.18rem .5rem; border-radius:5px;
+  background:rgba(8,145,178,.08); border:1px solid rgba(34,211,238,.18);
+  color:#22d3ee; font:700 .58rem var(--font-mono); letter-spacing:.06em;
+}
+.fmt-badge-muted {
+  background:rgba(148,163,184,.06); border-color:rgba(148,163,184,.16); color:#64748b;
+}
+.upload-note {
+  margin-top:.9rem; display:inline-flex; align-items:center; gap:.4rem;
+  color:#64748b; font:500 .66rem Inter,sans-serif;
+}
+.upload-note-dot {
+  width:6px; height:6px; border-radius:50%; background:#10b981;
+  box-shadow:0 0 8px rgba(16,185,129,.6);
+}
+
+/* ── DIAGNOSTIC PANEL ── */
+.diagnostic-panel {
+  padding:1.15rem 1.25rem; border-radius:12px; margin-bottom:.8rem;
+  background:linear-gradient(135deg,rgba(8,145,178,.07),rgba(15,23,42,.85));
+  border:1px solid rgba(34,211,238,.22);
+}
+.diag-header {
+  display:flex; justify-content:space-between; align-items:center;
+  margin-bottom:.65rem; gap:.5rem; flex-wrap:wrap;
+}
+.diag-label {
+  font:700 .6rem Inter,sans-serif; color:#22d3ee;
+  text-transform:uppercase; letter-spacing:.14em;
+}
+.badge {
+  display:inline-flex; align-items:center; gap:.3rem;
+  padding:.22rem .58rem; border-radius:999px;
+  font:700 .58rem Inter,sans-serif; letter-spacing:.04em;
+}
+.badge-research { background:rgba(124,58,237,.10); border:1px solid rgba(124,58,237,.24); color:#a78bfa; }
+.badge-high     { background:rgba(16,185,129,.10);  border:1px solid rgba(16,185,129,.28); color:#34d399; }
+.badge-moderate { background:rgba(245,158,11,.10);  border:1px solid rgba(245,158,11,.28); color:#fbbf24; }
+.badge-low      { background:rgba(239,68,68,.10);   border:1px solid rgba(239,68,68,.28);  color:#f87171; }
+.diag-prediction {
+  font:800 1.9rem/1.05 var(--font-display);
+  color:#e2e8f0; letter-spacing:-.03em;
+}
+.diag-confidence { margin-top:.2rem; color:#94a3b8; font:500 .8rem Inter,sans-serif; }
+
+/* ── UNCERTAINTY / XAI ── */
+.uncertainty-card {
+  margin:.8rem 0; padding:1rem 1.15rem; border-radius:12px;
+  background:rgba(124,58,237,.05); border:1px solid rgba(124,58,237,.20);
+}
+.unc-title {
+  font:700 .58rem Inter,sans-serif; color:#a78bfa;
+  text-transform:uppercase; letter-spacing:.14em; margin-bottom:.65rem;
+}
+.unc-value { font:800 1.35rem/1 var(--font-mono); letter-spacing:-.01em; }
+.unc-band  { margin-top:.2rem; font:600 .72rem Inter,sans-serif; }
+
+.xai-card {
+  margin:.7rem 0; padding:.9rem 1.15rem; border-radius:12px;
+  background:rgba(8,145,178,.04); border:1px solid rgba(34,211,238,.16);
+}
+.xai-title {
+  display:flex; align-items:center; gap:.4rem;
+  font:700 .6rem Inter,sans-serif; color:#22d3ee;
+  text-transform:uppercase; letter-spacing:.12em; margin-bottom:.6rem;
+}
+.xai-text { color:#94a3b8; font:400 .76rem/1.6 Inter,sans-serif; }
+.xai-text b  { color:#cbd5e1; font-weight:700; }
+.xai-text em { color:#cbd5e1; font-style:italic; }
+
+/* ── DISCLAIMER ── */
+.disclaimer {
+  display:flex; align-items:flex-start; gap:.55rem;
+  margin:.8rem 0; padding:.75rem .95rem; border-radius:10px;
+  background:rgba(245,158,11,.045); border:1px solid rgba(245,158,11,.18);
+  color:#94a3b8; font:400 .74rem/1.5 Inter,sans-serif;
+}
+.disclaimer b { color:#fbbf24; }
+
+/* ── PROBABILITY GRID ── */
+.prob-grid {
+  display:grid; grid-template-columns:repeat(auto-fit,minmax(140px,1fr));
+  gap:.6rem; margin:.4rem 0 .2rem;
+}
+.prob-card {
+  position:relative; padding:.85rem .95rem; border-radius:10px;
+  background:rgba(15,23,42,.72); border:1px solid rgba(148,163,184,.12);
+  transition:border-color .16s,transform .16s;
+}
+.prob-card:hover { border-color:rgba(34,211,238,.28); }
+.prob-card.is-top {
+  border-color:rgba(34,211,238,.42);
+  background:linear-gradient(135deg,rgba(8,145,178,.13),rgba(15,23,42,.85));
+  box-shadow:0 0 22px rgba(8,145,178,.12);
+}
+.prob-value {
+  font:800 1.4rem/1 var(--font-mono); color:#e2e8f0; letter-spacing:-.02em;
+}
+.prob-card.is-top .prob-value { color:#22d3ee; }
+.prob-label { margin-top:.3rem; color:#94a3b8; font:600 .7rem Inter,sans-serif; }
+.prob-top-tag {
+  position:absolute; top:.5rem; right:.5rem;
+  padding:.12rem .4rem; border-radius:999px;
+  background:rgba(34,211,238,.14); border:1px solid rgba(34,211,238,.32);
+  color:#22d3ee; font:700 .5rem Inter,sans-serif;
+  letter-spacing:.06em; text-transform:uppercase;
+}
+
+/* ── EMPTY STATE ── */
+.empty-state {
+  padding:3rem 1rem; text-align:center; border-radius:14px;
+  border:1px dashed rgba(148,163,184,.16); background:rgba(15,23,42,.35);
+}
+.empty-icon {
+  width:64px; height:64px; margin:0 auto .9rem; display:grid; place-items:center;
+  border-radius:14px; background:rgba(148,163,184,.05);
+  border:1px solid rgba(148,163,184,.14);
+}
+.empty-title { color:#cbd5e1; font:700 .95rem var(--font-display); }
+.empty-text  { margin-top:.35rem; color:#64748b; font:400 .78rem Inter,sans-serif; }
+
+/* ── DISTRIBUTION BARS ── */
+.dist-card {
+  margin:.4rem 0; padding:.65rem .85rem; border-radius:10px;
+  background:rgba(15,23,42,.6); border:1px solid rgba(148,163,184,.10);
+}
+.dist-row {
+  display:flex; justify-content:space-between; align-items:center; margin-bottom:.45rem;
+}
+.dist-name  { color:#cbd5e1; font:600 .78rem Inter,sans-serif; }
+.dist-count { color:#94a3b8; font:600 .7rem var(--font-mono); }
+.dist-track { height:6px; border-radius:999px; background:rgba(148,163,184,.10); overflow:hidden; }
+.dist-fill {
+  height:100%; border-radius:999px;
+  background:linear-gradient(90deg,#0891b2,#22d3ee);
+  transition:width 1s cubic-bezier(.2,.8,.2,1);
+}
+
+/* ── LATEST RESULT ── */
+.latest-card {
+  padding:.7rem .85rem; border-radius:10px;
+  background:rgba(15,23,42,.55); border:1px solid rgba(148,163,184,.10);
+}
+.latest-row {
+  display:flex; justify-content:space-between; gap:.6rem;
+  padding:.42rem 0; border-bottom:1px solid rgba(148,163,184,.07);
+}
+.latest-row:last-child { border-bottom:0; }
+.latest-key { color:#64748b; font:600 .68rem Inter,sans-serif; }
+.latest-val {
+  color:#cbd5e1; font:600 .7rem var(--font-mono);
+  text-align:right; word-break:break-word;
+}
+
+/* ── HISTORY THUMB ── */
+.thumb-card {
+  display:flex; align-items:center; gap:.85rem;
+  padding:.75rem .95rem; margin:.4rem 0; border-radius:10px;
+  background:rgba(15,23,42,.6); border:1px solid rgba(148,163,184,.10);
+  transition:border-color .16s,transform .16s;
+}
+.thumb-card:hover { border-color:rgba(34,211,238,.25); transform:translateX(2px); }
+.thumb-icon {
+  width:36px; height:36px; display:grid; place-items:center;
+  border-radius:9px; background:rgba(8,145,178,.08);
+  border:1px solid rgba(34,211,238,.18); flex:0 0 auto;
+}
+.thumb-info  { flex:1; min-width:0; }
+.thumb-title { color:#e2e8f0; font:700 .85rem Inter,sans-serif; }
+.thumb-meta {
+  margin-top:.15rem; color:#64748b; font:500 .68rem var(--font-mono);
+  overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
+}
+.conf-badge {
+  display:inline-block; padding:.28rem .65rem; border-radius:999px;
+  font:700 .72rem var(--font-mono); letter-spacing:.01em;
+}
+.conf-hi  { background:rgba(16,185,129,.12); border:1px solid rgba(16,185,129,.30); color:#34d399; }
+.conf-mid { background:rgba(245,158,11,.12); border:1px solid rgba(245,158,11,.30); color:#fbbf24; }
+.conf-lo  { background:rgba(239,68,68,.12);  border:1px solid rgba(239,68,68,.30);  color:#f87171; }
+
+/* ── ACTIVITY FEED ── */
+.act-feed {
+  padding:.55rem .65rem; border-radius:10px; max-height:360px; overflow-y:auto;
+  background:rgba(15,23,42,.55); border:1px solid rgba(148,163,184,.10);
+}
+.act-row {
+  display:flex; gap:.55rem; padding:.38rem .25rem;
+  border-bottom:1px solid rgba(148,163,184,.06);
+  font:500 .7rem Inter,sans-serif;
+}
+.act-row:last-child { border-bottom:0; }
+.act-time { color:#475569; font:600 .65rem var(--font-mono); flex:0 0 auto; }
+.act-msg  { color:#94a3b8; word-break:break-word; }
+.act-success .act-msg { color:#34d399; }
+.act-warn    .act-msg { color:#fbbf24; }
+.act-error   .act-msg { color:#f87171; }
+
+/* ── EXPORT HEAD ── */
+.export-head {
+  display:flex; align-items:center; gap:.7rem;
+  margin:1rem 0 .65rem; padding:.7rem .95rem; border-radius:10px;
+  background:rgba(15,23,42,.72); border:1px solid rgba(148,163,184,.12);
+}
+.export-head-icon {
+  width:34px; height:34px; display:grid; place-items:center;
+  border-radius:8px; background:rgba(8,145,178,.08);
+  border:1px solid rgba(34,211,238,.18);
+}
+.export-head-title { color:#e2e8f0; font:700 .85rem var(--font-display); }
+.export-head-sub   { color:#64748b; font:500 .68rem Inter,sans-serif; }
+.export-head-badge {
+  margin-left:auto; padding:.18rem .55rem; border-radius:999px;
+  background:rgba(16,185,129,.10); border:1px solid rgba(16,185,129,.28);
+  color:#34d399; font:700 .58rem Inter,sans-serif; letter-spacing:.06em;
+}
+.export-item-label {
+  color:#64748b; font:700 .6rem Inter,sans-serif;
+  text-transform:uppercase; letter-spacing:.1em; margin:.2rem 0 .35rem;
+}
+
+/* ── APP FOOTER ── */
+.app-footer {
+  display:grid; grid-template-columns:1.4fr 1fr 1fr; gap:1.5rem;
+  margin-top:2.5rem; padding:1.5rem; border-radius:14px;
+  background:linear-gradient(180deg,rgba(15,23,42,.6),rgba(11,17,32,.9));
+  border:1px solid rgba(148,163,184,.10);
+}
+.footer-brand-lockup { display:flex; align-items:center; gap:.6rem; margin-bottom:.75rem; }
+.footer-brand-icon {
+  width:38px; height:38px; display:grid; place-items:center;
+  border-radius:10px; background:rgba(8,145,178,.08);
+  border:1px solid rgba(34,211,238,.20);
+}
+.footer-brand-name { color:#e2e8f0; font:800 .95rem var(--font-display); }
+.footer-brand-tag  { color:#64748b; font:500 .65rem Inter,sans-serif; }
+.footer-desc {
+  color:#94a3b8; font:400 .74rem/1.55 Inter,sans-serif;
+  max-width:46ch; margin-bottom:.65rem;
+}
+.footer-copy { color:#475569; font:600 .65rem Inter,sans-serif; }
+.footer-col-title {
+  color:#22d3ee; font:700 .6rem Inter,sans-serif;
+  text-transform:uppercase; letter-spacing:.12em; margin-bottom:.55rem;
+}
+.footer-tech-badges { display:flex; flex-wrap:wrap; gap:.3rem; }
+.ft-badge {
+  display:inline-flex; align-items:center; gap:.3rem;
+  padding:.22rem .55rem; border-radius:6px;
+  background:rgba(8,145,178,.06); border:1px solid rgba(34,211,238,.16);
+  color:#94a3b8; font:600 .62rem var(--font-mono);
+}
+.ft-badge-dot {
+  width:5px; height:5px; border-radius:50%; background:#22d3ee;
+  box-shadow:0 0 6px rgba(34,211,238,.6);
+}
+.footer-stats { display:flex; flex-direction:column; gap:.55rem; }
+.f-stat {
+  padding:.55rem .7rem; border-radius:8px;
+  background:rgba(15,23,42,.55); border:1px solid rgba(148,163,184,.10);
+}
+.f-stat-val {
+  display:flex; align-items:center; gap:.4rem;
+  color:#e2e8f0; font:800 1.05rem/1 var(--font-display); letter-spacing:-.02em;
+}
+.f-stat-lbl {
+  margin-top:.22rem; color:#64748b; font:600 .6rem Inter,sans-serif;
+  text-transform:uppercase; letter-spacing:.08em;
+}
+.f-dot {
+  width:8px; height:8px; border-radius:50%; background:#34d399;
+  box-shadow:0 0 8px rgba(52,211,153,.7);
+}
+.f-dot-off { background:#f87171; box-shadow:0 0 8px rgba(248,113,113,.7); }
+
+.copyright-line {
+  margin-top:1rem; padding:.9rem 1rem; text-align:center;
+  font:500 .72rem Inter,sans-serif;
+  border-top:1px solid rgba(148,163,184,.08);
+}
+
+/* ── RESPONSIVE ── */
 @media (max-width: 1100px) {
   :root { --sb-w:230px; }
   [data-testid="stSidebar"] { min-width:230px !important; max-width:230px !important; width:230px !important; }
   .sticky-header { left:calc(var(--sb-w) + .5rem); }
   .hd-ticker { display:none; }
+  .app-footer { grid-template-columns:1fr 1fr; }
+}
+@media (max-width: 900px) {
+  .app-footer { grid-template-columns:1fr 1fr; }
 }
 @media (max-width: 760px) {
   :root { --sb-w:0px; --hd-h:48px; }
@@ -775,6 +1156,12 @@ html, body, [data-testid="stAppViewContainer"], [data-testid="stApp"] {
   .hd-page { margin-left:auto; }
   .sb-engine-grid { grid-template-columns:1fr 1fr; }
 }
+@media (max-width: 600px) {
+  .app-footer { grid-template-columns:1fr; padding:1.1rem; }
+  .hero h1 { font-size:2rem; }
+  .diag-prediction { font-size:1.5rem; }
+  .prob-grid { grid-template-columns:repeat(2,1fr); }
+}
 @media (max-width: 560px) {
   .stButton > button, .stDownloadButton > button { min-height:44px !important; }
   [data-testid="stMetric"] { padding:.65rem !important; }
@@ -783,6 +1170,8 @@ html, body, [data-testid="stAppViewContainer"], [data-testid="stApp"] {
 """
 st.markdown(f"<style>{UI_CSS}</style>", unsafe_allow_html=True)
 
+
+# ─────────────────────────────────────────────────────────────────────────────
 # MODEL ARCHITECTURES
 # ─────────────────────────────────────────────────────────────────────────────
 
@@ -870,14 +1259,12 @@ def load_model(model_path):
     if not model_path.exists():
         raise FileNotFoundError(f"Model file not found: {model_path}")
 
-    # FIX: PyTorch 2.6+ defaults weights_only=True; try safe first, fallback.
     try:
         checkpoint = torch.load(model_path, map_location=DEVICE, weights_only=True)
     except Exception:
         try:
             checkpoint = torch.load(model_path, map_location=DEVICE, weights_only=False)
         except TypeError:
-            # Older PyTorch (<1.13) has no weights_only kwarg
             checkpoint = torch.load(model_path, map_location=DEVICE)
 
     if not isinstance(checkpoint, dict):
@@ -948,7 +1335,6 @@ def predict_image(image, model, class_names):
 
 
 def mc_dropout_predict(image, model, class_names, n_samples=MC_SAMPLES):
-    """MC Dropout. Restores model.eval() even if an exception occurs."""
     if model is None:
         return None
 
@@ -999,7 +1385,6 @@ def _get_target_layer(model, model_name):
 
 
 def _cam_to_heatmap(cam_raw):
-    """FIX: removed unused second parameter."""
     cam = np.maximum(cam_raw, 0)
     cam -= cam.min()
     if cam.max() > 0:
@@ -1062,7 +1447,6 @@ def generate_gradcam_pp(image, model, model_name):
         tensor = test_transforms(image).unsqueeze(0).to(DEVICE)
         model.zero_grad()
         out = model(tensor)
-        # FIX: removed retain_graph=True — not needed for single backward pass
         out[0, int(out.argmax(dim=1).item())].backward()
         if not activations or not gradients:
             raise RuntimeError("Hooks failed.")
@@ -1100,7 +1484,6 @@ def generate_gradcam_pp(image, model, model_name):
 
 
 def explanation_agreement(image, model, model_name):
-    """Pearson correlation between Grad-CAM and Grad-CAM++ heatmaps."""
     if model is None:
         return None
     model.eval()
@@ -1117,7 +1500,6 @@ def explanation_agreement(image, model, model_name):
         model.zero_grad()
         out = model(tensor)
         idx = int(out.argmax(dim=1).item())
-        # FIX: no retain_graph needed — we do a fresh forward pass below
         out[0, idx].backward()
 
         fwd1.remove()
@@ -1218,7 +1600,6 @@ def plot_latency_trend(history):
 
 
 def plot_uncertainty_history(history):
-    # FIX: filter out None uncertainties (was leaking None into matplotlib)
     data = [
         (i + 1, h["uncertainty"])
         for i, h in enumerate(history)
@@ -1470,7 +1851,6 @@ def render_live_probability_animation(result, mc_result=None):
             f'<span style="float:right;font-weight:700;color:{color};font-family:\'JetBrains Mono\',monospace;font-size:.74rem">σ={uval:.4f} · {band}</span></div>'
         )
 
-    # FIX: increased height buffer for MC rows + labels
     h = 130 + 34 * len(items) + (160 + 34 * len(items) if mc_result else 0)
 
     _render_html(f"""
@@ -1559,7 +1939,7 @@ with st.sidebar:
             <span class="sb-brand-pulse"></span>
         </div>
         <div class="sb-brand-text">
-            <div class="sb-brand-name">NeuroLens <span class="sb-brand-ai">AI</span><span class="sb-brand-ver">v3.4</span></div>
+            <div class="sb-brand-name">NeuroLens <span class="sb-brand-ai">AI</span><span class="sb-brand-ver">v3.5</span></div>
             <div class="sb-brand-sub">Neurodiagnostic Intelligence</div>
         </div>
     </div>"""), unsafe_allow_html=True)
@@ -1894,7 +2274,7 @@ if nav == "Home":
         <div class="info-card" style="border-color:rgba(220,38,38,.28);background:rgba(220,38,38,.04)">
             <div style="display:flex;align-items:center;gap:.5rem;margin-bottom:.5rem">{err_svg}
                 <h3 style="color:#f87171;margin:0">Neural Engine Unavailable</h3></div>
-            <p>Expected: <code style="font-family:var(--font-mono)">{MODEL_PATH}</code></p>
+            <p>Expected: <code>{MODEL_PATH}</code></p>
         </div>"""), unsafe_allow_html=True)
         with st.expander("Technical Details"):
             st.code(model_error)
@@ -2290,7 +2670,6 @@ elif nav == "MRI Analysis":
                         unsafe_allow_html=True,
                     )
                     if st.session_state.gradcam_image:
-                        # FIX: use _stretch_pyplot() for st.pyplot
                         st.pyplot(st.session_state.gradcam_image, **_stretch_pyplot())
                         st.caption("Weighted class activations · α=0.44")
                 with pp_col:
@@ -2500,7 +2879,6 @@ elif nav == "Dashboard":
             )
             cf = plot_confidence_trend(history)
             if cf:
-                # FIX: _stretch_pyplot()
                 st.pyplot(cf, **_stretch_pyplot())
                 plt.close(cf)
             else:
@@ -2806,7 +3184,6 @@ elif nav == "XAI Lab":
             _icon_header(Icons.activity(20, "#22d3ee"), "Uncertainty Distribution"),
             unsafe_allow_html=True,
         )
-        # FIX: filter None uncertainties for the count check too
         unc_data = [h["uncertainty"] for h in history if h.get("uncertainty") is not None]
         if len(unc_data) >= 2:
             uf = plot_uncertainty_history(history)
