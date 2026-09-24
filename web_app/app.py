@@ -111,7 +111,7 @@ def uncertainty_band(uncertainty: float) -> tuple[str, str]:
 
 
 # ─────────────────────────────────────────────────────────────────────────────
-# CSS — Design System v3.1 (Vercel/Linear-grade dark UI)
+# CSS — Design System v3.2 (Compact + Scalable)
 # ─────────────────────────────────────────────────────────────────────────────
 STYLES = """
 <style>
@@ -151,10 +151,27 @@ STYLES = """
     --font-mono:    'JetBrains Mono', ui-monospace, monospace;
 
     /* Radius */
-    --r-sm: 10px;
-    --r-md: 14px;
-    --r-lg: 18px;
+    --r-sm: 8px;
+    --r-md: 12px;
+    --r-lg: 16px;
     --r-pill: 999px;
+
+    /* Sizing scale (scalable) */
+    --btn-h-sm: 30px;
+    --btn-h-md: 34px;
+    --btn-h-lg: 38px;
+    --btn-pad-x-sm: 0.65rem;
+    --btn-pad-x-md: 0.85rem;
+    --btn-font-sm: 0.72rem;
+    --btn-font-md: 0.78rem;
+    --btn-font-lg: 0.82rem;
+
+    /* Sidebar width */
+    --sb-w: 268px;
+    --sb-w-md: 240px;
+
+    /* Header height */
+    --hd-h: 52px;
 
     /* Shadow */
     --sh-1: 0 1px 2px rgba(0,0,0,.25);
@@ -162,7 +179,7 @@ STYLES = """
     --sh-3: 0 12px 32px rgba(0,0,0,.35);
     --sh-focus: 0 0 0 3px rgba(14,165,233,.28);
 
-    /* Legacy aliases — keep existing inline HTML resolving */
+    /* Legacy aliases */
     --bg-primary: var(--bg);
     --bg-secondary: var(--surface);
     --bg-card: var(--surface-2);
@@ -189,7 +206,7 @@ header[data-testid="stHeader"] { background: transparent; }
 #MainMenu, footer { visibility: hidden; }
 
 h1, h2, h3, .metric-value, .diagnostic-prediction,
-.uncertainty-value, .hero h1, .sticky-brand-name, .footer-brand {
+.uncertainty-value, .hero h1, .sticky-brand-name, .footer-brand-name {
     font-family: var(--font-display);
     letter-spacing: -0.02em;
 }
@@ -198,17 +215,19 @@ code, pre, .activity-feed, .activity-time {
     font-family: var(--font-mono);
 }
 
-/* ── SIDEBAR ── */
+/* ════════════════════════════════════════════════════════════════════════
+   SIDEBAR — COMPACT + SCALABLE
+   ════════════════════════════════════════════════════════════════════════ */
 [data-testid="stSidebar"] {
     background: var(--surface) !important;
     border-right: 1px solid var(--line) !important;
-    min-width: 288px !important;
-    max-width: 288px !important;
-    width: 288px !important;
+    min-width: var(--sb-w) !important;
+    max-width: var(--sb-w) !important;
+    width: var(--sb-w) !important;
 }
 [data-testid="stSidebar"] > div:first-child {
-    width: 288px !important;
-    padding: 1.1rem 0.75rem 1rem !important;
+    width: var(--sb-w) !important;
+    padding: 0.85rem 0.55rem 0.85rem !important;
 }
 [data-testid="stSidebar"] ::-webkit-scrollbar { width: 4px; }
 [data-testid="stSidebar"] ::-webkit-scrollbar-thumb {
@@ -217,51 +236,57 @@ code, pre, .activity-feed, .activity-time {
 
 .sidebar-brand-title {
     font-family: var(--font-display);
-    font-size: 1.15rem;
+    font-size: 1.02rem;
     font-weight: 700;
     color: var(--text-1);
     letter-spacing: -0.02em;
+    line-height: 1.1;
 }
 .sidebar-brand-subtitle {
-    font-size: 0.65rem;
+    font-size: 0.58rem;
     color: var(--text-3);
     font-weight: 500;
     letter-spacing: 0.06em;
     text-transform: uppercase;
     margin-top: 2px;
+    line-height: 1.2;
 }
 .sidebar-section-label {
-    margin: 1.25rem 0 0.5rem;
+    margin: 0.85rem 0 0.35rem;
     padding-left: 0.5rem;
-    font-size: 0.62rem;
+    font-size: 0.58rem;
     font-weight: 700;
     letter-spacing: 0.14em;
     color: var(--text-3);
     text-transform: uppercase;
 }
 
-/* Sidebar buttons = nav items (compact) */
-[data-testid="stSidebar"] .stButton { margin: 0.1rem 0 !important; }
+/* Sidebar buttons = nav items (COMPACT) */
+[data-testid="stSidebar"] .stButton {
+    margin: 0.05rem 0 !important;
+}
 [data-testid="stSidebar"] .stButton > button {
     width: 100% !important;
-    min-height: 34px !important;
+    min-height: var(--btn-h-md) !important;
+    height: var(--btn-h-md) !important;
     display: flex !important;
     align-items: center !important;
     justify-content: center !important;
-    padding: 0.38rem 0.7rem !important;
+    padding: 0.3rem 0.6rem !important;
     border-radius: var(--r-sm) !important;
     background: transparent !important;
     border: 1px solid transparent !important;
     color: var(--text-2) !important;
-    font-size: 0.79rem !important;
+    font-size: var(--btn-font-sm) !important;
     font-weight: 500 !important;
+    line-height: 1.1 !important;
     transition: background 140ms ease, color 140ms ease, border-color 140ms ease !important;
     box-shadow: none !important;
 }
 [data-testid="stSidebar"] .stButton > button p {
-    line-height: 1.15 !important;
+    line-height: 1.1 !important;
     margin: 0 !important;
-    font-size: 0.79rem !important;
+    font-size: var(--btn-font-sm) !important;
     font-weight: 500 !important;
 }
 [data-testid="stSidebar"] .stButton > button:hover {
@@ -275,14 +300,14 @@ code, pre, .activity-feed, .activity-time {
     outline: none !important;
 }
 
-/* Nav active — replaces the old markdown wrapper hack */
+/* Nav active state */
 .nav-active {
     position: relative !important;
     border-radius: var(--r-sm) !important;
     background: var(--accent-soft) !important;
     border: 1px solid var(--accent-line) !important;
     box-shadow: none !important;
-    margin: -0.1rem 0 !important;
+    margin: -0.05rem 0 !important;
     padding: 0 !important;
     line-height: 0 !important;
 }
@@ -304,95 +329,106 @@ code, pre, .activity-feed, .activity-time {
 .sidebar-active-indicator {
     display: flex;
     align-items: center;
-    gap: 0.5rem;
-    height: 34px;
-    padding: 0 0.75rem;
-    margin: 0.1rem 0 0.6rem;
+    gap: 0.4rem;
+    height: var(--btn-h-sm);
+    padding: 0 0.6rem;
+    margin: 0.05rem 0 0.45rem;
     border-radius: var(--r-sm);
     background: rgba(255,255,255,0.025);
     border: 1px solid var(--line);
     color: var(--text-2);
-    font-size: 0.72rem;
+    font-size: 0.65rem;
     font-weight: 600;
     letter-spacing: 0.02em;
 }
 .sidebar-active-dot {
-    flex: 0 0 6px; width: 6px; height: 6px;
+    flex: 0 0 5px; width: 5px; height: 5px;
     border-radius: 50%;
     background: var(--success);
+    box-shadow: 0 0 6px rgba(16,185,129,0.6);
 }
-.sidebar-active-text { line-height: 1; }
+.sidebar-active-text { line-height: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
 /* Sidebar engine panel */
 .sidebar-engine-grid {
     display: grid;
     grid-template-columns: 1fr 1fr;
-    gap: 0.5rem;
-    margin-top: 0.6rem;
+    gap: 0.35rem;
+    margin-top: 0.45rem;
 }
 .sidebar-mini-stat {
-    padding: 0.55rem 0.65rem;
+    padding: 0.4rem 0.5rem;
     border-radius: var(--r-sm);
     background: rgba(255,255,255,0.02);
     border: 1px solid var(--line);
 }
 .sidebar-mini-label {
-    font-size: 0.58rem;
+    font-size: 0.52rem;
     color: var(--text-3);
     text-transform: uppercase;
     letter-spacing: 0.08em;
     font-weight: 600;
 }
 .sidebar-mini-value {
-    margin-top: 0.25rem;
+    margin-top: 0.15rem;
     font-family: var(--font-mono);
-    font-size: 0.78rem;
+    font-size: 0.7rem;
     font-weight: 600;
     color: var(--text-1);
     overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
 }
 .sidebar-footer {
-    margin-top: 1rem;
-    padding: 0.7rem 0.8rem;
+    margin-top: 0.75rem;
+    padding: 0.55rem 0.65rem;
     border-radius: var(--r-sm);
     background: rgba(245,158,11,0.05);
     border: 1px solid rgba(245,158,11,0.18);
-    font-size: 0.68rem;
+    font-size: 0.62rem;
     color: var(--text-2);
     text-align: center;
-    line-height: 1.5;
+    line-height: 1.4;
 }
 
-/* ── STICKY HEADER ── */
+/* Sidebar HR */
+[data-testid="stSidebar"] hr {
+    margin: 0.65rem 0 !important;
+    border-color: var(--line) !important;
+}
+
+/* ════════════════════════════════════════════════════════════════════════
+   STICKY HEADER — COMPACT + SCALABLE
+   ════════════════════════════════════════════════════════════════════════ */
 .sticky-header {
-    position: fixed; top: 0.5rem;
-    left: calc(288px + 0.5rem); right: 0.5rem;
+    position: fixed; top: 0.4rem;
+    left: calc(var(--sb-w) + 0.4rem); right: 0.4rem;
     z-index: 9999;
-    display: flex; align-items: center; gap: 0.85rem;
-    padding: 0.6rem 0.9rem;
+    display: flex; align-items: center; gap: 0.55rem;
+    padding: 0.4rem 0.65rem;
+    min-height: var(--hd-h);
     border-radius: var(--r-md);
-    background: rgba(15,21,36,0.85);
-    backdrop-filter: blur(20px) saturate(160%);
-    -webkit-backdrop-filter: blur(20px) saturate(160%);
+    background: rgba(15,21,36,0.88);
+    backdrop-filter: blur(18px) saturate(160%);
+    -webkit-backdrop-filter: blur(18px) saturate(160%);
     border: 1px solid var(--line);
     box-shadow: var(--sh-2);
     transition: border-color 200ms ease;
 }
 .sticky-header:hover { border-color: var(--line-strong); }
 
-.sticky-brand { display: flex; align-items: center; gap: 0.55rem; flex-shrink: 0; }
+.sticky-brand { display: flex; align-items: center; gap: 0.45rem; flex-shrink: 0; }
 .sticky-brand-logo {
     position: relative;
-    width: 36px; height: 36px;
-    border-radius: 10px;
+    width: 32px; height: 32px;
+    border-radius: 9px;
     background: var(--accent-soft);
     border: 1px solid var(--accent-line);
     display: flex; align-items: center; justify-content: center;
-    font-size: 1.1rem;
+    font-size: 1rem;
+    flex-shrink: 0;
 }
 .sticky-brand-pulse {
     position: absolute; top: -2px; right: -2px;
-    width: 8px; height: 8px;
+    width: 7px; height: 7px;
     border-radius: 50%;
     background: var(--success);
     border: 2px solid var(--surface);
@@ -404,51 +440,56 @@ code, pre, .activity-feed, .activity-time {
 }
 .sticky-brand-text { display: flex; flex-direction: column; gap: 1px; }
 .sticky-brand-name {
-    font-size: 0.98rem; font-weight: 700; color: var(--text-1);
-    letter-spacing: -0.015em; line-height: 1.1;
+    font-size: 0.88rem; font-weight: 700; color: var(--text-1);
+    letter-spacing: -0.015em; line-height: 1.05;
 }
 .sticky-brand-version {
-    font-size: 0.6rem; color: var(--text-3); font-weight: 500;
+    font-size: 0.55rem; color: var(--text-3); font-weight: 500;
     letter-spacing: 0.06em; text-transform: uppercase;
 }
 
-.sticky-divider { width: 1px; height: 22px; background: var(--line); flex-shrink: 0; }
+.sticky-divider { width: 1px; height: 20px; background: var(--line); flex-shrink: 0; }
 
 .sticky-ticker {
     flex: 1; overflow: hidden;
     border-radius: var(--r-sm);
     background: rgba(255,255,255,0.02);
-    padding: 0.4rem 0.75rem;
+    padding: 0.3rem 0.6rem;
     min-width: 0;
     border: 1px solid var(--line);
+    height: 30px;
+    display: flex; align-items: center;
 }
 .sticky-ticker-inner {
-    display: flex; align-items: center; gap: 1rem;
+    display: flex; align-items: center; gap: 0.75rem;
     white-space: nowrap; overflow: hidden;
     color: var(--text-2);
     font-family: var(--font-mono);
-    font-size: 0.72rem; font-weight: 500;
+    font-size: 0.68rem; font-weight: 500;
     letter-spacing: 0.01em;
+    width: 100%;
     mask-image: linear-gradient(to right, #000 0%, #000 92%, transparent 100%);
     -webkit-mask-image: linear-gradient(to right, #000 0%, #000 92%, transparent 100%);
 }
 .tick-badge {
-    padding: 0.15rem 0.5rem; border-radius: 6px;
+    padding: 0.12rem 0.42rem; border-radius: 5px;
     background: rgba(16,185,129,0.12);
     color: #34d399;
     border: 1px solid rgba(16,185,129,0.28);
-    font-size: 0.65rem; font-weight: 700; letter-spacing: 0.08em;
+    font-size: 0.6rem; font-weight: 700; letter-spacing: 0.08em;
     font-family: var(--font-body);
+    flex-shrink: 0;
 }
-.tick-item { color: var(--text-2); font-family: var(--font-mono); font-size: 0.72rem; }
+.tick-item { color: var(--text-2); font-family: var(--font-mono); font-size: 0.68rem; }
 .tick-item b { color: var(--text-1); font-weight: 600; }
 .tick-idle { color: var(--text-3); font-style: italic; }
 
 .sticky-status {
-    display: inline-flex; align-items: center; gap: 0.4rem;
-    padding: 0.3rem 0.65rem; border-radius: var(--r-sm);
-    font-size: 0.66rem; font-weight: 700; letter-spacing: 0.08em;
+    display: inline-flex; align-items: center; gap: 0.35rem;
+    padding: 0.22rem 0.55rem; border-radius: var(--r-sm);
+    font-size: 0.6rem; font-weight: 700; letter-spacing: 0.08em;
     white-space: nowrap; flex-shrink: 0;
+    height: 26px;
 }
 .status-ok {
     background: rgba(16,185,129,0.10);
@@ -461,27 +502,28 @@ code, pre, .activity-feed, .activity-time {
     border: 1px solid rgba(239,68,68,0.24);
 }
 .sticky-status-dot {
-    width: 6px; height: 6px; border-radius: 50%;
+    width: 5px; height: 5px; border-radius: 50%;
     background: currentColor;
 }
 
 .sticky-page {
-    display: inline-flex; align-items: center; gap: 0.45rem;
-    padding: 0.35rem 0.7rem; border-radius: var(--r-sm);
+    display: inline-flex; align-items: center; gap: 0.35rem;
+    padding: 0.25rem 0.55rem; border-radius: var(--r-sm);
     background: transparent;
     border: 1px solid var(--line);
-    font-size: 0.76rem; font-weight: 600; color: var(--text-1);
+    font-size: 0.7rem; font-weight: 600; color: var(--text-1);
     white-space: nowrap; flex-shrink: 0;
+    height: 26px;
 }
 .sticky-page-dot {
-    width: 6px; height: 6px; border-radius: 50%;
+    width: 5px; height: 5px; border-radius: 50%;
     background: var(--accent);
 }
 
 .main .block-container {
-    padding-top: 5.75rem !important;
-    padding-left: 1.5rem !important;
-    padding-right: 1.5rem !important;
+    padding-top: 4.75rem !important;
+    padding-left: 1.25rem !important;
+    padding-right: 1.25rem !important;
     max-width: 1320px;
 }
 
@@ -498,10 +540,10 @@ code, pre, .activity-feed, .activity-time {
 
 /* ── HERO ── */
 .hero {
-    padding: 3rem 2rem;
+    padding: 2.5rem 1.75rem;
     border-radius: var(--r-lg);
     text-align: center;
-    margin-bottom: 1.5rem;
+    margin-bottom: 1.25rem;
     background: var(--surface-2);
     border: 1px solid var(--line);
     position: relative;
@@ -516,41 +558,41 @@ code, pre, .activity-feed, .activity-time {
     pointer-events: none;
 }
 .hero h1 {
-    font-size: 3rem;
+    font-size: 2.5rem;
     font-weight: 800;
     letter-spacing: -0.035em;
-    margin-bottom: 0.75rem;
+    margin-bottom: 0.6rem;
     color: var(--text-1);
     position: relative;
 }
 .hero p {
     color: var(--text-2);
-    font-size: 1rem;
+    font-size: 0.92rem;
     line-height: 1.6;
     max-width: 620px;
     margin: 0 auto;
     position: relative;
 }
 .hero-badge {
-    display: inline-flex; align-items: center; gap: 0.4rem;
-    padding: 0.35rem 0.75rem;
+    display: inline-flex; align-items: center; gap: 0.35rem;
+    padding: 0.3rem 0.65rem;
     border-radius: var(--r-pill);
     background: var(--accent-soft);
     border: 1px solid var(--accent-line);
-    font-size: 0.7rem; font-weight: 600;
+    font-size: 0.66rem; font-weight: 600;
     color: var(--accent-hi);
-    margin-bottom: 1rem;
+    margin-bottom: 0.85rem;
     position: relative;
 }
 
-/* ── DIAGNOSTIC PANEL (result hero) ── */
+/* ── DIAGNOSTIC PANEL ── */
 .diagnostic-panel {
-    padding: 2rem 2.25rem;
+    padding: 1.75rem 2rem;
     border-radius: var(--r-lg);
     background: var(--surface-2);
     border: 1px solid var(--accent-line);
     box-shadow: var(--sh-2);
-    margin-top: 1.5rem;
+    margin-top: 1.25rem;
     position: relative;
     overflow: hidden;
 }
@@ -563,16 +605,16 @@ code, pre, .activity-feed, .activity-time {
 }
 .diagnostic-header {
     display: flex; justify-content: space-between; align-items: center;
-    margin-bottom: 1rem;
-    padding-bottom: 0.75rem;
+    margin-bottom: 0.85rem;
+    padding-bottom: 0.65rem;
     border-bottom: 1px solid var(--line);
 }
 .diagnostic-title {
-    font-size: 0.7rem; color: var(--text-3);
+    font-size: 0.66rem; color: var(--text-3);
     text-transform: uppercase; letter-spacing: 0.12em; font-weight: 700;
 }
 .diagnostic-prediction {
-    font-size: 2.75rem;
+    font-size: 2.4rem;
     font-weight: 800;
     color: var(--text-1);
     letter-spacing: -0.03em;
@@ -580,18 +622,18 @@ code, pre, .activity-feed, .activity-time {
 }
 .diagnostic-confidence {
     font-family: var(--font-mono);
-    font-size: 1rem; font-weight: 500;
+    font-size: 0.92rem; font-weight: 500;
     color: var(--accent-hi);
-    margin-top: 0.5rem;
+    margin-top: 0.4rem;
     letter-spacing: 0;
 }
 
 /* ── BADGES ── */
 .medical-badge {
-    display: inline-flex; align-items: center; gap: 0.3rem;
-    padding: 0.28rem 0.65rem;
+    display: inline-flex; align-items: center; gap: 0.28rem;
+    padding: 0.24rem 0.58rem;
     border-radius: 6px;
-    font-size: 0.68rem; font-weight: 600;
+    font-size: 0.64rem; font-weight: 600;
     letter-spacing: 0.02em;
 }
 .badge-research { background: rgba(245,158,11,0.10); color: #fbbf24; border: 1px solid rgba(245,158,11,0.24); }
@@ -601,7 +643,7 @@ code, pre, .activity-feed, .activity-time {
 
 /* ── METRIC CARDS ── */
 .metric-card {
-    padding: 1.25rem;
+    padding: 1rem 1.1rem;
     border-radius: var(--r-md);
     background: var(--surface-2);
     border: 1px solid var(--line);
@@ -612,20 +654,20 @@ code, pre, .activity-feed, .activity-time {
     background: var(--surface-3);
 }
 .metric-icon {
-    font-size: 1.1rem;
-    margin-bottom: 0.5rem;
+    font-size: 1rem;
+    margin-bottom: 0.4rem;
     opacity: 0.85;
 }
 .metric-value {
-    font-size: 2rem;
+    font-size: 1.7rem;
     font-weight: 700;
     color: var(--text-1);
-    margin: 0.15rem 0;
+    margin: 0.12rem 0;
     letter-spacing: -0.025em;
     font-variant-numeric: tabular-nums;
 }
 .metric-label {
-    font-size: 0.66rem;
+    font-size: 0.6rem;
     color: var(--text-3);
     text-transform: uppercase;
     letter-spacing: 0.1em;
@@ -634,8 +676,8 @@ code, pre, .activity-feed, .activity-time {
 
 /* ── INFO CARD ── */
 .info-card {
-    padding: 1.5rem;
-    min-height: 140px;
+    padding: 1.25rem;
+    min-height: 130px;
     border-radius: var(--r-lg);
     background: var(--surface-2);
     border: 1px solid var(--line);
@@ -643,9 +685,9 @@ code, pre, .activity-feed, .activity-time {
 .info-card:hover { border-color: var(--line-strong); transform: translateY(-1px); }
 .info-card h3 {
     margin-top: 0;
-    margin-bottom: 0.5rem;
+    margin-bottom: 0.4rem;
     color: var(--text-1);
-    font-size: 0.95rem;
+    font-size: 0.9rem;
     font-weight: 600;
     font-family: var(--font-display);
     letter-spacing: -0.01em;
@@ -653,53 +695,53 @@ code, pre, .activity-feed, .activity-time {
 .info-card p {
     color: var(--text-2);
     line-height: 1.55;
-    font-size: 0.85rem;
-    margin: 0.25rem 0;
+    font-size: 0.8rem;
+    margin: 0.2rem 0;
 }
 
 /* ── UNCERTAINTY CARD ── */
 .uncertainty-card {
-    padding: 1.25rem 1.5rem;
+    padding: 1.1rem 1.25rem;
     border-radius: var(--r-md);
     background: var(--surface-2);
     border: 1px solid var(--line);
     border-left: 3px solid var(--violet);
-    margin-top: 1rem;
+    margin-top: 0.85rem;
     transition: border-left-color 300ms ease, background 300ms ease;
 }
 .uncertainty-title {
-    font-size: 0.68rem;
+    font-size: 0.62rem;
     color: var(--violet);
     text-transform: uppercase;
     letter-spacing: 0.12em;
     font-weight: 700;
-    margin-bottom: 0.6rem;
+    margin-bottom: 0.5rem;
     opacity: 0.9;
 }
 .uncertainty-value {
     font-family: var(--font-display);
-    font-size: 1.6rem;
+    font-size: 1.45rem;
     font-weight: 700;
     letter-spacing: -0.02em;
     font-variant-numeric: tabular-nums;
     line-height: 1.1;
 }
 .uncertainty-band {
-    font-size: 0.82rem;
+    font-size: 0.78rem;
     font-weight: 600;
-    margin-top: 0.2rem;
+    margin-top: 0.15rem;
     opacity: 0.9;
 }
 
 /* ── PROBABILITY GRID ── */
 .probability-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-    gap: 0.75rem;
-    margin-top: 1rem;
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    gap: 0.6rem;
+    margin-top: 0.85rem;
 }
 .probability-card {
-    padding: 1rem;
+    padding: 0.85rem;
     border-radius: var(--r-md);
     background: var(--surface-2);
     border: 1px solid var(--line);
@@ -713,15 +755,15 @@ code, pre, .activity-feed, .activity-time {
 }
 .probability-value {
     font-family: var(--font-display);
-    font-size: 1.5rem;
+    font-size: 1.35rem;
     font-weight: 700;
     color: var(--text-1);
-    margin-bottom: 0.25rem;
+    margin-bottom: 0.2rem;
     letter-spacing: -0.02em;
     font-variant-numeric: tabular-nums;
 }
 .probability-label {
-    font-size: 0.75rem;
+    font-size: 0.7rem;
     color: var(--text-2);
     font-weight: 500;
 }
@@ -740,55 +782,55 @@ code, pre, .activity-feed, .activity-time {
 
 /* ── CHARTS ── */
 .chart-container {
-    padding: 1.25rem;
+    padding: 1.1rem;
     border-radius: var(--r-md);
     background: var(--surface-2);
     border: 1px solid var(--line);
-    margin-top: 1rem;
+    margin-top: 0.85rem;
 }
 
-/* ── THUMBNAILS (history rows) ── */
+/* ── THUMBNAILS ── */
 .thumbnail-card {
-    display: flex; align-items: center; gap: 0.85rem;
-    padding: 0.85rem 1rem;
+    display: flex; align-items: center; gap: 0.75rem;
+    padding: 0.75rem 0.9rem;
     border-radius: var(--r-md);
     background: var(--surface-2);
     border: 1px solid var(--line);
-    margin-bottom: 0.5rem;
+    margin-bottom: 0.4rem;
 }
 .thumbnail-card:hover {
     border-color: var(--line-strong);
     background: var(--surface-3);
 }
 .thumbnail-img {
-    width: 44px; height: 44px;
+    width: 40px; height: 40px;
     border-radius: var(--r-sm);
     background: var(--accent-soft);
     border: 1px solid var(--accent-line);
     display: flex; align-items: center; justify-content: center;
-    font-size: 1.15rem;
+    font-size: 1.05rem;
     flex-shrink: 0;
 }
 .thumbnail-info { flex: 1; min-width: 0; }
 .thumbnail-title {
     font-family: var(--font-display);
-    font-size: 0.92rem;
+    font-size: 0.88rem;
     font-weight: 600;
     color: var(--text-1);
-    margin-bottom: 0.15rem;
+    margin-bottom: 0.12rem;
     letter-spacing: -0.01em;
 }
 .thumbnail-meta {
     font-family: var(--font-mono);
-    font-size: 0.7rem;
+    font-size: 0.66rem;
     color: var(--text-3);
 }
 .confidence-badge {
     display: inline-block;
-    padding: 0.28rem 0.6rem;
+    padding: 0.24rem 0.55rem;
     border-radius: 6px;
     font-family: var(--font-mono);
-    font-size: 0.76rem;
+    font-size: 0.72rem;
     font-weight: 600;
 }
 .confidence-high   { background: rgba(16,185,129,0.10); color: #34d399; border: 1px solid rgba(16,185,129,0.22); }
@@ -797,23 +839,23 @@ code, pre, .activity-feed, .activity-time {
 
 /* ── EMPTY STATES ── */
 .empty-state {
-    padding: 3rem 2rem;
+    padding: 2.5rem 1.75rem;
     border-radius: var(--r-lg);
     background: var(--surface-2);
     border: 1px dashed var(--line-strong);
     text-align: center;
 }
-.empty-state-icon { font-size: 2.25rem; margin-bottom: 1rem; opacity: 0.5; }
+.empty-state-icon { font-size: 2rem; margin-bottom: 0.85rem; opacity: 0.5; }
 .empty-state-title {
     font-family: var(--font-display);
-    font-size: 1rem;
+    font-size: 0.95rem;
     font-weight: 600;
     color: var(--text-1);
-    margin-bottom: 0.4rem;
+    margin-bottom: 0.35rem;
     letter-spacing: -0.01em;
 }
 .empty-state-text {
-    font-size: 0.85rem;
+    font-size: 0.8rem;
     color: var(--text-2);
     max-width: 380px;
     margin: 0 auto;
@@ -825,18 +867,18 @@ code, pre, .activity-feed, .activity-time {
     border-radius: var(--r-md);
     border: 1px solid var(--line);
     background: rgba(0,0,0,0.20);
-    max-height: 340px;
+    max-height: 320px;
     overflow-y: auto;
     font-family: var(--font-mono);
-    font-size: 0.72rem;
+    font-size: 0.68rem;
 }
 .activity-row {
-    display: flex; gap: 0.7rem;
-    padding: 0.4rem 0.8rem;
+    display: flex; gap: 0.6rem;
+    padding: 0.35rem 0.7rem;
     border-bottom: 1px solid rgba(255,255,255,0.03);
 }
 .activity-row:last-child { border-bottom: none; }
-.activity-time { color: var(--text-3); min-width: 62px; }
+.activity-time { color: var(--text-3); min-width: 58px; }
 .activity-msg  { color: var(--text-2); }
 .activity-success .activity-msg { color: #6ee7b7; }
 .activity-warn    .activity-msg { color: #fbbf24; }
@@ -844,21 +886,21 @@ code, pre, .activity-feed, .activity-time {
 
 /* ── DISTRIBUTION CARDS ── */
 .dist-card {
-    padding: 0.85rem 1rem;
+    padding: 0.75rem 0.9rem;
     border-radius: var(--r-md);
     background: var(--surface-2);
     border: 1px solid var(--line);
-    margin-bottom: 0.5rem;
+    margin-bottom: 0.4rem;
 }
 .dist-card:hover { border-color: var(--line-strong); }
 .dist-header {
     display: flex; justify-content: space-between; align-items: center;
-    margin-bottom: 0.5rem;
+    margin-bottom: 0.4rem;
 }
-.dist-name { font-size: 0.85rem; font-weight: 600; color: var(--text-1); }
+.dist-name { font-size: 0.8rem; font-weight: 600; color: var(--text-1); }
 .dist-count {
     font-family: var(--font-mono);
-    font-size: 0.75rem;
+    font-size: 0.7rem;
     color: var(--accent-hi);
     font-weight: 500;
 }
@@ -877,30 +919,30 @@ code, pre, .activity-feed, .activity-time {
 
 /* ── LATEST RESULT CARD ── */
 .latest-card {
-    padding: 0.75rem 1.15rem;
+    padding: 0.65rem 1rem;
     border-radius: var(--r-md);
     background: var(--surface-2);
     border: 1px solid var(--line);
 }
 .latest-row {
     display: flex; justify-content: space-between; align-items: center;
-    padding: 0.55rem 0;
+    padding: 0.45rem 0;
     border-bottom: 1px solid var(--line);
 }
 .latest-row:last-child { border-bottom: none; }
-.latest-key { font-size: 0.78rem; color: var(--text-2); font-weight: 500; }
+.latest-key { font-size: 0.72rem; color: var(--text-2); font-weight: 500; }
 .latest-val {
     font-family: var(--font-mono);
-    font-size: 0.78rem;
+    font-size: 0.72rem;
     color: var(--text-1);
     font-weight: 500;
 }
 
-/* ── ELEGANT UPLOAD HERO ── */
+/* ── UPLOAD HERO ── */
 .upload-hero {
     position: relative;
-    margin: 1rem 0 .75rem;
-    padding: 1.85rem 2rem 1.5rem;
+    margin: 0.85rem 0 0.65rem;
+    padding: 1.5rem 1.75rem 1.25rem;
     border-radius: var(--r-lg);
     background: var(--surface-2);
     border: 1px solid var(--line);
@@ -919,47 +961,47 @@ code, pre, .activity-feed, .activity-time {
 }
 .upload-icon {
     position: relative;
-    width: 60px; height: 60px;
-    margin: 0 auto .9rem;
-    border-radius: 16px;
+    width: 54px; height: 54px;
+    margin: 0 auto 0.75rem;
+    border-radius: 14px;
     background: linear-gradient(135deg, rgba(14,165,233,0.22), rgba(14,165,233,0.04));
     border: 1px solid var(--accent-line);
     display: flex; align-items: center; justify-content: center;
     color: var(--accent-hi);
     box-shadow: 0 10px 26px rgba(14,165,233,0.14);
 }
-.upload-icon svg { width: 26px; height: 26px; }
+.upload-icon svg { width: 24px; height: 24px; }
 .upload-title {
     position: relative;
     font-family: var(--font-display);
-    font-size: 1.18rem;
+    font-size: 1.08rem;
     font-weight: 700;
     color: var(--text-1);
     letter-spacing: -0.02em;
-    margin-bottom: .3rem;
+    margin-bottom: 0.25rem;
 }
 .upload-subtitle {
     position: relative;
-    font-size: .84rem;
+    font-size: 0.78rem;
     color: var(--text-2);
-    margin-bottom: .95rem;
+    margin-bottom: 0.75rem;
     line-height: 1.5;
 }
 .upload-badges {
     position: relative;
     display: flex; justify-content: center;
-    gap: .4rem; flex-wrap: wrap;
+    gap: 0.35rem; flex-wrap: wrap;
 }
 .upload-badge {
-    padding: .26rem .62rem;
+    padding: 0.22rem 0.55rem;
     border-radius: 6px;
     background: rgba(14,165,233,0.08);
     border: 1px solid rgba(14,165,233,0.22);
     font-family: var(--font-mono);
-    font-size: .64rem;
+    font-size: 0.6rem;
     font-weight: 600;
     color: var(--accent-hi);
-    letter-spacing: .08em;
+    letter-spacing: 0.08em;
 }
 .upload-badge-muted {
     background: rgba(255,255,255,0.03);
@@ -968,11 +1010,11 @@ code, pre, .activity-feed, .activity-time {
 }
 .upload-footnote {
     display: flex; align-items: center; justify-content: center;
-    gap: .45rem;
-    margin-top: .85rem;
-    font-size: .72rem;
+    gap: 0.4rem;
+    margin-top: 0.7rem;
+    font-size: 0.68rem;
     color: var(--text-3);
-    letter-spacing: .01em;
+    letter-spacing: 0.01em;
 }
 .upload-footnote-dot {
     width: 5px; height: 5px;
@@ -986,13 +1028,13 @@ code, pre, .activity-feed, .activity-time {
 .export-panel-head {
     display: flex;
     align-items: center;
-    gap: 0.85rem;
-    padding: 1.15rem 1.35rem;
+    gap: 0.75rem;
+    padding: 1rem 1.15rem;
     border-radius: var(--r-lg) var(--r-lg) 0 0;
     background: var(--surface-2);
     border: 1px solid var(--line);
     border-bottom: 1px solid var(--line);
-    margin-top: 1.5rem;
+    margin-top: 1.25rem;
     position: relative;
     overflow: hidden;
 }
@@ -1006,38 +1048,38 @@ code, pre, .activity-feed, .activity-time {
 }
 .export-head-icon {
     position: relative;
-    width: 42px; height: 42px;
-    border-radius: 12px;
+    width: 38px; height: 38px;
+    border-radius: 10px;
     background: linear-gradient(135deg, rgba(14,165,233,0.22), rgba(14,165,233,0.04));
     border: 1px solid var(--accent-line);
     display: flex; align-items: center; justify-content: center;
-    font-size: 1.15rem;
+    font-size: 1.05rem;
     flex-shrink: 0;
     box-shadow: 0 8px 20px rgba(14,165,233,0.14);
 }
 .export-head-text { display: flex; flex-direction: column; gap: 2px; position: relative; }
 .export-head-title {
     font-family: var(--font-display);
-    font-size: 1rem;
+    font-size: 0.95rem;
     font-weight: 700;
     color: var(--text-1);
     letter-spacing: -0.015em;
     line-height: 1.2;
 }
 .export-head-sub {
-    font-size: 0.74rem;
+    font-size: 0.68rem;
     color: var(--text-3);
     letter-spacing: 0.01em;
 }
 .export-head-badge {
     margin-left: auto;
-    padding: 0.28rem 0.65rem;
+    padding: 0.24rem 0.58rem;
     border-radius: var(--r-pill);
     background: rgba(16,185,129,0.10);
     border: 1px solid rgba(16,185,129,0.24);
     color: #34d399;
     font-family: var(--font-mono);
-    font-size: 0.62rem;
+    font-size: 0.6rem;
     font-weight: 700;
     letter-spacing: 0.1em;
 }
@@ -1045,14 +1087,14 @@ code, pre, .activity-feed, .activity-time {
 .export-item-label {
     display: flex;
     align-items: center;
-    gap: 0.5rem;
+    gap: 0.45rem;
     font-family: var(--font-mono);
-    font-size: 0.63rem;
+    font-size: 0.6rem;
     color: var(--text-3);
     text-transform: uppercase;
     letter-spacing: 0.12em;
     font-weight: 700;
-    margin: 0 0 0.55rem 0;
+    margin: 0 0 0.45rem 0;
     padding-left: 0.15rem;
 }
 .export-item-label::before {
@@ -1068,7 +1110,7 @@ code, pre, .activity-feed, .activity-time {
 [data-testid="stFileUploader"] {
     background: linear-gradient(180deg, rgba(14,165,233,0.035), rgba(14,165,233,0.005));
     border-radius: var(--r-lg);
-    padding: 1.15rem 1rem;
+    padding: 1rem 0.9rem;
     border: 1px dashed var(--line-strong);
     transition: border-color 200ms ease, background 200ms ease;
 }
@@ -1076,16 +1118,16 @@ code, pre, .activity-feed, .activity-time {
     border-color: var(--accent-line);
     background: linear-gradient(180deg, rgba(14,165,233,0.07), rgba(14,165,233,0.015));
 }
-[data-testid="stFileUploader"] small { color: var(--text-3) !important; }
+[data-testid="stFileUploader"] small { color: var(--text-3) !important; font-size: 0.72rem !important; }
 [data-testid="stFileUploader"] button {
     border-radius: var(--r-sm) !important;
     background: var(--accent) !important;
     color: #041018 !important;
     border: 1px solid var(--accent) !important;
     font-weight: 600 !important;
-    font-size: 0.78rem !important;
-    min-height: 32px !important;
-    padding: 0.4rem 0.85rem !important;
+    font-size: 0.75rem !important;
+    min-height: 30px !important;
+    padding: 0.35rem 0.75rem !important;
     transition: background 140ms ease, border-color 140ms ease !important;
 }
 [data-testid="stFileUploader"] button:hover {
@@ -1100,23 +1142,25 @@ code, pre, .activity-feed, .activity-time {
 }
 [data-testid="stExpander"]:hover { border-color: var(--line-strong) !important; }
 
-/* ── COMPACT BUTTONS (all pages) ── */
+/* ════════════════════════════════════════════════════════════════════════
+   UNIVERSAL COMPACT BUTTONS
+   ════════════════════════════════════════════════════════════════════════ */
 .stButton > button {
     border-radius: var(--r-sm) !important;
     font-weight: 600 !important;
-    font-size: 0.78rem !important;
-    padding: 0.42rem 0.9rem !important;
-    min-height: 32px !important;
+    font-size: var(--btn-font-md) !important;
+    padding: 0.38rem 0.85rem !important;
+    min-height: var(--btn-h-md) !important;
     height: auto !important;
-    line-height: 1.2 !important;
+    line-height: 1.15 !important;
     transition: background 140ms ease, border-color 140ms ease, box-shadow 140ms ease !important;
     box-shadow: none !important;
 }
 .stButton > button p {
-    font-size: 0.78rem !important;
+    font-size: var(--btn-font-md) !important;
     font-weight: 600 !important;
     margin: 0 !important;
-    line-height: 1.2 !important;
+    line-height: 1.15 !important;
 }
 .stButton > button:hover { transform: none !important; box-shadow: var(--sh-1) !important; }
 .stButton > button:focus-visible {
@@ -1124,16 +1168,16 @@ code, pre, .activity-feed, .activity-time {
     outline: none !important;
 }
 
-/* Primary = slightly larger but still compact */
+/* Primary buttons */
 .stButton > button[kind="primary"] {
-    padding: 0.5rem 1.1rem !important;
-    min-height: 40px !important;
+    padding: 0.45rem 1rem !important;
+    min-height: var(--btn-h-lg) !important;
     background: var(--accent) !important;
     border: 1px solid var(--accent) !important;
     color: #041018 !important;
 }
 .stButton > button[kind="primary"] p {
-    font-size: 0.82rem !important;
+    font-size: var(--btn-font-md) !important;
     font-weight: 600 !important;
 }
 .stButton > button[kind="primary"]:hover {
@@ -1142,17 +1186,17 @@ code, pre, .activity-feed, .activity-time {
 }
 
 /* ── COMPACT DOWNLOAD BUTTONS ── */
-[data-testid="stDownloadButton"] { margin-bottom: 0.25rem !important; }
+[data-testid="stDownloadButton"] { margin-bottom: 0.2rem !important; }
 [data-testid="stDownloadButton"] > button {
-    width: 240px !important;
-    min-width: 240px !important;
-    min-height: 40px !important;
-    padding: 0.55rem 0.9rem !important;
+    width: 220px !important;
+    min-width: 220px !important;
+    min-height: 38px !important;
+    padding: 0.5rem 0.85rem !important;
     border-radius: var(--r-sm) !important;
     background: var(--surface-3) !important;
     border: 1px solid var(--line) !important;
     color: var(--text-1) !important;
-    font-size: 0.78rem !important;
+    font-size: 0.75rem !important;
     font-weight: 600 !important;
     letter-spacing: -0.005em !important;
     transition: background 180ms ease, border-color 180ms ease,
@@ -1162,17 +1206,17 @@ code, pre, .activity-feed, .activity-time {
     display: flex !important;
     align-items: center !important;
     justify-content: center !important;
-    gap: 0.45rem !important;
+    gap: 0.4rem !important;
 }
 [data-testid="stDownloadButton"] > button p {
-    font-size: 0.78rem !important;
+    font-size: 0.75rem !important;
     font-weight: 600 !important;
     margin: 0 !important;
-    line-height: 1.2 !important;
+    line-height: 1.15 !important;
 }
 [data-testid="stDownloadButton"] > button svg {
-    width: 14px !important;
-    height: 14px !important;
+    width: 13px !important;
+    height: 13px !important;
 }
 [data-testid="stDownloadButton"] > button:hover {
     background: var(--accent-soft) !important;
@@ -1189,11 +1233,11 @@ code, pre, .activity-feed, .activity-time {
     background: linear-gradient(135deg, var(--accent), #0284c7) !important;
     border: 1px solid var(--accent) !important;
     color: #041018 !important;
-    min-height: 42px !important;
-    padding: 0.6rem 1rem !important;
+    min-height: 40px !important;
+    padding: 0.55rem 0.95rem !important;
 }
 [data-testid="stDownloadButton"] > button[kind="primary"] p {
-    font-size: 0.82rem !important;
+    font-size: 0.78rem !important;
     font-weight: 600 !important;
 }
 [data-testid="stDownloadButton"] > button[kind="primary"]:hover {
@@ -1206,13 +1250,13 @@ code, pre, .activity-feed, .activity-time {
 
 [data-testid="stMetricValue"] {
     font-family: var(--font-display) !important;
-    font-size: 1.5rem !important;
+    font-size: 1.35rem !important;
     font-weight: 700 !important;
     letter-spacing: -0.02em !important;
     font-variant-numeric: tabular-nums !important;
 }
 [data-testid="stMetricLabel"] {
-    font-size: 0.68rem !important;
+    font-size: 0.62rem !important;
     color: var(--text-3) !important;
     text-transform: uppercase !important;
     letter-spacing: 0.08em !important;
@@ -1222,8 +1266,8 @@ code, pre, .activity-feed, .activity-time {
     background: var(--accent) !important;
     border-radius: 4px !important;
 }
-.stAlert { border-radius: var(--r-sm) !important; }
-hr { border-color: var(--line) !important; margin: 1.25rem 0 !important; }
+.stAlert { border-radius: var(--r-sm) !important; padding: 0.6rem 0.85rem !important; }
+hr { border-color: var(--line) !important; margin: 1rem 0 !important; }
 .stImage {
     border-radius: var(--r-md) !important;
     overflow: hidden !important;
@@ -1237,8 +1281,8 @@ hr { border-color: var(--line) !important; margin: 1.25rem 0 !important; }
 .stTabs [data-baseweb="tab"] {
     background: transparent !important;
     border-radius: var(--r-sm) var(--r-sm) 0 0 !important;
-    padding: 0.6rem 1rem !important;
-    font-size: 0.85rem !important;
+    padding: 0.5rem 0.85rem !important;
+    font-size: 0.8rem !important;
     font-weight: 500 !important;
     color: var(--text-2) !important;
 }
@@ -1247,44 +1291,57 @@ hr { border-color: var(--line) !important; margin: 1.25rem 0 !important; }
     border-bottom: 2px solid var(--accent) !important;
 }
 
+/* Checkbox styling */
+[data-testid="stCheckbox"] {
+    padding: 0.15rem 0 !important;
+}
+[data-testid="stCheckbox"] label {
+    font-size: 0.78rem !important;
+}
+
+/* Toggle */
+[data-testid="stToggle"] label {
+    font-size: 0.78rem !important;
+}
+
 /* ── XAI CARD ── */
 .xai-card {
-    padding: 1.25rem 1.5rem;
+    padding: 1.1rem 1.25rem;
     border-radius: var(--r-md);
     background: var(--surface-2);
     border: 1px solid var(--line);
-    margin-top: 1rem;
+    margin-top: 0.85rem;
 }
 .xai-title {
-    font-size: 0.68rem;
+    font-size: 0.64rem;
     color: var(--accent-hi);
     text-transform: uppercase;
     letter-spacing: 0.12em;
     font-weight: 700;
-    margin-bottom: 0.5rem;
+    margin-bottom: 0.4rem;
 }
 .xai-text {
-    font-size: 0.85rem;
+    font-size: 0.8rem;
     color: var(--text-2);
     line-height: 1.6;
 }
 
-/* ══════════════════════════════════════════════════════════════
+/* ════════════════════════════════════════════════════════════════════════
    FOOTER — REDESIGNED v3.1
-   ══════════════════════════════════════════════════════════════ */
+   ════════════════════════════════════════════════════════════════════════ */
 .app-footer {
     position: relative;
     display: grid;
     grid-template-columns: 1.4fr 1.4fr 1fr;
-    gap: 1.5rem;
-    padding: 2rem 2rem 1.75rem;
+    gap: 1.25rem;
+    padding: 1.75rem 1.75rem 1.5rem;
     border-radius: var(--r-lg);
     background:
         radial-gradient(circle at 0% 0%, rgba(14,165,233,0.08), transparent 45%),
         radial-gradient(circle at 100% 100%, rgba(139,92,246,0.06), transparent 45%),
         var(--surface-2);
     border: 1px solid var(--line);
-    margin-top: 3rem;
+    margin-top: 2.5rem;
     overflow: hidden;
     box-shadow: var(--sh-2);
 }
@@ -1299,7 +1356,7 @@ hr { border-color: var(--line) !important; margin: 1.25rem 0 !important; }
 .footer-col {
     display: flex;
     flex-direction: column;
-    gap: 0.75rem;
+    gap: 0.6rem;
     position: relative;
     z-index: 1;
 }
@@ -1307,32 +1364,31 @@ hr { border-color: var(--line) !important; margin: 1.25rem 0 !important; }
 .footer-col-stack { grid-column: 2 / 3; }
 .footer-col-stats { grid-column: 3 / 4; }
 
-/* Brand block */
 .footer-brand-row {
     display: flex;
     align-items: center;
-    gap: 0.85rem;
+    gap: 0.7rem;
 }
 .footer-brand-logo {
-    width: 44px; height: 44px;
-    border-radius: 12px;
+    width: 40px; height: 40px;
+    border-radius: 11px;
     background: linear-gradient(135deg, rgba(14,165,233,0.25), rgba(14,165,233,0.05));
     border: 1px solid var(--accent-line);
     display: flex; align-items: center; justify-content: center;
-    font-size: 1.35rem;
+    font-size: 1.2rem;
     flex-shrink: 0;
     box-shadow: 0 8px 20px rgba(14,165,233,0.14);
 }
 .footer-brand-name {
     font-family: var(--font-display);
-    font-size: 1.05rem;
+    font-size: 1rem;
     font-weight: 800;
     color: var(--text-1);
     letter-spacing: -0.02em;
     line-height: 1.15;
 }
 .footer-brand-tagline {
-    font-size: 0.68rem;
+    font-size: 0.62rem;
     color: var(--text-3);
     letter-spacing: 0.06em;
     text-transform: uppercase;
@@ -1340,34 +1396,33 @@ hr { border-color: var(--line) !important; margin: 1.25rem 0 !important; }
     margin-top: 2px;
 }
 .footer-brand-desc {
-    font-size: 0.8rem;
+    font-size: 0.75rem;
     color: var(--text-2);
-    line-height: 1.6;
+    line-height: 1.55;
     max-width: 320px;
 }
 .footer-copyright {
     font-family: var(--font-mono);
-    font-size: 0.68rem;
+    font-size: 0.64rem;
     color: var(--text-3);
     letter-spacing: 0.01em;
-    padding-top: 0.5rem;
+    padding-top: 0.4rem;
     border-top: 1px dashed var(--line);
-    margin-top: 0.25rem;
+    margin-top: 0.2rem;
 }
 .footer-copyright b { color: var(--text-2); font-weight: 600; }
 
-/* Stack block */
 .footer-col-title {
     display: inline-flex;
     align-items: center;
-    gap: 0.45rem;
+    gap: 0.4rem;
     font-family: var(--font-mono);
-    font-size: 0.62rem;
+    font-size: 0.58rem;
     color: var(--text-3);
     text-transform: uppercase;
     letter-spacing: 0.14em;
     font-weight: 700;
-    margin-bottom: 0.25rem;
+    margin-bottom: 0.2rem;
 }
 .footer-col-title::before {
     content: "";
@@ -1379,19 +1434,19 @@ hr { border-color: var(--line) !important; margin: 1.25rem 0 !important; }
 .footer-badges {
     display: flex;
     flex-wrap: wrap;
-    gap: 0.45rem;
+    gap: 0.4rem;
 }
 .badge-tech {
     display: inline-flex;
     align-items: center;
-    gap: 0.35rem;
-    padding: 0.35rem 0.7rem;
-    border-radius: 8px;
+    gap: 0.3rem;
+    padding: 0.3rem 0.6rem;
+    border-radius: 7px;
     background: rgba(255,255,255,0.03);
     border: 1px solid var(--line);
     color: var(--text-2);
     font-family: var(--font-mono);
-    font-size: 0.68rem;
+    font-size: 0.64rem;
     font-weight: 500;
     transition: border-color 160ms ease, color 160ms ease, background 160ms ease, transform 160ms ease;
 }
@@ -1408,21 +1463,20 @@ hr { border-color: var(--line) !important; margin: 1.25rem 0 !important; }
     flex-shrink: 0;
 }
 
-/* Stats block */
 .footer-stats {
     display: grid;
     grid-template-columns: 1fr 1fr;
-    gap: 0.6rem;
-    margin-top: 0.2rem;
+    gap: 0.5rem;
+    margin-top: 0.15rem;
 }
 .footer-stat {
-    padding: 0.75rem 0.85rem;
-    border-radius: 10px;
+    padding: 0.65rem 0.75rem;
+    border-radius: 9px;
     background: rgba(0,0,0,0.20);
     border: 1px solid var(--line);
     display: flex;
     flex-direction: column;
-    gap: 0.2rem;
+    gap: 0.15rem;
     transition: border-color 160ms ease, background 160ms ease;
 }
 .footer-stat:hover {
@@ -1432,18 +1486,18 @@ hr { border-color: var(--line) !important; margin: 1.25rem 0 !important; }
 .footer-stat--wide { grid-column: 1 / -1; }
 .footer-stat-val {
     font-family: var(--font-display);
-    font-size: 1.15rem;
+    font-size: 1.05rem;
     font-weight: 700;
     color: var(--text-1);
     display: inline-flex;
     align-items: center;
-    gap: 0.4rem;
+    gap: 0.35rem;
     letter-spacing: -0.02em;
     font-variant-numeric: tabular-nums;
     line-height: 1.1;
 }
 .footer-stat-lbl {
-    font-size: 0.58rem;
+    font-size: 0.54rem;
     color: var(--text-3);
     text-transform: uppercase;
     letter-spacing: 0.12em;
@@ -1466,78 +1520,120 @@ hr { border-color: var(--line) !important; margin: 1.25rem 0 !important; }
     50%      { opacity: 0.5; }
 }
 
-/* Copyright bar */
 .copyright-line {
     text-align: center;
-    padding: 1.25rem 0.5rem 0.5rem;
-    font-size: 0.75rem;
+    padding: 1rem 0.5rem 0.5rem;
+    font-size: 0.7rem;
     color: var(--text-3);
     letter-spacing: 0.02em;
     line-height: 1.8;
 }
 .copyright-brand { color: var(--text-2); font-weight: 600; }
 .copyright-sep { color: var(--text-3); margin: 0 0.5rem; }
-.copyright-dev-label { font-size: 0.72rem; color: var(--text-3); }
+.copyright-dev-label { font-size: 0.68rem; color: var(--text-3); }
 .copyright-dev-name  { color: var(--text-1); font-weight: 600; }
 .copyright-dev-amp   { color: var(--text-3); margin: 0 0.4rem; }
 
-/* ── DISCLAIMER ── */
 .disclaimer {
-    margin-top: 1.5rem;
-    padding: 1rem 1.25rem;
+    margin-top: 1.25rem;
+    padding: 0.85rem 1.1rem;
     border-radius: var(--r-md);
     background: rgba(245,158,11,0.05);
     border: 1px solid rgba(245,158,11,0.18);
     color: var(--text-2);
-    font-size: 0.82rem;
+    font-size: 0.78rem;
     line-height: 1.65;
 }
 
-/* ── RESPONSIVE ── */
+/* ════════════════════════════════════════════════════════════════════════
+   RESPONSIVE — SCALABLE SIZING
+   ════════════════════════════════════════════════════════════════════════ */
+
+/* Tablet landscape (≤ 1280px) */
+@media (max-width: 1280px) {
+    :root {
+        --sb-w: 250px;
+        --btn-font-sm: 0.7rem;
+        --btn-font-md: 0.75rem;
+    }
+    .main .block-container { padding-left: 1rem !important; padding-right: 1rem !important; }
+}
+
+/* Tablet portrait (≤ 1024px) */
+@media (max-width: 1024px) {
+    :root {
+        --sb-w: 230px;
+        --sb-w-md: 220px;
+        --btn-h-md: 32px;
+        --btn-font-md: 0.74rem;
+        --btn-font-sm: 0.7rem;
+    }
+    .sticky-header { left: calc(var(--sb-w) + 0.35rem) !important; }
+    .sticky-ticker-inner { font-size: 0.64rem; gap: 0.6rem; }
+    .tick-item { font-size: 0.64rem; }
+    .app-footer { grid-template-columns: 1fr 1fr !important; }
+    .footer-col-stats { grid-column: 1 / -1 !important; }
+}
+
+/* Mobile (≤ 768px) */
 @media (max-width: 768px) {
+    :root {
+        --sb-w: 100%;
+        --btn-h-md: 34px;
+        --btn-h-sm: 30px;
+    }
+    [data-testid="stSidebar"] {
+        min-width: 100% !important;
+        max-width: 100% !important;
+        width: 100% !important;
+    }
+    [data-testid="stSidebar"] > div:first-child { width: 100% !important; }
+
     .sticky-header {
-        left: 0.4rem !important; right: 0.4rem !important;
-        padding: 0.5rem 0.7rem !important;
-        gap: 0.5rem !important;
+        left: 0.35rem !important; right: 0.35rem !important;
+        padding: 0.35rem 0.55rem !important;
+        gap: 0.4rem !important;
+        min-height: 46px;
     }
     .sticky-ticker, .sticky-brand-version { display: none; }
     .sticky-status { display: none; }
-    .sticky-brand-logo { width: 32px; height: 32px; font-size: 1rem; }
-    .sticky-brand-name { font-size: 0.88rem; }
-    [data-testid="stSidebar"] {
-        min-width: 100% !important; max-width: 100% !important;
-    }
-    .main .block-container { padding-top: 4.5rem !important; }
-    .hero h1 { font-size: 1.85rem !important; }
-    .hero { padding: 2rem 1.25rem; }
-    .probability-grid { grid-template-columns: 1fr 1fr !important; }
-    .app-footer { grid-template-columns: 1fr !important; padding: 1.5rem 1.25rem; }
+    .sticky-brand-logo { width: 30px; height: 30px; font-size: 0.95rem; }
+    .sticky-brand-name { font-size: 0.82rem; }
+    .sticky-divider { height: 18px; }
+
+    .main .block-container { padding-top: 4.15rem !important; padding-left: 0.75rem !important; padding-right: 0.75rem !important; }
+    .hero h1 { font-size: 1.65rem !important; }
+    .hero { padding: 1.75rem 1.1rem; }
+    .hero p { font-size: 0.82rem; }
+    .probability-grid { grid-template-columns: 1fr 1fr !important; gap: 0.5rem; }
+    .app-footer { grid-template-columns: 1fr !important; padding: 1.25rem 1.1rem; gap: 1rem; }
     .footer-col-brand, .footer-col-stack, .footer-col-stats {
         grid-column: 1 / -1 !important;
     }
     .footer-stats { grid-template-columns: 1fr 1fr; }
-    .diagnostic-prediction { font-size: 2rem !important; }
-    .upload-hero { padding: 1.5rem 1.25rem 1.25rem; }
-    .upload-title { font-size: 1.05rem; }
-    .upload-subtitle { font-size: 0.78rem; }
-    .upload-icon { width: 52px; height: 52px; }
-    .upload-icon svg { width: 22px; height: 22px; }
-    .export-panel-head { padding: 1rem 1rem; gap: 0.65rem; }
+    .diagnostic-prediction { font-size: 1.85rem !important; }
+    .upload-hero { padding: 1.25rem 1.1rem 1rem; }
+    .upload-title { font-size: 1rem; }
+    .upload-subtitle { font-size: 0.74rem; }
+    .upload-icon { width: 48px; height: 48px; }
+    .upload-icon svg { width: 20px; height: 20px; }
+    .export-panel-head { padding: 0.85rem 0.9rem; gap: 0.55rem; }
     .export-head-badge { display: none; }
-    .export-head-icon { width: 38px; height: 38px; font-size: 1rem; }
-    .export-head-title { font-size: 0.92rem; }
+    .export-head-icon { width: 34px; height: 34px; font-size: 0.95rem; }
+    .export-head-title { font-size: 0.88rem; }
+
+    [data-testid="stDownloadButton"] > button {
+        width: 100% !important;
+        min-width: 0 !important;
+    }
 }
 
-@media (min-width: 769px) and (max-width: 1024px) {
-    .sticky-header { left: calc(260px + 0.4rem) !important; }
-    [data-testid="stSidebar"] {
-        min-width: 260px !important;
-        max-width: 260px !important;
-        width: 260px !important;
-    }
-    [data-testid="stSidebar"] > div:first-child { width: 260px !important; }
-    .app-footer { grid-template-columns: 1fr 1fr !important; }
-    .footer-col-stats { grid-column: 1 / -1 !important; }
+/* Extra small (≤ 480px) */
+@media (max-width: 480px) {
+    .sticky-page span:not(.sticky-page-dot) { display: none; }
+    .sticky-page { padding: 0.25rem 0.4rem; }
+    .probability-grid { grid-template-columns: 1fr !important; }
+    .footer-stats { grid-template-columns: 1fr; }
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -1549,17 +1645,15 @@ hr { border-color: var(--line) !important; margin: 1.25rem 0 !important; }
 }
 
 
-/* ============================================================
+/* ════════════════════════════════════════════════════════════════════════
    UNIVERSAL BUTTON CENTER ALIGNMENT
-   ============================================================ */
+   ════════════════════════════════════════════════════════════════════════ */
 
-/* General Streamlit buttons */
 .stButton {
     display: flex !important;
     justify-content: center !important;
     align-items: center !important;
 }
-
 .stButton > button {
     margin-left: auto !important;
     margin-right: auto !important;
@@ -1568,13 +1662,10 @@ hr { border-color: var(--line) !important; margin: 1.25rem 0 !important; }
     justify-content: center !important;
     text-align: center !important;
 }
-
 .stButton > button p {
     width: 100% !important;
     text-align: center !important;
 }
-
-/* Primary buttons */
 .stButton > button[kind="primary"] {
     margin-left: auto !important;
     margin-right: auto !important;
@@ -1582,14 +1673,12 @@ hr { border-color: var(--line) !important; margin: 1.25rem 0 !important; }
     text-align: center !important;
 }
 
-/* Sidebar navigation buttons */
 [data-testid="stSidebar"] .stButton {
     display: flex !important;
     justify-content: center !important;
     align-items: center !important;
     width: 100% !important;
 }
-
 [data-testid="stSidebar"] .stButton > button {
     width: 100% !important;
     margin-left: auto !important;
@@ -1599,24 +1688,21 @@ hr { border-color: var(--line) !important; margin: 1.25rem 0 !important; }
     justify-content: center !important;
     text-align: center !important;
 }
-
 [data-testid="stSidebar"] .stButton > button p {
     width: 100% !important;
     text-align: center !important;
 }
 
-/* Download buttons */
 [data-testid="stDownloadButton"] {
     display: flex !important;
     justify-content: center !important;
     align-items: center !important;
 }
-
 [data-testid="stDownloadButton"] > button {
-    width: 240px !important;
-    min-width: 240px !important;
-    height: 40px !important;
-    min-height: 40px !important;
+    width: 220px !important;
+    min-width: 220px !important;
+    height: 38px !important;
+    min-height: 38px !important;
     padding: 4px 10px !important;
     margin-left: auto !important;
     margin-right: auto !important;
@@ -1625,12 +1711,9 @@ hr { border-color: var(--line) !important; margin: 1.25rem 0 !important; }
     justify-content: center !important;
     text-align: center !important;
 }
-
 [data-testid="stDownloadButton"] > button p {
     text-align: center !important;
 }
-
-/* Primary download buttons */
 [data-testid="stDownloadButton"] > button[kind="primary"] {
     margin-left: auto !important;
     margin-right: auto !important;
@@ -1638,11 +1721,7 @@ hr { border-color: var(--line) !important; margin: 1.25rem 0 !important; }
     text-align: center !important;
 }
 
-/* File uploader button */
-[data-testid="stFileUploader"] {
-    text-align: center !important;
-}
-
+[data-testid="stFileUploader"] { text-align: center !important; }
 [data-testid="stFileUploader"] button {
     margin-left: auto !important;
     margin-right: auto !important;
@@ -1660,7 +1739,6 @@ hr { border-color: var(--line) !important; margin: 1.25rem 0 !important; }
     align-items: center !important;
     width: 100% !important;
 }
-
 .stButton:has(button[key="home_cta"]) > button,
 .stButton:has(button[key="analyze_btn"]) > button {
     margin-left: auto !important;
@@ -1679,7 +1757,6 @@ hr { border-color: var(--line) !important; margin: 1.25rem 0 !important; }
     align-items: center !important;
     width: 100% !important;
 }
-
 .stButton:has(button[key="settings_reset"]) > button,
 .stButton:has(button[key="clear_hist_btn"]) > button,
 .stButton:has(button[key="sb_clear"]) > button,
@@ -1690,7 +1767,7 @@ hr { border-color: var(--line) !important; margin: 1.25rem 0 !important; }
     text-align: center !important;
 }
 
-/* Confirm / Cancel buttons */
+/* Confirm / Cancel */
 .stButton:has(button[key="confirm_hist"]),
 .stButton:has(button[key="cancel_hist"]),
 .stButton:has(button[key="sb_clear_yes"]),
@@ -1703,7 +1780,6 @@ hr { border-color: var(--line) !important; margin: 1.25rem 0 !important; }
     justify-content: center !important;
     align-items: center !important;
 }
-
 .stButton:has(button[key="confirm_hist"]) > button,
 .stButton:has(button[key="cancel_hist"]) > button,
 .stButton:has(button[key="sb_clear_yes"]) > button,
@@ -1718,13 +1794,11 @@ hr { border-color: var(--line) !important; margin: 1.25rem 0 !important; }
     text-align: center !important;
 }
 
-/* Buttons inside Streamlit columns */
 [data-testid="stHorizontalBlock"] .stButton {
     display: flex !important;
     justify-content: center !important;
     align-items: center !important;
 }
-
 [data-testid="stHorizontalBlock"] .stButton > button {
     margin-left: auto !important;
     margin-right: auto !important;
@@ -1732,7 +1806,6 @@ hr { border-color: var(--line) !important; margin: 1.25rem 0 !important; }
     text-align: center !important;
 }
 
-/* Keep button labels centered even with width="stretch/content" */
 .stButton > button[style*="width"] {
     justify-content: center !important;
     text-align: center !important;
@@ -2321,18 +2394,18 @@ def render_live_ticker():
         unc_str = f" · Uncertainty σ={u_val:.3f} ({band})"
     _render_html(f"""
     <style>
-    .tw{{overflow:hidden;border-radius:11px;border:1px solid rgba(255,255,255,0.06);
-    background:rgba(19,26,44,0.9);padding:.55rem 0;}}
+    .tw{{overflow:hidden;border-radius:10px;border:1px solid rgba(255,255,255,0.06);
+    background:rgba(19,26,44,0.9);padding:.45rem 0;}}
     .tt{{display:inline-block;white-space:nowrap;padding-left:100%;
-    animation:mq 26s linear infinite;color:#a4b0c0;font:500 .8rem 'JetBrains Mono',monospace;letter-spacing:.02em}}
-    .lp{{display:inline-block;width:6px;height:6px;border-radius:50%;background:#0ea5e9;margin-right:9px;vertical-align:middle}}
+    animation:mq 26s linear infinite;color:#a4b0c0;font:500 .74rem 'JetBrains Mono',monospace;letter-spacing:.02em}}
+    .lp{{display:inline-block;width:5px;height:5px;border-radius:50%;background:#0ea5e9;margin-right:8px;vertical-align:middle}}
     @keyframes mq{{0%{{transform:translateX(0);}}100%{{transform:translateX(-100%);}}}}
     </style>
     <div class="tw"><div class="tt"><span class="lp"></span>LIVE ·
     {text} · Throughput: {st.session_state.live_throughput:.2f}/min ·
     Last Conf: {st.session_state.live_last_confidence:.1f}% ·
     Avg Conf: {st.session_state.live_avg_confidence:.1f}%{unc_str}
-    </div></div>""", height=40)
+    </div></div>""", height=34)
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -2357,7 +2430,7 @@ def render_sticky_header():
     status_text = "ONLINE" if engine_ok else "OFFLINE"
     device_tag  = "GPU" if DEVICE.type == "cuda" else "CPU"
 
-    mc_str = f"<span class='tick-item'>Uncertainty σ=<b>{mc['uncertainty']:.3f}</b></span>" if mc else ""
+    mc_str = f"<span class='tick-item'>σ=<b>{mc['uncertainty']:.3f}</b></span>" if mc else ""
 
     st.markdown(safe_html(f"""
     <div class="sticky-header">
@@ -2405,7 +2478,7 @@ def render_sticky_header():
 def render_activity_feed():
     log = st.session_state.activity_log[-14:][::-1]
     if not log:
-        st.markdown("<div style='color:var(--text-muted);font-size:.84rem'>No activity yet.</div>", unsafe_allow_html=True)
+        st.markdown("<div style='color:var(--text-muted);font-size:.8rem'>No activity yet.</div>", unsafe_allow_html=True)
         return
     rows = "".join(
         f"<div class='activity-row activity-{e['level']}'>"
@@ -2448,24 +2521,24 @@ def render_live_probability_animation(result, mc_result=None):
         band  = mc_result["band"]
         uval  = mc_result["uncertainty"]
         color = mc_result["color"]
-        unc_html = f'<div style="margin-top:.85rem;padding:.65rem .85rem;border-radius:10px;background:rgba(139,92,246,0.06);border:1px solid rgba(139,92,246,0.20)"><span style="font-size:.66rem;color:#8b5cf6;text-transform:uppercase;letter-spacing:.12em;font-weight:700;font-family:\'Inter\',sans-serif">MC Uncertainty</span><span style="float:right;font-weight:700;color:{color};font-family:\'JetBrains Mono\',monospace;font-size:.82rem">σ={uval:.4f} · {band}</span></div>'
+        unc_html = f'<div style="margin-top:.75rem;padding:.55rem .75rem;border-radius:9px;background:rgba(139,92,246,0.06);border:1px solid rgba(139,92,246,0.20)"><span style="font-size:.6rem;color:#8b5cf6;text-transform:uppercase;letter-spacing:.12em;font-weight:700;font-family:\'Inter\',sans-serif">MC Uncertainty</span><span style="float:right;font-weight:700;color:{color};font-family:\'JetBrains Mono\',monospace;font-size:.76rem">σ={uval:.4f} · {band}</span></div>'
 
     _render_html(f"""
     <style>
-    .live-prob{{padding:1.25rem 1.5rem;border-radius:16px;border:1px solid rgba(255,255,255,0.06);
+    .live-prob{{padding:1.1rem 1.25rem;border-radius:14px;border:1px solid rgba(255,255,255,0.06);
     background:#131a2c;font-family:Inter,sans-serif;color:#e8edf5}}
-    .live-prob-head{{display:flex;justify-content:space-between;align-items:center;margin-bottom:.85rem;
-    padding-bottom:.6rem;border-bottom:1px solid rgba(255,255,255,0.06)}}
-    .live-prob-title{{font-size:.68rem;color:#38bdf8;text-transform:uppercase;letter-spacing:.12em;font-weight:700}}
-    .live-prob-pred{{font-family:Sora,sans-serif;font-size:.95rem;font-weight:700;color:#e8edf5;letter-spacing:-.01em}}
-    .lp-row{{display:flex;align-items:center;gap:.75rem;margin:.45rem 0}}
-    .lp-label{{min-width:140px;font-size:.8rem;color:#a4b0c0;font-weight:500}}
+    .live-prob-head{{display:flex;justify-content:space-between;align-items:center;margin-bottom:.75rem;
+    padding-bottom:.5rem;border-bottom:1px solid rgba(255,255,255,0.06)}}
+    .live-prob-title{{font-size:.62rem;color:#38bdf8;text-transform:uppercase;letter-spacing:.12em;font-weight:700}}
+    .live-prob-pred{{font-family:Sora,sans-serif;font-size:.88rem;font-weight:700;color:#e8edf5;letter-spacing:-.01em}}
+    .lp-row{{display:flex;align-items:center;gap:.65rem;margin:.4rem 0}}
+    .lp-label{{min-width:130px;font-size:.75rem;color:#a4b0c0;font-weight:500}}
     .lp-track{{flex:1;height:6px;border-radius:999px;background:rgba(255,255,255,0.05);overflow:hidden;position:relative}}
     .lp-fill{{height:100%;width:0%;background:#0ea5e9;border-radius:999px;
     transition:width 1.2s cubic-bezier(.2,.8,.2,1)}}
     .lp-mc{{background:#8b5cf6 !important}}
-    .lp-val{{min-width:60px;text-align:right;font-family:'JetBrains Mono',monospace;font-weight:600;color:#e8edf5;font-size:.78rem}}
-    .lp-section{{font-size:.62rem;color:#6b7789;text-transform:uppercase;letter-spacing:.12em;font-weight:700;margin:.9rem 0 .35rem}}
+    .lp-val{{min-width:55px;text-align:right;font-family:'JetBrains Mono',monospace;font-weight:600;color:#e8edf5;font-size:.74rem}}
+    .lp-section{{font-size:.58rem;color:#6b7789;text-transform:uppercase;letter-spacing:.12em;font-weight:700;margin:.75rem 0 .3rem}}
     </style>
     <div class="live-prob">
         <div class="live-prob-head">
@@ -2484,7 +2557,7 @@ def render_live_probability_animation(result, mc_result=None):
             requestAnimationFrame(()=>{{el.style.width=t+'%';}});
         }});
     }});
-    </script>""", height=60 + 40 * len(items) + (40 * len(items) + 100 if mc_result else 0))
+    </script>""", height=60 + 36 * len(items) + (36 * len(items) + 90 if mc_result else 0))
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -2499,9 +2572,9 @@ with st.sidebar:
     active_nav = st.session_state.nav
 
     st.markdown(safe_html("""
-    <div style="padding:.3rem .4rem 1.1rem">
+    <div style="padding:.2rem .4rem .85rem">
         <div class="sidebar-brand-title">🧠 NeuroLens AI</div>
-        <div class="sidebar-brand-subtitle">Neurodiagnostic Intelligence Platform · v3.0</div>
+        <div class="sidebar-brand-subtitle">Neurodiagnostic Intelligence · v3.0</div>
     </div>"""), unsafe_allow_html=True)
 
     engine_online = MODEL_PATH.exists() and model_error is None
@@ -2534,17 +2607,17 @@ with st.sidebar:
     mc_badge   = ""
     if st.session_state.mc_result:
         mc = st.session_state.mc_result
-        mc_badge = f"<br><div style='margin-top:.4rem;font-size:.68rem;color:#8b5cf6;font-family:\"JetBrains Mono\",monospace'>σ={mc['uncertainty']:.4f} · {mc['band']}</div>"
+        mc_badge = f"<br><div style='margin-top:.3rem;font-size:.62rem;color:#8b5cf6;font-family:\"JetBrains Mono\",monospace'>σ={mc['uncertainty']:.4f} · {mc['band']}</div>"
 
     st.markdown(safe_html(f"""
-    <div style="margin-top:.5rem;padding:.8rem;border-radius:12px;background:rgba(255,255,255,.02);border:1px solid rgba(255,255,255,.06)">
+    <div style="margin-top:.4rem;padding:.65rem .7rem;border-radius:10px;background:rgba(255,255,255,.02);border:1px solid rgba(255,255,255,.06)">
         <div class="sidebar-mini-label">NEURAL ENGINE</div>
-        <div style="margin-top:.3rem;font-size:.82rem;font-weight:700;color:{'#10b981' if engine_online else '#ef4444'}">{eng_status}</div>
+        <div style="margin-top:.25rem;font-size:.76rem;font-weight:700;color:{'#10b981' if engine_online else '#ef4444'}">{eng_status}</div>
         {mc_badge}
-        <div class="sidebar-engine-grid" style="margin-top:.65rem">
+        <div class="sidebar-engine-grid" style="margin-top:.5rem">
             <div class="sidebar-mini-stat"><div class="sidebar-mini-label">Device</div><div class="sidebar-mini-value">{DEVICE}</div></div>
             <div class="sidebar-mini-stat"><div class="sidebar-mini-label">Scans</div><div class="sidebar-mini-value">{total_scans}</div></div>
-            <div class="sidebar-mini-stat"><div class="sidebar-mini-label">Architecture</div><div class="sidebar-mini-value">{model_name or '—'}</div></div>
+            <div class="sidebar-mini-stat"><div class="sidebar-mini-label">Model</div><div class="sidebar-mini-value">{model_name or '—'}</div></div>
             <div class="sidebar-mini-stat"><div class="sidebar-mini-label">Avg Conf</div><div class="sidebar-mini-value">{avg_conf:.0f}%</div></div>
         </div>
     </div>"""), unsafe_allow_html=True)
@@ -2581,7 +2654,7 @@ with st.sidebar:
     st.markdown(safe_html("""
     <div class="sidebar-footer">
         ⚠️ Research Prototype<br>
-        Not for clinical use. Predictions do not constitute medical diagnoses.
+        Not for clinical use.
     </div>"""), unsafe_allow_html=True)
 
 
@@ -2607,17 +2680,15 @@ if nav == "🏠 Home":
         <p>Deep Learning · Dual XAI (Grad-CAM + Grad-CAM++) · MC Dropout Uncertainty Estimation · Neuroimaging</p>
     </div>""")), unsafe_allow_html=True)
 
-    # ── Centered CTA button (medium-small, narrower columns) ─────────────
     _cta_l, _cta_c, _cta_r = st.columns([1.6, 1, 1.6])
     with _cta_c:
         if st.button("🔬 Analyze MRI Scan", type="primary", key="home_cta", width="stretch"):
             st.session_state.nav = "🔬 MRI Analysis"
             st.rerun()
 
-    # ── Centered caption ─────────────────────────────────────────────────
     st.markdown(
         "<div style='text-align:center;color:var(--text-3);"
-        "font-size:.82rem;margin-top:.55rem;line-height:1.5'>"
+        "font-size:.76rem;margin-top:.45rem;line-height:1.5'>"
         "Research prototype for education and research. "
         "Model predictions are not medical diagnoses."
         "</div>",
@@ -2646,7 +2717,7 @@ if nav == "🏠 Home":
     ]
     for col, (icon, title, desc) in zip([c1, c2, c3, c4], cards):
         with col:
-            st.markdown(f'<div class="info-card"><div style="font-size:1.6rem;margin-bottom:.6rem;opacity:.9">{icon}</div><h3>{title}</h3><p>{desc}</p></div>', unsafe_allow_html=True)
+            st.markdown(f'<div class="info-card"><div style="font-size:1.4rem;margin-bottom:.5rem;opacity:.9">{icon}</div><h3>{title}</h3><p>{desc}</p></div>', unsafe_allow_html=True)
 
     st.write("")
     st.subheader("How NeuroLens Works")
@@ -2663,10 +2734,10 @@ if nav == "🏠 Home":
     for col, (num, title, desc) in zip(step_cols, steps):
         with col:
             st.markdown(safe_html(f"""
-            <div style="text-align:center;padding:.9rem .5rem;border-radius:14px;background:#131a2c;border:1px solid rgba(255,255,255,.06)">
-                <div style="font-family:Sora,sans-serif;font-size:1.3rem;font-weight:700;color:#38bdf8">{num}</div>
-                <div style="font-size:.78rem;font-weight:600;color:var(--text-primary);margin:.3rem 0">{title}</div>
-                <div style="font-size:.66rem;color:var(--text-muted)">{desc}</div>
+            <div style="text-align:center;padding:.75rem .4rem;border-radius:12px;background:#131a2c;border:1px solid rgba(255,255,255,.06)">
+                <div style="font-family:Sora,sans-serif;font-size:1.15rem;font-weight:700;color:#38bdf8">{num}</div>
+                <div style="font-size:.72rem;font-weight:600;color:var(--text-primary);margin:.25rem 0">{title}</div>
+                <div style="font-size:.6rem;color:var(--text-muted)">{desc}</div>
             </div>"""), unsafe_allow_html=True)
 
     st.write("")
@@ -2681,26 +2752,26 @@ if nav == "🏠 Home":
     else:
         st.markdown(safe_html(f"""
         <div class="info-card" style="border-color:rgba(16,185,129,.3); background:rgba(16,185,129,.05)">
-            <div style="display: flex; align-items: center; gap: 0.6rem; margin-bottom: 1rem;">
-                <span style="font-size: 1.2rem;">✅</span>
-                <h3 style="color:var(--success-var); margin: 0; font-size: 1.1rem;">Neural Engine Ready</h3>
+            <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.85rem;">
+                <span style="font-size: 1.1rem;">✅</span>
+                <h3 style="color:var(--success-var); margin: 0; font-size: 1rem;">Neural Engine Ready</h3>
             </div>
-            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem;">
-                <div style="background: rgba(0,0,0,0.15); padding: 0.75rem 1rem; border-radius: 10px; border: 1px solid rgba(16,185,129,0.2);">
-                    <div style="font-size: 0.65rem; color: #6b7789; text-transform: uppercase; letter-spacing: 0.08em; font-weight: 600;">Architecture</div>
-                    <div style="font-size: 0.95rem; font-weight: 700; color: #e8edf5; margin-top: 0.3rem; font-family: 'JetBrains Mono', monospace;">{model_name}</div>
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 0.75rem;">
+                <div style="background: rgba(0,0,0,0.15); padding: 0.65rem 0.85rem; border-radius: 9px; border: 1px solid rgba(16,185,129,0.2);">
+                    <div style="font-size: 0.6rem; color: #6b7789; text-transform: uppercase; letter-spacing: 0.08em; font-weight: 600;">Architecture</div>
+                    <div style="font-size: 0.88rem; font-weight: 700; color: #e8edf5; margin-top: 0.25rem; font-family: 'JetBrains Mono', monospace;">{model_name}</div>
                 </div>
-                <div style="background: rgba(0,0,0,0.15); padding: 0.75rem 1rem; border-radius: 10px; border: 1px solid rgba(16,185,129,0.2);">
-                    <div style="font-size: 0.65rem; color: #6b7789; text-transform: uppercase; letter-spacing: 0.08em; font-weight: 600;">Device</div>
-                    <div style="font-size: 0.95rem; font-weight: 700; color: #e8edf5; margin-top: 0.3rem; font-family: 'JetBrains Mono', monospace;">{DEVICE}</div>
+                <div style="background: rgba(0,0,0,0.15); padding: 0.65rem 0.85rem; border-radius: 9px; border: 1px solid rgba(16,185,129,0.2);">
+                    <div style="font-size: 0.6rem; color: #6b7789; text-transform: uppercase; letter-spacing: 0.08em; font-weight: 600;">Device</div>
+                    <div style="font-size: 0.88rem; font-weight: 700; color: #e8edf5; margin-top: 0.25rem; font-family: 'JetBrains Mono', monospace;">{DEVICE}</div>
                 </div>
-                <div style="background: rgba(0,0,0,0.15); padding: 0.75rem 1rem; border-radius: 10px; border: 1px solid rgba(16,185,129,0.2);">
-                    <div style="font-size: 0.65rem; color: #6b7789; text-transform: uppercase; letter-spacing: 0.08em; font-weight: 600;">Classes</div>
-                    <div style="font-size: 0.9rem; font-weight: 700; color: #38bdf8; margin-top: 0.3rem;">{', '.join(class_names)}</div>
+                <div style="background: rgba(0,0,0,0.15); padding: 0.65rem 0.85rem; border-radius: 9px; border: 1px solid rgba(16,185,129,0.2);">
+                    <div style="font-size: 0.6rem; color: #6b7789; text-transform: uppercase; letter-spacing: 0.08em; font-weight: 600;">Classes</div>
+                    <div style="font-size: 0.84rem; font-weight: 700; color: #38bdf8; margin-top: 0.25rem;">{', '.join(class_names)}</div>
                 </div>
-                <div style="background: rgba(0,0,0,0.15); padding: 0.75rem 1rem; border-radius: 10px; border: 1px solid rgba(16,185,129,0.2);">
-                    <div style="font-size: 0.65rem; color: #6b7789; text-transform: uppercase; letter-spacing: 0.08em; font-weight: 600;">MC Dropout & XAI</div>
-                    <div style="font-size: 0.9rem; font-weight: 700; color: #e8edf5; margin-top: 0.3rem;">{MC_SAMPLES} passes · Grad-CAM + Grad-CAM++</div>
+                <div style="background: rgba(0,0,0,0.15); padding: 0.65rem 0.85rem; border-radius: 9px; border: 1px solid rgba(16,185,129,0.2);">
+                    <div style="font-size: 0.6rem; color: #6b7789; text-transform: uppercase; letter-spacing: 0.08em; font-weight: 600;">MC Dropout & XAI</div>
+                    <div style="font-size: 0.84rem; font-weight: 700; color: #e8edf5; margin-top: 0.25rem;">{MC_SAMPLES} passes · Grad-CAM + Grad-CAM++</div>
                 </div>
             </div>
         </div>"""), unsafe_allow_html=True)
@@ -2729,9 +2800,6 @@ elif nav == "🔬 MRI Analysis":
         with st.expander("Technical Details"):
             st.code(model_error)
     else:
-        # ═══════════════════════════════════════════════════════════
-        # ELEGANT UPLOAD ZONE
-        # ═══════════════════════════════════════════════════════════
         st.markdown(safe_html("""
         <div class="upload-hero">
             <div class="upload-icon">
@@ -2814,7 +2882,6 @@ elif nav == "🔬 MRI Analysis":
                     run_xai = st.checkbox("Enable Dual XAI (Grad-CAM + Grad-CAM++)", value=True, key="run_xai_cb")
                     run_agreement = st.checkbox("Compute Explanation Agreement Score", value=True, key="run_agree_cb")
 
-                    # Medium-small primary CTA — sizes to content
                     if st.button("🔍 Run AI Analysis", type="primary", width="content", key="analyze_btn"):
                         if st.session_state.live_session_start is None:
                             st.session_state.live_session_start = datetime.now()
@@ -2970,7 +3037,7 @@ elif nav == "🔬 MRI Analysis":
                 </div>
                 <div class="diagnostic-prediction">{result['prediction']}</div>
                 <div class="diagnostic-confidence">{conf_val:.2f}% model confidence</div>
-                <div style="margin-top:.85rem">
+                <div style="margin-top:.75rem">
                     <span class="medical-badge badge-{conf_cls}">{conf_lbl} Confidence</span>
                 </div>
             </div>"""), unsafe_allow_html=True)
@@ -2993,7 +3060,7 @@ elif nav == "🔬 MRI Analysis":
                             <div class="uncertainty-value" style="color:{color}">σ = {unc:.4f}</div>
                             <div class="uncertainty-band" style="color:{color}">{band}</div>
                         </div>
-                        <div style="text-align:right;font-size:.8rem;color:var(--text-secondary)">
+                        <div style="text-align:right;font-size:.75rem;color:var(--text-secondary)">
                             MC Confidence: <b style="color:var(--accent-light);font-family:'JetBrains Mono',monospace">{mc_res['confidence']:.2f}%</b><br>
                             Prediction: <b>{mc_res['prediction']}</b>
                         </div>
@@ -3012,9 +3079,9 @@ elif nav == "🔬 MRI Analysis":
                             Pearson correlation between Grad-CAM and Grad-CAM++ heatmaps.<br>
                             A high score (&gt;0.70) means both methods highlight similar regions. Similarity alone does not verify that an explanation is correct.
                         </div>
-                        <div style="text-align:right;min-width:90px">
-                            <div style="font-family:'Sora',sans-serif;font-size:1.5rem;font-weight:700;color:{a_color};letter-spacing:-.02em">{agree:.3f}</div>
-                            <div style="font-size:.7rem;color:{a_color};font-weight:600">{a_label}</div>
+                        <div style="text-align:right;min-width:80px">
+                            <div style="font-family:'Sora',sans-serif;font-size:1.35rem;font-weight:700;color:{a_color};letter-spacing:-.02em">{agree:.3f}</div>
+                            <div style="font-size:.66rem;color:{a_color};font-weight:600">{a_label}</div>
                         </div>
                     </div>
                 </div>"""), unsafe_allow_html=True)
@@ -3027,7 +3094,7 @@ elif nav == "🔬 MRI Analysis":
                 f'<div class="probability-card {"predicted" if label == result["prediction"] else ""}">'
                 f'<div class="probability-value">{prob:.1f}%</div>'
                 f'<div class="probability-label">{label}</div>'
-                f'{"<div style=\"font-size:.62rem;color:var(--accent-light);margin-top:.3rem;font-weight:700;letter-spacing:.08em\">▲ TOP</div>" if label == result["prediction"] else ""}'
+                f'{"<div style=\"font-size:.58rem;color:var(--accent-light);margin-top:.25rem;font-weight:700;letter-spacing:.08em\">▲ TOP</div>" if label == result["prediction"] else ""}'
                 f'</div>'
                 for label, prob in result["probabilities"].items()
             ) + '</div>'
@@ -3062,9 +3129,6 @@ elif nav == "🔬 MRI Analysis":
                     </div>
                 </div>"""), unsafe_allow_html=True)
 
-            # ─────────────────────────────────────────────────
-            # UNIFIED EXPORT PANEL
-            # ─────────────────────────────────────────────────
             gc_buf = None
             if st.session_state.gradcam_image is not None:
                 _b = io.BytesIO()
@@ -3127,7 +3191,7 @@ elif nav == "🔬 MRI Analysis":
                 )
 
             st.markdown(
-                '<div class="export-item-label" style="margin-top:1rem">Analysis Report · TXT</div>',
+                '<div class="export-item-label" style="margin-top:.85rem">Analysis Report · TXT</div>',
                 unsafe_allow_html=True,
             )
             st.download_button(
@@ -3230,9 +3294,9 @@ elif nav == "📊 Dashboard":
 
         if avg_agree is not None:
             st.markdown(safe_html(f"""
-            <div style="margin:.75rem 0;padding:.85rem 1.25rem;border-radius:14px;background:#131a2c;border:1px solid rgba(14,165,233,.22);display:flex;justify-content:space-between;align-items:center">
-                <span style="font-size:.72rem;color:var(--accent-light);font-weight:700;text-transform:uppercase;letter-spacing:.1em">Average Explanation Agreement Score</span>
-                <span style="font-family:'Sora',sans-serif;font-size:1.3rem;font-weight:700;color:var(--text-primary);letter-spacing:-.02em">{avg_agree:.3f}</span>
+            <div style="margin:.65rem 0;padding:.75rem 1.1rem;border-radius:12px;background:#131a2c;border:1px solid rgba(14,165,233,.22);display:flex;justify-content:space-between;align-items:center">
+                <span style="font-size:.66rem;color:var(--accent-light);font-weight:700;text-transform:uppercase;letter-spacing:.1em">Average Explanation Agreement Score</span>
+                <span style="font-family:'Sora',sans-serif;font-size:1.2rem;font-weight:700;color:var(--text-primary);letter-spacing:-.02em">{avg_agree:.3f}</span>
             </div>"""), unsafe_allow_html=True)
 
         st.write("")
@@ -3446,8 +3510,8 @@ elif nav == "🔥 Grad-CAM":
                         High scores (&gt;0.70) indicate similar heatmaps, but do not establish that the explanation is correct.
                     </div>
                     <div style="text-align:right">
-                        <div style="font-family:'Sora',sans-serif;font-size:1.5rem;font-weight:700;color:{a_color};letter-spacing:-.02em">{agree:.3f}</div>
-                        <div style="font-size:.7rem;color:{a_color};font-weight:600">{a_label}</div>
+                        <div style="font-family:'Sora',sans-serif;font-size:1.35rem;font-weight:700;color:{a_color};letter-spacing:-.02em">{agree:.3f}</div>
+                        <div style="font-size:.66rem;color:{a_color};font-weight:600">{a_label}</div>
                     </div>
                 </div>
             </div>"""), unsafe_allow_html=True)
@@ -3529,7 +3593,7 @@ elif nav == "🎯 XAI Lab":
                 with col:
                     st.markdown(safe_html(f"""
                     <div class="metric-card" style="border-color:{color}30">
-                        <div class="metric-value" style="color:{color};font-size:1.7rem">{cnt}</div>
+                        <div class="metric-value" style="color:{color};font-size:1.55rem">{cnt}</div>
                         <div class="metric-label">{band.replace(' Reliability', '')}</div>
                     </div>"""), unsafe_allow_html=True)
 
@@ -3671,7 +3735,7 @@ elif nav == "⚙️ Settings":
 
 
 # ─────────────────────────────────────────────────────────────────────────────
-# FOOTER — REDESIGNED
+# FOOTER
 # ─────────────────────────────────────────────────────────────────────────────
 
 year       = datetime.now().year
@@ -3685,8 +3749,6 @@ st_ver    = st.__version__
 
 st.markdown(safe_html(f"""
 <div class="app-footer">
-
-    <!-- Brand Column -->
     <div class="footer-col footer-col-brand">
         <div class="footer-brand-row">
             <div class="footer-brand-logo">🧠</div>
@@ -3703,7 +3765,6 @@ st.markdown(safe_html(f"""
         </div>
     </div>
 
-    <!-- Tech Stack Column -->
     <div class="footer-col footer-col-stack">
         <div class="footer-col-title">Tech Stack</div>
         <div class="footer-badges">
@@ -3714,13 +3775,12 @@ st.markdown(safe_html(f"""
             <span class="badge-tech"><span class="badge-tech-dot"></span>MC Dropout</span>
             <span class="badge-tech"><span class="badge-tech-dot"></span>{model_name or 'CustomCNN'}</span>
         </div>
-        <div class="footer-col-title" style="margin-top:0.75rem">Build</div>
-        <div style="font-family:'JetBrains Mono',monospace;font-size:0.7rem;color:var(--text-3);letter-spacing:0.01em;">
+        <div class="footer-col-title" style="margin-top:0.6rem">Build</div>
+        <div style="font-family:'JetBrains Mono',monospace;font-size:0.66rem;color:var(--text-3);letter-spacing:0.01em;">
             {build_time}
         </div>
     </div>
 
-    <!-- Session Stats Column -->
     <div class="footer-col footer-col-stats">
         <div class="footer-col-title">Session</div>
         <div class="footer-stats">
@@ -3741,7 +3801,6 @@ st.markdown(safe_html(f"""
             </div>
         </div>
     </div>
-
 </div>"""), unsafe_allow_html=True)
 
 st.markdown(safe_html(f"""
