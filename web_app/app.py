@@ -1501,8 +1501,8 @@ hr { border-color: var(--line) !important; margin: 1.25rem 0 !important; }
 }
 
 [data-testid="stDownloadButton"] > button {
-    width: 180px !important;
-    min-width: 180px !important;
+    width: 100% !important;
+    min-width: 100% !important;
     height: 40px !important;
     min-height: 40px !important;
     padding: 4px 10px !important;
