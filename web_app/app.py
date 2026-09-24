@@ -1127,7 +1127,7 @@ code, pre, .activity-feed, .activity-time {
 /* Primary = slightly larger but still compact */
 .stButton > button[kind="primary"] {
     padding: 0.5rem 1.1rem !important;
-    min-height: 36px !important;
+    min-height: 40px !important;
     background: var(--accent) !important;
     border: 1px solid var(--accent) !important;
     color: #041018 !important;
@@ -1501,10 +1501,10 @@ hr { border-color: var(--line) !important; margin: 1.25rem 0 !important; }
 }
 
 [data-testid="stDownloadButton"] > button {
-    width: 150px !important;
-    min-width: 150px !important;
-    height: 36px !important;
-    min-height: 36px !important;
+    width: 180px !important;
+    min-width: 180px !important;
+    height: 40px !important;
+    min-height: 40px !important;
     padding: 4px 10px !important;
     margin-left: auto !important;
     margin-right: auto !important;
