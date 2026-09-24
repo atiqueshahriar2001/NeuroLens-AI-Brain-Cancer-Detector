@@ -894,17 +894,118 @@ code, pre, .activity-feed, .activity-time {
     font-weight: 500;
 }
 
+/* ── ELEGANT UPLOAD HERO ── */
+.upload-hero {
+    position: relative;
+    margin: 1rem 0 .75rem;
+    padding: 1.85rem 2rem 1.5rem;
+    border-radius: var(--r-lg);
+    background: var(--surface-2);
+    border: 1px solid var(--line);
+    overflow: hidden;
+    text-align: center;
+    box-shadow: var(--sh-1);
+}
+.upload-hero::before {
+    content: "";
+    position: absolute;
+    top: -80%; left: 50%;
+    transform: translateX(-50%);
+    width: 520px; height: 520px;
+    background: radial-gradient(circle, rgba(14,165,233,0.14), transparent 62%);
+    pointer-events: none;
+}
+.upload-icon {
+    position: relative;
+    width: 60px; height: 60px;
+    margin: 0 auto .9rem;
+    border-radius: 16px;
+    background: linear-gradient(135deg, rgba(14,165,233,0.22), rgba(14,165,233,0.04));
+    border: 1px solid var(--accent-line);
+    display: flex; align-items: center; justify-content: center;
+    color: var(--accent-hi);
+    box-shadow: 0 10px 26px rgba(14,165,233,0.14);
+}
+.upload-icon svg { width: 26px; height: 26px; }
+.upload-title {
+    position: relative;
+    font-family: var(--font-display);
+    font-size: 1.18rem;
+    font-weight: 700;
+    color: var(--text-1);
+    letter-spacing: -0.02em;
+    margin-bottom: .3rem;
+}
+.upload-subtitle {
+    position: relative;
+    font-size: .84rem;
+    color: var(--text-2);
+    margin-bottom: .95rem;
+    line-height: 1.5;
+}
+.upload-badges {
+    position: relative;
+    display: flex; justify-content: center;
+    gap: .4rem; flex-wrap: wrap;
+}
+.upload-badge {
+    padding: .26rem .62rem;
+    border-radius: 6px;
+    background: rgba(14,165,233,0.08);
+    border: 1px solid rgba(14,165,233,0.22);
+    font-family: var(--font-mono);
+    font-size: .64rem;
+    font-weight: 600;
+    color: var(--accent-hi);
+    letter-spacing: .08em;
+}
+.upload-badge-muted {
+    background: rgba(255,255,255,0.03);
+    border-color: var(--line);
+    color: var(--text-3);
+}
+.upload-footnote {
+    display: flex; align-items: center; justify-content: center;
+    gap: .45rem;
+    margin-top: .85rem;
+    font-size: .72rem;
+    color: var(--text-3);
+    letter-spacing: .01em;
+}
+.upload-footnote-dot {
+    width: 5px; height: 5px;
+    border-radius: 50%;
+    background: var(--success);
+    display: inline-block;
+    box-shadow: 0 0 8px rgba(16,185,129,0.55);
+}
+
 /* ── STREAMLIT NATIVE OVERRIDES ── */
 [data-testid="stFileUploader"] {
-    background: var(--surface-2);
-    border-radius: var(--r-md);
-    padding: 1rem;
+    background: linear-gradient(180deg, rgba(14,165,233,0.035), rgba(14,165,233,0.005));
+    border-radius: var(--r-lg);
+    padding: 1.15rem 1rem;
     border: 1px dashed var(--line-strong);
+    transition: border-color 200ms ease, background 200ms ease;
 }
 [data-testid="stFileUploader"]:hover {
     border-color: var(--accent-line);
-    background: var(--accent-soft);
+    background: linear-gradient(180deg, rgba(14,165,233,0.07), rgba(14,165,233,0.015));
 }
+[data-testid="stFileUploader"] small { color: var(--text-3) !important; }
+[data-testid="stFileUploader"] button {
+    border-radius: var(--r-sm) !important;
+    background: var(--accent) !important;
+    color: #041018 !important;
+    border: 1px solid var(--accent) !important;
+    font-weight: 600 !important;
+    transition: background 140ms ease, border-color 140ms ease !important;
+}
+[data-testid="stFileUploader"] button:hover {
+    background: var(--accent-hi) !important;
+    border-color: var(--accent-hi) !important;
+}
+
 [data-testid="stExpander"] {
     border-radius: var(--r-md) !important;
     border: 1px solid var(--line) !important;
@@ -1139,6 +1240,11 @@ hr { border-color: var(--line) !important; margin: 1.25rem 0 !important; }
         flex: 1 1 100% !important; min-width: 0 !important;
     }
     .diagnostic-prediction { font-size: 2rem !important; }
+    .upload-hero { padding: 1.5rem 1.25rem 1.25rem; }
+    .upload-title { font-size: 1.05rem; }
+    .upload-subtitle { font-size: 0.78rem; }
+    .upload-icon { width: 52px; height: 52px; }
+    .upload-icon svg { width: 22px; height: 22px; }
 }
 
 @media (min-width: 769px) and (max-width: 1024px) {
@@ -2132,15 +2238,28 @@ elif nav == "🔬 MRI Analysis":
             st.code(model_error)
     else:
         # ═══════════════════════════════════════════════════════════
-        # CENTERED UPLOAD ZONE  ← ← ← (NEW)
+        # ELEGANT UPLOAD ZONE  ← ← ← (REDESIGNED)
         # ═══════════════════════════════════════════════════════════
         st.markdown(safe_html("""
-        <div style="text-align:center;margin:1.5rem 0 .85rem">
-            <div class="hero-badge" style="display:inline-flex">
-                📤 Upload Brain MRI Scan
+        <div class="upload-hero">
+            <div class="upload-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                     stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                    <polyline points="17 8 12 3 7 8"/>
+                    <line x1="12" y1="3" x2="12" y2="15"/>
+                </svg>
             </div>
-            <div style="color:var(--text-3);font-size:.82rem;margin-top:.65rem;letter-spacing:.02em">
-                Supported formats: <b style="color:var(--text-2)">JPG · PNG · WEBP</b>
+            <div class="upload-title">Upload Brain MRI Scan</div>
+            <div class="upload-subtitle">
+                Drop your scan below or click to browse your files
+            </div>
+            <div class="upload-badges">
+                <span class="upload-badge">JPG</span>
+                <span class="upload-badge">JPEG</span>
+                <span class="upload-badge">PNG</span>
+                <span class="upload-badge">WEBP</span>
+                <span class="upload-badge upload-badge-muted">≤ 200 MB</span>
             </div>
         </div>
         """), unsafe_allow_html=True)
@@ -2153,6 +2272,12 @@ elif nav == "🔬 MRI Analysis":
                 key="mri_uploader",
                 label_visibility="collapsed",
             )
+            st.markdown(safe_html("""
+            <div class="upload-footnote">
+                <span class="upload-footnote-dot"></span>
+                Files are processed locally · Nothing is uploaded to external servers
+            </div>
+            """), unsafe_allow_html=True)
 
         image_id = None
         if uploaded_file is not None:
