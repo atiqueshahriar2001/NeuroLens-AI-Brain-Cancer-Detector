@@ -746,16 +746,25 @@ code, pre, .mono { font-family: var(--font-mono); }
     letter-spacing: -0.04em; line-height: 1.05;
     color: var(--text-1); margin: 0 0 0.75rem; position: relative;
 }
-.hero-sub {
-    color: var(--text-2); font-size: 0.9rem; line-height: 1.65;
-    max-width: 580px;
-    margin: 0 auto;
-    padding: 0 1rem;
-    position: relative;
-    font-weight: 400;
-    text-align: center;
-}
-.hero-divider {
+.hero .hero-sub,
+.hero .hero-sub p,
+.hero p.hero-sub,
+[data-testid="stMarkdownContainer"] .hero-sub,
+[data-testid="stMarkdownContainer"] .hero-sub p,
+[data-testid="stMarkdownContainer"] p.hero-sub {
+    color: var(--text-2) !important;
+    font-size: 0.9rem !important;
+    line-height: 1.65 !important;
+    max-width: 580px !important;
+    margin-left: auto !important;
+    margin-right: auto !important;
+    padding: 0 1rem !important;
+    position: relative !important;
+    font-weight: 400 !important;
+    text-align: center !important;
+    display: block !important;
+    width: 100% !important;
+}.hero-divider {
     width: 48px; height: 2px; border-radius: 1px;
     background: linear-gradient(to right, var(--accent), transparent);
     margin: 1rem auto 0; position: relative;
