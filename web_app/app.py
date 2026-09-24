@@ -1,17 +1,6 @@
 # =============================================================================
 # NeuroLens AI — Neurodiagnostic Intelligence Platform
-# Production SaaS Edition v3.6 — Vibrant Blue-Green Edition + Premium UI v6.0
-# =============================================================================
-# FIX SUMMARY (v3.6):
-#   - VIBRANT blue-green color palette (--blue, --cyan, --green gradients)
-#   - Sidebar SVG icon injection via CSS ::before + URL-encoded data URIs
-#   - Upgraded sticky header with gradient border mask + glow
-#   - Upgraded footer with gradient border + corner radial glow
-#   - Gradient text on brand name, nav groups, footer titles
-#   - Primary buttons now use 3-stop blue→cyan→green gradient
-#   - Sidebar buttons: hover slide + cyan glow + icon fade-in
-#   - Triple radial background glow (blue top-left, green bottom-right)
-#   - No changes to ML / inference / core logic
+# Production SaaS Edition v3.6.1 — Vibrant Blue-Green Edition + Premium UI v6.1
 # =============================================================================
 
 import warnings
@@ -548,7 +537,6 @@ st.markdown(
 # ─────────────────────────────────────────────────────────────────────────────
 UI_CSS = r"""
 :root {
-  /* ── Base Backgrounds ── */
   --bg:#030814;
   --bg-2:#061029;
   --surface:#0a1a35;
@@ -556,18 +544,15 @@ UI_CSS = r"""
   --surface-3:#16385f;
   --surface-4:#1f4d7a;
 
-  /* ── Vibrant Blues ── */
   --blue:#2563eb;
   --blue-hi:#3b82f6;
   --cyan:#06b6d4;
   --cyan-hi:#22d3ee;
 
-  /* ── Vibrant Greens ── */
   --green:#10b981;
   --green-hi:#22c55e;
   --emerald:#34d399;
 
-  /* ── Status ── */
   --accent:#06b6d4;
   --accent-hi:#22d3ee;
   --success:#10b981;
@@ -577,21 +562,17 @@ UI_CSS = r"""
   --danger-hi:#f87171;
   --violet:#8b5cf6;
 
-  /* ── Text ── */
   --text:#f1f5f9;
   --text-2:#94a3b8;
   --text-3:#64748b;
 
-  /* ── Borders ── */
   --line:rgba(59,130,246,.14);
   --line-strong:rgba(59,130,246,.30);
   --line-glow:rgba(34,211,238,.35);
 
-  /* ── Typography ── */
   --font-display:'Sora','Inter',system-ui,sans-serif;
   --font-mono:'JetBrains Mono',ui-monospace,SFMono-Regular,Menlo,monospace;
 
-  /* ── Layout ── */
   --sb-w:280px;
   --hd-h:60px;
 }
@@ -630,7 +611,6 @@ html, body, [data-testid="stAppViewContainer"], [data-testid="stApp"] {
   padding:0 .85rem 1rem !important;
 }
 
-/* ── Sidebar nav buttons ── */
 [data-testid="stSidebar"] .stButton { width:100% !important; margin:.22rem 0 !important; }
 [data-testid="stSidebar"] .stButton > button {
   position:relative !important;
@@ -663,7 +643,6 @@ html, body, [data-testid="stAppViewContainer"], [data-testid="stApp"] {
   color:inherit !important; font:inherit !important;
 }
 
-/* ── Nav group label ── */
 .sb-nav-group {
   margin:1.1rem .4rem .4rem !important;
   font:800 .62rem/1.2 'Inter',system-ui,sans-serif !important;
@@ -675,7 +654,6 @@ html, body, [data-testid="stAppViewContainer"], [data-testid="stApp"] {
   background-clip:text;
 }
 
-/* ── Brand ── */
 .sb-brand {
   display:flex; align-items:center; gap:.8rem;
   padding:.9rem .4rem .75rem;
@@ -749,7 +727,6 @@ html, body, [data-testid="stAppViewContainer"], [data-testid="stApp"] {
   50%     { opacity:.6; transform:scale(1.15); }
 }
 
-/* ── Session pill ── */
 .sb-session {
   display:flex; align-items:center; gap:.5rem;
   min-height:34px;
@@ -764,7 +741,6 @@ html, body, [data-testid="stAppViewContainer"], [data-testid="stApp"] {
 .sb-session-time { margin-left:auto; color:#475569; font:600 .6rem var(--font-mono); }
 .sb-session-dot { width:7px; height:7px; border-radius:50%; flex:0 0 auto; }
 
-/* ── Neural Engine panel ── */
 .sb-engine {
   margin:.85rem .05rem .95rem;
   padding:.85rem;
@@ -849,9 +825,6 @@ html, body, [data-testid="stAppViewContainer"], [data-testid="stApp"] {
   font:.6rem/1.4 Inter,sans-serif;
 }
 
-/* ═══════════════════════════════════════════════════════════════════════
-   GLOBAL BUTTONS
-   ═══════════════════════════════════════════════════════════════════════ */
 .stButton > button, .stDownloadButton > button {
   min-height:42px !important;
   border-radius:10px !important;
@@ -911,9 +884,6 @@ html, body, [data-testid="stAppViewContainer"], [data-testid="stApp"] {
 [data-testid="stMetricLabel"] { color:#64748b !important; }
 [data-testid="stMetricValue"] { color:#e2e8f0 !important; }
 
-/* ═══════════════════════════════════════════════════════════════════════
-   STICKY HEADER — vibrant gradient border
-   ═══════════════════════════════════════════════════════════════════════ */
 .sticky-header {
   position:fixed; z-index:9999;
   top:.6rem; left:calc(var(--sb-w) + .6rem); right:.6rem;
@@ -1027,10 +997,6 @@ html, body, [data-testid="stAppViewContainer"], [data-testid="stApp"] {
   background:#22d3ee;
   box-shadow:0 0 8px rgba(34,211,238,.9);
 }
-
-/* ═══════════════════════════════════════════════════════════════════════
-   PAGE CONTENT CLASSES
-   ═══════════════════════════════════════════════════════════════════════ */
 
 /* ── HERO ── */
 .hero { padding:1.5rem 0 1rem; }
@@ -1268,7 +1234,6 @@ html, body, [data-testid="stAppViewContainer"], [data-testid="stApp"] {
 .xai-text b  { color:#cbd5e1; font-weight:700; }
 .xai-text em { color:#cbd5e1; font-style:italic; }
 
-/* ── DISCLAIMER ── */
 .disclaimer {
   display:flex; align-items:flex-start; gap:.6rem;
   margin:.85rem 0; padding:.8rem 1rem; border-radius:10px;
@@ -1278,7 +1243,6 @@ html, body, [data-testid="stAppViewContainer"], [data-testid="stApp"] {
 }
 .disclaimer b { color:#fbbf24; }
 
-/* ── PROBABILITY GRID ── */
 .prob-grid {
   display:grid; grid-template-columns:repeat(auto-fit,minmax(140px,1fr));
   gap:.65rem; margin:.4rem 0 .2rem;
@@ -1317,7 +1281,6 @@ html, body, [data-testid="stAppViewContainer"], [data-testid="stApp"] {
   letter-spacing:.06em; text-transform:uppercase;
 }
 
-/* ── EMPTY STATE ── */
 .empty-state {
   padding:3rem 1rem; text-align:center; border-radius:14px;
   border:1px dashed rgba(59,130,246,.20);
@@ -1332,7 +1295,6 @@ html, body, [data-testid="stAppViewContainer"], [data-testid="stApp"] {
 .empty-title { color:#cbd5e1; font:700 .98rem var(--font-display); }
 .empty-text  { margin-top:.4rem; color:#64748b; font:400 .8rem Inter,sans-serif; }
 
-/* ── DISTRIBUTION BARS ── */
 .dist-card {
   margin:.45rem 0; padding:.7rem .9rem; border-radius:10px;
   background:linear-gradient(135deg,rgba(15,37,71,.6),rgba(10,26,53,.6));
@@ -1351,7 +1313,6 @@ html, body, [data-testid="stAppViewContainer"], [data-testid="stApp"] {
   transition:width 1s cubic-bezier(.2,.8,.2,1);
 }
 
-/* ── LATEST RESULT ── */
 .latest-card {
   padding:.75rem .9rem; border-radius:10px;
   background:linear-gradient(135deg,rgba(15,37,71,.55),rgba(10,26,53,.55));
@@ -1368,7 +1329,6 @@ html, body, [data-testid="stAppViewContainer"], [data-testid="stApp"] {
   text-align:right; word-break:break-word;
 }
 
-/* ── HISTORY THUMB ── */
 .thumb-card {
   display:flex; align-items:center; gap:.9rem;
   padding:.8rem 1rem; margin:.45rem 0; border-radius:11px;
@@ -1402,7 +1362,6 @@ html, body, [data-testid="stAppViewContainer"], [data-testid="stApp"] {
 .conf-mid { background:rgba(245,158,11,.14); border:1px solid rgba(245,158,11,.35); color:#fbbf24; }
 .conf-lo  { background:rgba(239,68,68,.14);  border:1px solid rgba(239,68,68,.35);  color:#f87171; }
 
-/* ── ACTIVITY FEED ── */
 .act-feed {
   padding:.6rem .7rem; border-radius:10px; max-height:360px; overflow-y:auto;
   background:linear-gradient(135deg,rgba(15,37,71,.55),rgba(10,26,53,.55));
@@ -1420,7 +1379,6 @@ html, body, [data-testid="stAppViewContainer"], [data-testid="stApp"] {
 .act-warn    .act-msg { color:#fbbf24; }
 .act-error   .act-msg { color:#f87171; }
 
-/* ── EXPORT HEAD ── */
 .export-head {
   display:flex; align-items:center; gap:.75rem;
   margin:1.1rem 0 .7rem; padding:.75rem 1rem; border-radius:11px;
@@ -1445,9 +1403,6 @@ html, body, [data-testid="stAppViewContainer"], [data-testid="stApp"] {
   text-transform:uppercase; letter-spacing:.1em; margin:.25rem 0 .4rem;
 }
 
-/* ═══════════════════════════════════════════════════════════════════════
-   APP FOOTER — vibrant gradient border + glow
-   ═══════════════════════════════════════════════════════════════════════ */
 .app-footer {
   display:grid; grid-template-columns:1.4fr 1fr 1fr; gap:1.75rem;
   margin-top:2.5rem;
@@ -1653,11 +1608,11 @@ html, body, [data-testid="stAppViewContainer"], [data-testid="stApp"] {
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23f1f5f9' stroke-width='1.9' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='12' cy='12' r='3'/%3E%3Cpath d='M12 2v3'/%3E%3Cpath d='M12 19v3'/%3E%3Cpath d='m4.22 4.22 2.12 2.12'/%3E%3Cpath d='m17.66 17.66 2.12 2.12'/%3E%3Cpath d='M2 12h3'/%3E%3Cpath d='M19 12h3'/%3E%3Cpath d='m4.22 19.78 2.12-2.12'/%3E%3Cpath d='m17.66 6.34 2.12-2.12'/%3E%3C/svg%3E") !important;
 }
 
-/* ── XAI LAB ── */
-[data-testid="stSidebar"] .st-key-nav_xailab button::before {
+/* ── XAI LAB (FIXED: xai_lab slug) ── */
+[data-testid="stSidebar"] .st-key-nav_xai_lab button::before {
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2394a3b8' stroke-width='1.75' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M14.5 2v17.5c0 1.4-1.1 2.5-2.5 2.5h0c-1.4 0-2.5-1.1-2.5-2.5V2'/%3E%3Cpath d='M8.5 2h7'/%3E%3Cpath d='M14.5 16h-5'/%3E%3Cpath d='m8.5 13 5.5 3'/%3E%3C/svg%3E") !important;
 }
-[data-testid="stSidebar"] .st-key-nav_xailab button:hover::before {
+[data-testid="stSidebar"] .st-key-nav_xai_lab button:hover::before {
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23f1f5f9' stroke-width='1.9' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M14.5 2v17.5c0 1.4-1.1 2.5-2.5 2.5h0c-1.4 0-2.5-1.1-2.5-2.5V2'/%3E%3Cpath d='M8.5 2h7'/%3E%3Cpath d='M14.5 16h-5'/%3E%3Cpath d='m8.5 13 5.5 3'/%3E%3C/svg%3E") !important;
 }
 
@@ -1669,7 +1624,6 @@ html, body, [data-testid="stAppViewContainer"], [data-testid="stApp"] {
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23f1f5f9' stroke-width='1.9' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='12' cy='12' r='3'/%3E%3Cpath d='M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z'/%3E%3C/svg%3E") !important;
 }
 
-/* ── RESPONSIVE ── */
 @media (max-width: 1100px) {
   :root { --sb-w:240px; }
   [data-testid="stSidebar"] { min-width:240px !important; max-width:240px !important; width:240px !important; }
@@ -2469,7 +2423,6 @@ with st.sidebar:
     else:
         uptime = "—"
 
-    # ── Brand ──
     brain_large = Icons.brain(22, "#22d3ee")
     st.markdown(safe_html(f"""
     <div class="sb-brand">
@@ -2478,12 +2431,11 @@ with st.sidebar:
             <span class="sb-brand-pulse"></span>
         </div>
         <div class="sb-brand-text">
-            <div class="sb-brand-name">NeuroLens <span class="sb-brand-ai">AI</span><span class="sb-brand-ver">v3.6</span></div>
+            <div class="sb-brand-name">NeuroLens <span class="sb-brand-ai">AI</span><span class="sb-brand-ver">v3.6.1</span></div>
             <div class="sb-brand-sub">Neurodiagnostic Intelligence</div>
         </div>
     </div>"""), unsafe_allow_html=True)
 
-    # ── Session pill ──
     dot_color = "var(--success-hi)" if engine_ok else "var(--danger-hi)"
     st.markdown(safe_html(f"""
     <div class="sb-session">
@@ -2492,7 +2444,7 @@ with st.sidebar:
         <span class="sb-session-time">{uptime}</span>
     </div>"""), unsafe_allow_html=True)
 
-    # ── Nav badges (updated vibrant colors) ──
+    # ── Nav badges ──
     badge_css_parts = []
     if total_scans > 0:
         badge_css_parts.append(f"""
@@ -2534,8 +2486,9 @@ with st.sidebar:
     agree_vals = [h.get("agreement_score") for h in history if h.get("agreement_score") is not None]
     if agree_vals:
         avg_agree = float(np.mean(agree_vals))
+        # FIXED: slug is now nav_xai_lab (with underscore)
         badge_css_parts.append(f"""
-        [data-testid="stSidebar"] .st-key-nav_xailab button::after {{
+        [data-testid="stSidebar"] .st-key-nav_xai_lab button::after {{
             content: "{avg_agree:.2f}";
             position: absolute;
             right: 0.7rem;
@@ -2683,7 +2636,6 @@ with st.sidebar:
         if c2.button("Cancel", key="sb_reset_no", **_stretch()):
             st.session_state.confirm_reset = False
 
-    # ── Footer warning ──
     alert_svg = Icons.alert_triangle(13, "#d97706")
     st.markdown(safe_html(f"""
     <div class="sb-warning">
@@ -3901,7 +3853,7 @@ elif nav == "Settings":
 
 
 # ─────────────────────────────────────────────────────────────────────────────
-# FOOTER — vibrant gradient border
+# FOOTER
 # ─────────────────────────────────────────────────────────────────────────────
 
 year       = datetime.now().year
