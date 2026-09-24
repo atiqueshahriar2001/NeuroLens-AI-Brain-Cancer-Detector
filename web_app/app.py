@@ -2131,11 +2131,28 @@ elif nav == "🔬 MRI Analysis":
         with st.expander("Technical Details"):
             st.code(model_error)
     else:
-        uploaded_file = st.file_uploader(
-            "Upload Brain MRI Scan (JPG · PNG · WEBP)",
-            type=["jpg", "jpeg", "png", "webp"],
-            key="mri_uploader",
-        )
+        # ═══════════════════════════════════════════════════════════
+        # CENTERED UPLOAD ZONE  ← ← ← (NEW)
+        # ═══════════════════════════════════════════════════════════
+        st.markdown(safe_html("""
+        <div style="text-align:center;margin:1.5rem 0 .85rem">
+            <div class="hero-badge" style="display:inline-flex">
+                📤 Upload Brain MRI Scan
+            </div>
+            <div style="color:var(--text-3);font-size:.82rem;margin-top:.65rem;letter-spacing:.02em">
+                Supported formats: <b style="color:var(--text-2)">JPG · PNG · WEBP</b>
+            </div>
+        </div>
+        """), unsafe_allow_html=True)
+
+        _up_l, _up_c, _up_r = st.columns([1, 2, 1])
+        with _up_c:
+            uploaded_file = st.file_uploader(
+                "Upload Brain MRI Scan (JPG · PNG · WEBP)",
+                type=["jpg", "jpeg", "png", "webp"],
+                key="mri_uploader",
+                label_visibility="collapsed",
+            )
 
         image_id = None
         if uploaded_file is not None:
