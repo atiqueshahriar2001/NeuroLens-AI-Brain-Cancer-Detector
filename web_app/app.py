@@ -748,8 +748,12 @@ code, pre, .mono { font-family: var(--font-mono); }
 }
 .hero-sub {
     color: var(--text-2); font-size: 0.9rem; line-height: 1.65;
-    max-width: 580px; margin: 0 auto; position: relative;
+    max-width: 580px;
+    margin: 0 auto;
+    padding: 0 1rem;
+    position: relative;
     font-weight: 400;
+    text-align: center;
 }
 .hero-divider {
     width: 48px; height: 2px; border-radius: 1px;
