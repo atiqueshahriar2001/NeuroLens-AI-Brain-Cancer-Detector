@@ -1087,6 +1087,7 @@ code, pre, .activity-feed, .activity-time {
 .export-item-label {
     display: flex;
     align-items: center;
+    justify-content: center;
     gap: 0.45rem;
     font-family: var(--font-mono);
     font-size: 0.6rem;
@@ -1095,7 +1096,9 @@ code, pre, .activity-feed, .activity-time {
     letter-spacing: 0.12em;
     font-weight: 700;
     margin: 0 0 0.45rem 0;
-    padding-left: 0.15rem;
+    padding-left: 0;
+    text-align: center;
+    width: 100%;
 }
 .export-item-label::before {
     content: "";
@@ -3815,4 +3818,10 @@ st.markdown(safe_html(f"""
         <span class="copyright-dev-amp">&amp;</span>
         <span class="copyright-dev-name">Aronna Das</span>
     </span>
-</div>"""), unsafe_allow_html=True)
+</div>"""), unsafe_allow_html=True)                                                                                                                        
+
+Grad-CAM · PNG
+Grad-CAM++ · PNG
+Analysis Report · TXT
+
+ei tinti label download button gulor sathe align kora nei. Adjust kore dao.
