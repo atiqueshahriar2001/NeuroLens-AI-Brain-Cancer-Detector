@@ -1269,80 +1269,178 @@ hr { border-color: var(--line) !important; margin: 1.25rem 0 !important; }
     line-height: 1.6;
 }
 
-/* ── FOOTER ── */
+/* ══════════════════════════════════════════════════════════════
+   FOOTER — REDESIGNED v3.1
+   ══════════════════════════════════════════════════════════════ */
 .app-footer {
-    display: flex;
-    justify-content: space-between;
-    align-items: stretch;
+    position: relative;
+    display: grid;
+    grid-template-columns: 1.4fr 1.4fr 1fr;
     gap: 1.5rem;
-    padding: 1.25rem 1.5rem;
+    padding: 2rem 2rem 1.75rem;
     border-radius: var(--r-lg);
-    background: var(--surface-2);
+    background:
+        radial-gradient(circle at 0% 0%, rgba(14,165,233,0.08), transparent 45%),
+        radial-gradient(circle at 100% 100%, rgba(139,92,246,0.06), transparent 45%),
+        var(--surface-2);
     border: 1px solid var(--line);
-    margin-top: 2.5rem;
-    font-size: 0.8rem;
-    color: var(--text-2);
-    flex-wrap: wrap;
+    margin-top: 3rem;
+    overflow: hidden;
+    box-shadow: var(--sh-2);
 }
-.footer-col { display: flex; flex-direction: column; gap: 0.5rem; }
-.footer-col-brand { flex: 1; min-width: 200px; }
-.footer-col-stack { flex: 1.2; min-width: 200px; }
-.footer-col-stats { flex: 0 0 auto; min-width: 240px; }
+.app-footer::before {
+    content: "";
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(14,165,233,0.5), rgba(139,92,246,0.4), transparent);
+}
 
-.footer-brand-row { display: flex; align-items: center; gap: 0.6rem; }
+.footer-col {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    position: relative;
+    z-index: 1;
+}
+.footer-col-brand { grid-column: 1 / 2; }
+.footer-col-stack { grid-column: 2 / 3; }
+.footer-col-stats { grid-column: 3 / 4; }
+
+/* Brand block */
+.footer-brand-row {
+    display: flex;
+    align-items: center;
+    gap: 0.85rem;
+}
 .footer-brand-logo {
-    width: 32px; height: 32px;
-    border-radius: var(--r-sm);
-    background: var(--accent-soft);
+    width: 44px; height: 44px;
+    border-radius: 12px;
+    background: linear-gradient(135deg, rgba(14,165,233,0.25), rgba(14,165,233,0.05));
     border: 1px solid var(--accent-line);
     display: flex; align-items: center; justify-content: center;
-    font-size: 1rem;
+    font-size: 1.35rem;
+    flex-shrink: 0;
+    box-shadow: 0 8px 20px rgba(14,165,233,0.14);
 }
-.footer-brand { font-size: 0.92rem; font-weight: 700; color: var(--text-1); letter-spacing: -0.015em; }
-.footer-tagline {
-    font-size: 0.66rem; color: var(--text-3);
-    letter-spacing: 0.04em; font-weight: 500;
+.footer-brand-name {
+    font-family: var(--font-display);
+    font-size: 1.05rem;
+    font-weight: 800;
+    color: var(--text-1);
+    letter-spacing: -0.02em;
+    line-height: 1.15;
 }
-.footer-copy {
+.footer-brand-tagline {
+    font-size: 0.68rem;
+    color: var(--text-3);
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    font-weight: 600;
+    margin-top: 2px;
+}
+.footer-brand-desc {
+    font-size: 0.8rem;
+    color: var(--text-2);
+    line-height: 1.6;
+    max-width: 320px;
+}
+.footer-copyright {
     font-family: var(--font-mono);
     font-size: 0.68rem;
     color: var(--text-3);
-    line-height: 1.6;
-    margin-top: 0.35rem;
+    letter-spacing: 0.01em;
+    padding-top: 0.5rem;
+    border-top: 1px dashed var(--line);
+    margin-top: 0.25rem;
 }
+.footer-copyright b { color: var(--text-2); font-weight: 600; }
 
+/* Stack block */
 .footer-col-title {
-    font-size: 0.6rem;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+    font-family: var(--font-mono);
+    font-size: 0.62rem;
     color: var(--text-3);
     text-transform: uppercase;
     letter-spacing: 0.14em;
     font-weight: 700;
     margin-bottom: 0.25rem;
 }
-.footer-badges { display: flex; flex-wrap: wrap; gap: 0.4rem; }
+.footer-col-title::before {
+    content: "";
+    width: 3px; height: 10px;
+    border-radius: 1px;
+    background: var(--accent);
+    flex-shrink: 0;
+}
+.footer-badges {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.45rem;
+}
 .badge-tech {
-    padding: 0.25rem 0.6rem;
-    border-radius: 6px;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    padding: 0.35rem 0.7rem;
+    border-radius: 8px;
     background: rgba(255,255,255,0.03);
     border: 1px solid var(--line);
     color: var(--text-2);
     font-family: var(--font-mono);
-    font-size: 0.66rem;
+    font-size: 0.68rem;
     font-weight: 500;
-    transition: border-color 140ms ease, color 140ms ease;
+    transition: border-color 160ms ease, color 160ms ease, background 160ms ease, transform 160ms ease;
 }
-.badge-tech:hover { border-color: var(--line-strong); color: var(--text-1); }
+.badge-tech:hover {
+    border-color: var(--accent-line);
+    color: var(--accent-hi);
+    background: var(--accent-soft);
+    transform: translateY(-1px);
+}
+.badge-tech-dot {
+    width: 5px; height: 5px;
+    border-radius: 50%;
+    background: var(--accent);
+    flex-shrink: 0;
+}
 
-.footer-stats { display: flex; gap: 1.5rem; margin-top: 0.25rem; }
-.footer-stat { display: flex; flex-direction: column; gap: 0.15rem; }
+/* Stats block */
+.footer-stats {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.6rem;
+    margin-top: 0.2rem;
+}
+.footer-stat {
+    padding: 0.75rem 0.85rem;
+    border-radius: 10px;
+    background: rgba(0,0,0,0.20);
+    border: 1px solid var(--line);
+    display: flex;
+    flex-direction: column;
+    gap: 0.2rem;
+    transition: border-color 160ms ease, background 160ms ease;
+}
+.footer-stat:hover {
+    border-color: var(--line-strong);
+    background: rgba(0,0,0,0.30);
+}
+.footer-stat--wide { grid-column: 1 / -1; }
 .footer-stat-val {
     font-family: var(--font-display);
-    font-size: 0.95rem;
+    font-size: 1.15rem;
     font-weight: 700;
     color: var(--text-1);
-    display: inline-flex; align-items: center; gap: 0.4rem;
-    letter-spacing: -0.015em;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    letter-spacing: -0.02em;
     font-variant-numeric: tabular-nums;
+    line-height: 1.1;
 }
 .footer-stat-lbl {
     font-size: 0.58rem;
@@ -1356,16 +1454,26 @@ hr { border-color: var(--line) !important; margin: 1.25rem 0 !important; }
     border-radius: 50%;
     background: var(--success);
     display: inline-block;
+    box-shadow: 0 0 8px rgba(16,185,129,0.6);
+    animation: footer-pulse 2.2s ease-in-out infinite;
+}
+.footer-dot--off {
+    background: var(--danger);
+    box-shadow: 0 0 8px rgba(239,68,68,0.6);
+}
+@keyframes footer-pulse {
+    0%, 100% { opacity: 1; }
+    50%      { opacity: 0.5; }
 }
 
-/* ── COPYRIGHT ── */
+/* Copyright bar */
 .copyright-line {
     text-align: center;
-    padding: 1.5rem 0.5rem 0.5rem;
+    padding: 1.25rem 0.5rem 0.5rem;
     font-size: 0.75rem;
     color: var(--text-3);
     letter-spacing: 0.02em;
-    line-height: 1.7;
+    line-height: 1.8;
 }
 .copyright-brand { color: var(--text-2); font-weight: 600; }
 .copyright-sep { color: var(--text-3); margin: 0 0.5rem; }
@@ -1403,10 +1511,11 @@ hr { border-color: var(--line) !important; margin: 1.25rem 0 !important; }
     .hero h1 { font-size: 1.85rem !important; }
     .hero { padding: 2rem 1.25rem; }
     .probability-grid { grid-template-columns: 1fr 1fr !important; }
-    .app-footer { flex-direction: column; gap: 1rem; }
+    .app-footer { grid-template-columns: 1fr !important; padding: 1.5rem 1.25rem; }
     .footer-col-brand, .footer-col-stack, .footer-col-stats {
-        flex: 1 1 100% !important; min-width: 0 !important;
+        grid-column: 1 / -1 !important;
     }
+    .footer-stats { grid-template-columns: 1fr 1fr; }
     .diagnostic-prediction { font-size: 2rem !important; }
     .upload-hero { padding: 1.5rem 1.25rem 1.25rem; }
     .upload-title { font-size: 1.05rem; }
@@ -1427,6 +1536,8 @@ hr { border-color: var(--line) !important; margin: 1.25rem 0 !important; }
         width: 260px !important;
     }
     [data-testid="stSidebar"] > div:first-child { width: 260px !important; }
+    .app-footer { grid-template-columns: 1fr 1fr !important; }
+    .footer-col-stats { grid-column: 1 / -1 !important; }
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -1502,8 +1613,8 @@ hr { border-color: var(--line) !important; margin: 1.25rem 0 !important; }
 }
 
 [data-testid="stDownloadButton"] > button {
-    width: 240px !important;      /* Changed from 100% to 240px */
-    min-width: 240px !important;  /* Changed from 100% to 240px */
+    width: 240px !important;
+    min-width: 240px !important;
     height: 40px !important;
     min-height: 40px !important;
     padding: 4px 10px !important;
@@ -3560,7 +3671,7 @@ elif nav == "⚙️ Settings":
 
 
 # ─────────────────────────────────────────────────────────────────────────────
-# FOOTER
+# FOOTER — REDESIGNED
 # ─────────────────────────────────────────────────────────────────────────────
 
 year       = datetime.now().year
@@ -3574,32 +3685,42 @@ st_ver    = st.__version__
 
 st.markdown(safe_html(f"""
 <div class="app-footer">
+
+    <!-- Brand Column -->
     <div class="footer-col footer-col-brand">
         <div class="footer-brand-row">
             <div class="footer-brand-logo">🧠</div>
             <div>
-                <div class="footer-brand">NeuroLens AI</div>
-                <div class="footer-tagline">Neurodiagnostic Intelligence Platform</div>
+                <div class="footer-brand-name">NeuroLens AI</div>
+                <div class="footer-brand-tagline">Neurodiagnostic Intelligence</div>
             </div>
         </div>
-        <div class="footer-copy">
-            © {year} NeuroLens AI<br>
-            Build {build_time}
+        <div class="footer-brand-desc">
+            An advanced research platform for brain MRI classification with dual XAI explainability and Bayesian uncertainty estimation.
+        </div>
+        <div class="footer-copyright">
+            © {year} <b>NeuroLens AI</b> · All Rights Reserved
         </div>
     </div>
 
+    <!-- Tech Stack Column -->
     <div class="footer-col footer-col-stack">
         <div class="footer-col-title">Tech Stack</div>
         <div class="footer-badges">
-            <span class="badge-tech">PyTorch {torch_ver}</span>
-            <span class="badge-tech">Streamlit {st_ver}</span>
-            <span class="badge-tech">Grad-CAM</span>
-            <span class="badge-tech">Grad-CAM++</span>
-            <span class="badge-tech">MC Dropout</span>
-            <span class="badge-tech">{model_name or 'CustomCNN'}</span>
+            <span class="badge-tech"><span class="badge-tech-dot"></span>PyTorch {torch_ver}</span>
+            <span class="badge-tech"><span class="badge-tech-dot"></span>Streamlit {st_ver}</span>
+            <span class="badge-tech"><span class="badge-tech-dot"></span>Grad-CAM</span>
+            <span class="badge-tech"><span class="badge-tech-dot"></span>Grad-CAM++</span>
+            <span class="badge-tech"><span class="badge-tech-dot"></span>MC Dropout</span>
+            <span class="badge-tech"><span class="badge-tech-dot"></span>{model_name or 'CustomCNN'}</span>
+        </div>
+        <div class="footer-col-title" style="margin-top:0.75rem">Build</div>
+        <div style="font-family:'JetBrains Mono',monospace;font-size:0.7rem;color:var(--text-3);letter-spacing:0.01em;">
+            {build_time}
         </div>
     </div>
 
+    <!-- Session Stats Column -->
     <div class="footer-col footer-col-stats">
         <div class="footer-col-title">Session</div>
         <div class="footer-stats">
@@ -3611,12 +3732,16 @@ st.markdown(safe_html(f"""
                 <div class="footer-stat-val">{avg_c_f:.1f}%</div>
                 <div class="footer-stat-lbl">Avg Conf</div>
             </div>
-            <div class="footer-stat">
-                <div class="footer-stat-val"><span class="footer-dot"></span> {'Online' if eng_ok else 'Offline'}</div>
+            <div class="footer-stat footer-stat--wide">
+                <div class="footer-stat-val">
+                    <span class="footer-dot {'footer-dot--off' if not eng_ok else ''}"></span>
+                    {'Engine Online' if eng_ok else 'Engine Offline'}
+                </div>
                 <div class="footer-stat-lbl">Status</div>
             </div>
         </div>
     </div>
+
 </div>"""), unsafe_allow_html=True)
 
 st.markdown(safe_html(f"""
