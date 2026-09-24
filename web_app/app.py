@@ -247,7 +247,7 @@ code, pre, .activity-feed, .activity-time {
     min-height: 34px !important;
     display: flex !important;
     align-items: center !important;
-    justify-content: flex-start !important;
+    justify-content: center !important;
     padding: 0.38rem 0.7rem !important;
     border-radius: var(--r-sm) !important;
     background: transparent !important;
@@ -1435,6 +1435,192 @@ hr { border-color: var(--line) !important; margin: 1.25rem 0 !important; }
         transition-duration: 0.01ms !important;
     }
 }
+
+
+/* ============================================================
+   UNIVERSAL BUTTON CENTER ALIGNMENT
+   ============================================================ */
+
+/* General Streamlit buttons */
+.stButton {
+    display: flex !important;
+    justify-content: center !important;
+    align-items: center !important;
+}
+
+.stButton > button {
+    margin-left: auto !important;
+    margin-right: auto !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    text-align: center !important;
+}
+
+.stButton > button p {
+    width: 100% !important;
+    text-align: center !important;
+}
+
+/* Primary buttons */
+.stButton > button[kind="primary"] {
+    margin-left: auto !important;
+    margin-right: auto !important;
+    justify-content: center !important;
+    text-align: center !important;
+}
+
+/* Sidebar navigation buttons */
+[data-testid="stSidebar"] .stButton {
+    display: flex !important;
+    justify-content: center !important;
+    align-items: center !important;
+    width: 100% !important;
+}
+
+[data-testid="stSidebar"] .stButton > button {
+    width: 100% !important;
+    margin-left: auto !important;
+    margin-right: auto !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    text-align: center !important;
+}
+
+[data-testid="stSidebar"] .stButton > button p {
+    width: 100% !important;
+    text-align: center !important;
+}
+
+/* Download buttons */
+[data-testid="stDownloadButton"] {
+    display: flex !important;
+    justify-content: center !important;
+    align-items: center !important;
+}
+
+[data-testid="stDownloadButton"] > button {
+    margin-left: auto !important;
+    margin-right: auto !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    text-align: center !important;
+}
+
+[data-testid="stDownloadButton"] > button p {
+    text-align: center !important;
+}
+
+/* Primary download buttons */
+[data-testid="stDownloadButton"] > button[kind="primary"] {
+    margin-left: auto !important;
+    margin-right: auto !important;
+    justify-content: center !important;
+    text-align: center !important;
+}
+
+/* File uploader button */
+[data-testid="stFileUploader"] {
+    text-align: center !important;
+}
+
+[data-testid="stFileUploader"] button {
+    margin-left: auto !important;
+    margin-right: auto !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    text-align: center !important;
+}
+
+/* Home CTA / Run AI Analysis */
+.stButton:has(button[key="home_cta"]),
+.stButton:has(button[key="analyze_btn"]) {
+    display: flex !important;
+    justify-content: center !important;
+    align-items: center !important;
+    width: 100% !important;
+}
+
+.stButton:has(button[key="home_cta"]) > button,
+.stButton:has(button[key="analyze_btn"]) > button {
+    margin-left: auto !important;
+    margin-right: auto !important;
+    justify-content: center !important;
+    text-align: center !important;
+}
+
+/* Settings Reset / History Clear */
+.stButton:has(button[key="settings_reset"]),
+.stButton:has(button[key="clear_hist_btn"]),
+.stButton:has(button[key="sb_clear"]),
+.stButton:has(button[key="sb_reset"]) {
+    display: flex !important;
+    justify-content: center !important;
+    align-items: center !important;
+    width: 100% !important;
+}
+
+.stButton:has(button[key="settings_reset"]) > button,
+.stButton:has(button[key="clear_hist_btn"]) > button,
+.stButton:has(button[key="sb_clear"]) > button,
+.stButton:has(button[key="sb_reset"]) > button {
+    margin-left: auto !important;
+    margin-right: auto !important;
+    justify-content: center !important;
+    text-align: center !important;
+}
+
+/* Confirm / Cancel buttons */
+.stButton:has(button[key="confirm_hist"]),
+.stButton:has(button[key="cancel_hist"]),
+.stButton:has(button[key="sb_clear_yes"]),
+.stButton:has(button[key="sb_clear_no"]),
+.stButton:has(button[key="sb_reset_yes"]),
+.stButton:has(button[key="sb_reset_no"]),
+.stButton:has(button[key="settings_confirm_yes"]),
+.stButton:has(button[key="settings_confirm_no"]) {
+    display: flex !important;
+    justify-content: center !important;
+    align-items: center !important;
+}
+
+.stButton:has(button[key="confirm_hist"]) > button,
+.stButton:has(button[key="cancel_hist"]) > button,
+.stButton:has(button[key="sb_clear_yes"]) > button,
+.stButton:has(button[key="sb_clear_no"]) > button,
+.stButton:has(button[key="sb_reset_yes"]) > button,
+.stButton:has(button[key="sb_reset_no"]) > button,
+.stButton:has(button[key="settings_confirm_yes"]) > button,
+.stButton:has(button[key="settings_confirm_no"]) > button {
+    margin-left: auto !important;
+    margin-right: auto !important;
+    justify-content: center !important;
+    text-align: center !important;
+}
+
+/* Buttons inside Streamlit columns */
+[data-testid="stHorizontalBlock"] .stButton {
+    display: flex !important;
+    justify-content: center !important;
+    align-items: center !important;
+}
+
+[data-testid="stHorizontalBlock"] .stButton > button {
+    margin-left: auto !important;
+    margin-right: auto !important;
+    justify-content: center !important;
+    text-align: center !important;
+}
+
+/* Keep button labels centered even with width="stretch/content" */
+.stButton > button[style*="width"] {
+    justify-content: center !important;
+    text-align: center !important;
+}
+
 </style>
 """
 
