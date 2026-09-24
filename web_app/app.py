@@ -6,6 +6,7 @@
 import warnings
 import time
 import io
+import copy
 import hashlib
 import platform
 from importlib import metadata
@@ -287,12 +288,7 @@ def safe_html(html: str) -> str:
 
 
 def _render_html(content: str, height: int = 200, scrolling: bool = False):
-    try:
-        if hasattr(st, "iframe"):
-            st.iframe(srcdoc=content, height=height, scrolling=scrolling)
-            return
-    except (AttributeError, TypeError):
-        pass
+    """Render arbitrary HTML via components.html (safe fallback)."""
     components.html(content, height=height, scrolling=scrolling)
 
 
@@ -353,26 +349,19 @@ STYLES = """
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Sora:wght@500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap');
 
 :root {
-    /* ── Surfaces ── */
     --bg:         #060b18;
     --surface:    #0b1120;
     --surface-2:  #0f172a;
     --surface-3:  #162032;
     --surface-4:  #1d2d44;
-
-    /* ── Borders ── */
     --line:       rgba(255,255,255,0.055);
     --line-md:    rgba(255,255,255,0.09);
     --line-hi:    rgba(255,255,255,0.14);
-
-    /* ── Brand Accent — deep teal-blue ── */
     --accent:        #0891b2;
     --accent-hi:     #22d3ee;
     --accent-soft:   rgba(8,145,178,0.09);
     --accent-line:   rgba(8,145,178,0.28);
     --accent-glow:   rgba(8,145,178,0.18);
-
-    /* ── Semantic ── */
     --success:    #059669;
     --success-hi: #34d399;
     --warning:    #d97706;
@@ -381,33 +370,21 @@ STYLES = """
     --danger-hi:  #f87171;
     --violet:     #7c3aed;
     --violet-hi:  #a78bfa;
-
-    /* ── Text ── */
     --text-1: #e2e8f0;
     --text-2: #94a3b8;
     --text-3: #4b5869;
     --text-4: #2d3a4a;
-
-    /* ── Type ── */
     --font-display: 'Sora', 'Inter', sans-serif;
     --font-body:    'Inter', -apple-system, sans-serif;
     --font-mono:    'JetBrains Mono', ui-monospace, monospace;
-
-    /* ── Shape ── */
     --r-xs:   5px;
     --r-sm:   8px;
     --r-md:   12px;
     --r-lg:   18px;
     --r-xl:   24px;
     --r-pill: 999px;
-
-    /* ── Sidebar ── */
     --sb-w:   270px;
-
-    /* ── Header ── */
     --hd-h:   54px;
-
-    /* ── Shadow ── */
     --sh-1:  0 1px 3px rgba(0,0,0,.3),  0 1px 2px rgba(0,0,0,.2);
     --sh-2:  0 4px 16px rgba(0,0,0,.4), 0 2px 6px rgba(0,0,0,.25);
     --sh-3:  0 16px 40px rgba(0,0,0,.5);
@@ -415,21 +392,14 @@ STYLES = """
     --sh-inset:  inset 0 1px 0 rgba(255,255,255,0.05);
 }
 
-/* ═══════════════════════════════════════
-   BASE
-═══════════════════════════════════════ */
 *, *::before, *::after { box-sizing: border-box; }
 body { -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; }
 .stApp { background: var(--bg); color: var(--text-1); }
 header[data-testid="stHeader"] { background: transparent; }
 #MainMenu, footer { visibility: hidden; }
-
 h1, h2, h3, h4 { font-family: var(--font-display); letter-spacing: -0.025em; }
 code, pre, .mono { font-family: var(--font-mono); }
 
-/* ═══════════════════════════════════════
-   SIDEBAR — base (v5.0 overrides follow)
-═══════════════════════════════════════ */
 [data-testid="stSidebar"] {
     background: var(--surface) !important;
     border-right: 1px solid var(--line) !important;
@@ -441,12 +411,8 @@ code, pre, .mono { font-family: var(--font-mono); }
     width: var(--sb-w) !important;
     padding: 0 !important;
 }
-
 @keyframes pulse-dot { 0%,100%{opacity:1;} 50%{opacity:.35;} }
 
-/* ═══════════════════════════════════════
-   STICKY HEADER
-═══════════════════════════════════════ */
 .sticky-header {
     position: fixed; top: 0.45rem;
     left: calc(var(--sb-w) + 0.5rem); right: 0.5rem;
@@ -461,10 +427,7 @@ code, pre, .mono { font-family: var(--font-mono); }
     border: 1px solid var(--line-md);
     box-shadow: var(--sh-2), var(--sh-inset);
 }
-
-.hd-brand {
-    display: flex; align-items: center; gap: 0.5rem; flex-shrink: 0;
-}
+.hd-brand { display: flex; align-items: center; gap: 0.5rem; flex-shrink: 0; }
 .hd-brand-icon {
     width: 30px; height: 30px; border-radius: 8px;
     background: var(--accent-soft); border: 1px solid var(--accent-line);
@@ -482,7 +445,6 @@ code, pre, .mono { font-family: var(--font-mono); }
     font-weight: 700; color: var(--text-1); letter-spacing: -0.015em;
 }
 .hd-divider { width: 1px; height: 18px; background: var(--line); flex-shrink: 0; }
-
 .hd-ticker {
     flex: 1; min-width: 0;
     height: 28px; border-radius: var(--r-xs);
@@ -509,7 +471,6 @@ code, pre, .mono { font-family: var(--font-mono); }
 .hd-tick { color: var(--text-2); font-size: 0.66rem; }
 .hd-tick b { color: var(--text-1); font-weight: 600; }
 .hd-tick-idle { color: var(--text-3); font-style: italic; }
-
 .hd-status {
     display: inline-flex; align-items: center; gap: 0.32rem;
     padding: 0.2rem 0.5rem; border-radius: var(--r-xs);
@@ -525,7 +486,6 @@ code, pre, .mono { font-family: var(--font-mono); }
     border: 1px solid rgba(220,38,38,0.22);
 }
 .hd-status-dot { width: 5px; height: 5px; border-radius: 50%; background: currentColor; }
-
 .hd-page {
     display: inline-flex; align-items: center; gap: 0.32rem;
     padding: 0.2rem 0.5rem; border-radius: var(--r-xs);
@@ -533,9 +493,7 @@ code, pre, .mono { font-family: var(--font-mono); }
     font-size: 0.68rem; font-weight: 600; color: var(--text-1);
     white-space: nowrap; flex-shrink: 0; height: 24px;
 }
-.hd-page-dot {
-    width: 5px; height: 5px; border-radius: 50%; background: var(--accent);
-}
+.hd-page-dot { width: 5px; height: 5px; border-radius: 50%; background: var(--accent); }
 
 .main .block-container {
     padding-top: 5rem !important;
@@ -544,9 +502,6 @@ code, pre, .mono { font-family: var(--font-mono); }
     max-width: 1380px;
 }
 
-/* ═══════════════════════════════════════
-   CARD PRIMITIVES
-═══════════════════════════════════════ */
 .card {
     background: var(--surface-2);
     border: 1px solid var(--line);
@@ -560,9 +515,6 @@ code, pre, .mono { font-family: var(--font-mono); }
     border-radius: var(--r-md); box-shadow: var(--sh-1);
 }
 
-/* ═══════════════════════════════════════
-   HERO SECTION
-═══════════════════════════════════════ */
 .hero {
     padding: 3rem 2rem 2.5rem;
     border-radius: var(--r-xl);
@@ -620,9 +572,6 @@ code, pre, .mono { font-family: var(--font-mono); }
     margin: 1rem auto 0; position: relative;
 }
 
-/* ═══════════════════════════════════════
-   METRIC CARDS
-═══════════════════════════════════════ */
 .metric-card {
     padding: 1.1rem 1.2rem;
     border-radius: var(--r-md);
@@ -650,9 +599,6 @@ code, pre, .mono { font-family: var(--font-mono); }
     font-weight: 600; letter-spacing: 0.08em;
 }
 
-/* ═══════════════════════════════════════
-   INFO CARDS
-═══════════════════════════════════════ */
 .info-card {
     padding: 1.25rem 1.4rem;
     border-radius: var(--r-lg);
@@ -678,9 +624,6 @@ code, pre, .mono { font-family: var(--font-mono); }
     color: var(--text-2); line-height: 1.6; font-size: 0.78rem; margin: 0;
 }
 
-/* ═══════════════════════════════════════
-   DIAGNOSTIC RESULT PANEL
-═══════════════════════════════════════ */
 .diagnostic-panel {
     padding: 2rem 2.25rem;
     border-radius: var(--r-xl);
@@ -718,9 +661,6 @@ code, pre, .mono { font-family: var(--font-mono); }
     color: var(--accent-hi); letter-spacing: 0;
 }
 
-/* ═══════════════════════════════════════
-   BADGES
-═══════════════════════════════════════ */
 .badge {
     display: inline-flex; align-items: center; gap: 0.3rem;
     padding: 0.22rem 0.55rem; border-radius: 6px;
@@ -731,9 +671,6 @@ code, pre, .mono { font-family: var(--font-mono); }
 .badge-moderate { background: rgba(217,119,6,0.09); color: var(--warning-hi); border: 1px solid rgba(217,119,6,0.22); }
 .badge-low      { background: rgba(220,38,38,0.09); color: var(--danger-hi);  border: 1px solid rgba(220,38,38,0.22); }
 
-/* ═══════════════════════════════════════
-   UNCERTAINTY CARD
-═══════════════════════════════════════ */
 .uncertainty-card {
     padding: 1.1rem 1.4rem;
     border-radius: var(--r-md);
@@ -754,9 +691,6 @@ code, pre, .mono { font-family: var(--font-mono); }
 }
 .unc-band { font-size: 0.78rem; font-weight: 600; margin-top: 0.12rem; }
 
-/* ═══════════════════════════════════════
-   PROBABILITY GRID
-═══════════════════════════════════════ */
 .prob-grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(148px, 1fr));
@@ -792,9 +726,6 @@ code, pre, .mono { font-family: var(--font-mono); }
     letter-spacing: 0.1em; margin-top: 0.2rem;
 }
 
-/* ═══════════════════════════════════════
-   XAI / EXPLANATION CARDS
-═══════════════════════════════════════ */
 .xai-card {
     padding: 1.1rem 1.4rem;
     border-radius: var(--r-md);
@@ -809,9 +740,6 @@ code, pre, .mono { font-family: var(--font-mono); }
 }
 .xai-text { font-size: 0.8rem; color: var(--text-2); line-height: 1.65; }
 
-/* ═══════════════════════════════════════
-   THUMBNAIL HISTORY CARDS
-═══════════════════════════════════════ */
 .thumb-card {
     display: flex; align-items: center; gap: 0.85rem;
     padding: 0.8rem 1rem;
@@ -845,9 +773,6 @@ code, pre, .mono { font-family: var(--font-mono); }
 .conf-mid { background: rgba(217,119,6,0.09);  color: var(--warning-hi); border: 1px solid rgba(217,119,6,0.22); }
 .conf-lo  { background: rgba(220,38,38,0.09);  color: var(--danger-hi);  border: 1px solid rgba(220,38,38,0.22); }
 
-/* ═══════════════════════════════════════
-   DIST / DISTRIBUTION BARS
-═══════════════════════════════════════ */
 .dist-card {
     padding: 0.75rem 0.9rem;
     border-radius: var(--r-md);
@@ -862,9 +787,6 @@ code, pre, .mono { font-family: var(--font-mono); }
 .dist-track { height: 4px; border-radius: 2px; background: rgba(255,255,255,0.05); overflow: hidden; }
 .dist-fill { height: 100%; border-radius: 2px; background: var(--accent); transition: width 600ms ease; }
 
-/* ═══════════════════════════════════════
-   UPLOAD AREA
-═══════════════════════════════════════ */
 .upload-hero {
     padding: 2rem 2rem 1.75rem;
     border-radius: var(--r-xl);
@@ -923,9 +845,6 @@ code, pre, .mono { font-family: var(--font-mono); }
     box-shadow: 0 0 8px rgba(52,211,153,0.55);
 }
 
-/* ═══════════════════════════════════════
-   ACTIVITY FEED
-═══════════════════════════════════════ */
 .act-feed {
     border-radius: var(--r-md); border: 1px solid var(--line);
     background: rgba(0,0,0,0.25); max-height: 300px; overflow-y: auto;
@@ -942,9 +861,6 @@ code, pre, .mono { font-family: var(--font-mono); }
 .act-warn    .act-msg { color: #fbbf24; }
 .act-error   .act-msg { color: #fca5a5; }
 
-/* ═══════════════════════════════════════
-   LATEST RESULT CARD
-═══════════════════════════════════════ */
 .latest-card {
     border-radius: var(--r-md); border: 1px solid var(--line);
     background: var(--surface-2); overflow: hidden;
@@ -957,9 +873,6 @@ code, pre, .mono { font-family: var(--font-mono); }
 .latest-key { font-size: 0.7rem; color: var(--text-2); font-weight: 500; }
 .latest-val { font-family: var(--font-mono); font-size: 0.7rem; color: var(--text-1); font-weight: 500; }
 
-/* ═══════════════════════════════════════
-   EMPTY STATES
-═══════════════════════════════════════ */
 .empty-state {
     padding: 3rem 2rem;
     border-radius: var(--r-xl);
@@ -982,18 +895,12 @@ code, pre, .mono { font-family: var(--font-mono); }
     max-width: 360px; margin: 0 auto; line-height: 1.6;
 }
 
-/* ═══════════════════════════════════════
-   CHART CONTAINER
-═══════════════════════════════════════ */
 .chart-wrap {
     padding: 1rem; border-radius: var(--r-md);
     background: var(--surface-2); border: 1px solid var(--line);
     margin-top: 0.85rem; box-shadow: var(--sh-1);
 }
 
-/* ═══════════════════════════════════════
-   EXPORT PANEL
-═══════════════════════════════════════ */
 .export-head {
     display: flex; align-items: center; gap: 0.85rem;
     padding: 1.1rem 1.4rem;
@@ -1038,9 +945,6 @@ code, pre, .mono { font-family: var(--font-mono); }
     background: var(--accent); opacity: 0.9; flex-shrink: 0;
 }
 
-/* ═══════════════════════════════════════
-   PROCESS STEPS
-═══════════════════════════════════════ */
 .step-card {
     padding: 0.8rem 0.6rem;
     border-radius: var(--r-md);
@@ -1056,9 +960,6 @@ code, pre, .mono { font-family: var(--font-mono); }
 .step-title { font-size: 0.72rem; font-weight: 600; color: var(--text-1); margin: 0.25rem 0 0.1rem; }
 .step-desc { font-size: 0.6rem; color: var(--text-3); line-height: 1.4; }
 
-/* ═══════════════════════════════════════
-   STREAMLIT OVERRIDES
-═══════════════════════════════════════ */
 [data-testid="stFileUploader"] {
     background: linear-gradient(180deg, rgba(8,145,178,0.03), rgba(8,145,178,0.005));
     border-radius: var(--r-lg); padding: 1rem 0.9rem;
@@ -1104,7 +1005,6 @@ code, pre, .mono { font-family: var(--font-mono); }
 .stButton > button[kind="primary"]:hover {
     background: var(--accent-hi) !important; border-color: var(--accent-hi) !important;
 }
-
 .stButton { display: flex !important; justify-content: center !important; align-items: center !important; }
 .stButton > button { margin-left: auto !important; margin-right: auto !important; justify-content: center !important; }
 
@@ -1162,9 +1062,6 @@ hr { border-color: var(--line) !important; margin: 1rem 0 !important; }
 [data-testid="stCheckbox"] label { font-size: 0.78rem !important; }
 [data-testid="stToggle"] label { font-size: 0.78rem !important; }
 
-/* ═══════════════════════════════════════
-   FOOTER
-═══════════════════════════════════════ */
 .app-footer {
     position: relative; margin-top: 3rem;
     display: grid; grid-template-columns: 1.5fr 1.4fr 1fr; gap: 1.5rem;
@@ -1247,9 +1144,6 @@ hr { border-color: var(--line) !important; margin: 1rem 0 !important; }
     display: flex; gap: 0.65rem; align-items: flex-start;
 }
 
-/* ═══════════════════════════════════════
-   RESPONSIVE
-═══════════════════════════════════════ */
 @media (max-width: 1280px) {
     :root { --sb-w: 252px; }
     .main .block-container { padding-left: 1.1rem !important; padding-right: 1.1rem !important; }
@@ -1282,13 +1176,10 @@ st.markdown(STYLES, unsafe_allow_html=True)
 
 
 # ─────────────────────────────────────────────────────────────────────────────
-# SIDEBAR v5.0 — Premium Redesign (overrides previous sidebar styles)
+# SIDEBAR v5.0 — Premium Redesign
 # ─────────────────────────────────────────────────────────────────────────────
 SIDEBAR_STYLES = """
 <style>
-/* ═══════════════════════════════════════
-   SIDEBAR — Background: gradient + dot grid
-═══════════════════════════════════════ */
 [data-testid="stSidebar"] {
     background: linear-gradient(180deg, var(--surface) 0%, #080d1c 55%, var(--bg) 100%) !important;
     border-right: 1px solid var(--line) !important;
@@ -1326,7 +1217,6 @@ SIDEBAR_STYLES = """
     background: var(--accent-line);
 }
 
-/* ─── Brand Lockup ─── */
 .sb-brand {
     padding: 1.15rem 1rem 0.9rem;
     border-bottom: 1px solid var(--line);
@@ -1388,7 +1278,6 @@ SIDEBAR_STYLES = """
     white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
 }
 
-/* ─── Session Pill ─── */
 .sb-session {
     margin: 0.7rem 0.85rem 0;
     padding: 0.5rem 0.7rem;
@@ -1417,7 +1306,6 @@ SIDEBAR_STYLES = """
     flex-shrink: 0;
 }
 
-/* ─── Nav group label ─── */
 .sb-nav-group {
     padding: 0.85rem 0.95rem 0.35rem;
     font-size: 0.55rem; font-weight: 700;
@@ -1430,7 +1318,6 @@ SIDEBAR_STYLES = """
     background: linear-gradient(to right, var(--line), transparent 90%);
 }
 
-/* ─── Nav Buttons ─── */
 [data-testid="stSidebar"] [class*="st-key-nav_"] {
     margin: 1px 0.6rem !important;
     width: auto !important;
@@ -1472,7 +1359,6 @@ SIDEBAR_STYLES = """
 }
 [data-testid="stSidebar"] .stButton { display: block !important; width: auto !important; }
 
-/* ─── Nav Icons (SVG via CSS mask) ─── */
 [data-testid="stSidebar"] [class*="st-key-nav_"] button::before {
     content: "";
     display: inline-block;
@@ -1521,7 +1407,6 @@ SIDEBAR_STYLES = """
             mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z'/%3E%3Ccircle cx='12' cy='12' r='3'/%3E%3C/svg%3E");
 }
 
-/* ─── Neural Engine Panel ─── */
 .sb-engine {
     margin: 0.75rem 0.85rem 0;
     padding: 0.85rem 0.9rem;
@@ -1609,7 +1494,6 @@ SIDEBAR_STYLES = """
 .sb-mini-cyan   .sb-mini-val { color: var(--accent-hi); }
 .sb-mini-violet .sb-mini-val { color: var(--violet-hi); }
 
-/* ─── Quick Actions (pill buttons) ─── */
 [data-testid="stSidebar"] [class*="st-key-sb_clear"] button,
 [data-testid="stSidebar"] [class*="st-key-sb_reset"] button {
     min-height: 34px !important; height: 34px !important;
@@ -1651,7 +1535,6 @@ SIDEBAR_STYLES = """
     color: var(--danger-hi) !important;
 }
 
-/* ─── Confirm cards + mini buttons ─── */
 .sb-confirm {
     margin: 0.35rem 0.85rem 0;
     padding: 0.65rem 0.75rem;
@@ -1707,7 +1590,6 @@ SIDEBAR_STYLES = """
 }
 [data-testid="stSidebar"] [data-testid="column"] { padding: 0 !important; }
 
-/* ─── Slim research notice ─── */
 .sb-warning {
     margin: 0.7rem 0.85rem 0.9rem;
     padding: 0.6rem 0.75rem 0.6rem 0.65rem;
@@ -1720,7 +1602,6 @@ SIDEBAR_STYLES = """
 }
 .sb-warning svg { flex-shrink: 0; margin-top: 1px; }
 
-/* ─── Dividers ─── */
 [data-testid="stSidebar"] hr {
     margin: 0.55rem 0.85rem !important;
     border-color: var(--line) !important;
@@ -1857,16 +1738,25 @@ def predict_image(image, model, class_names):
 
 
 def mc_dropout_predict(image, model, class_names, n_samples=MC_SAMPLES):
-    if model is None: return None
+    """MC Dropout. Restores model.eval() even if an exception occurs."""
+    if model is None:
+        return None
+
     def _enable_dropout(m):
-        if isinstance(m, (nn.Dropout, nn.Dropout2d)): m.train()
-    model.eval(); model.apply(_enable_dropout)
-    tensor = test_transforms(image).unsqueeze(0).to(DEVICE)
-    mc_preds = []
-    with torch.no_grad():
-        for _ in range(n_samples):
-            mc_preds.append(F.softmax(model(tensor), dim=1)[0].detach().cpu().numpy())
+        if isinstance(m, (nn.Dropout, nn.Dropout2d)):
+            m.train()
+
     model.eval()
+    try:
+        model.apply(_enable_dropout)
+        tensor = test_transforms(image).unsqueeze(0).to(DEVICE)
+        mc_preds = []
+        with torch.no_grad():
+            for _ in range(n_samples):
+                mc_preds.append(F.softmax(model(tensor), dim=1)[0].detach().cpu().numpy())
+    finally:
+        model.eval()
+
     mc_preds   = np.stack(mc_preds)
     mean_probs = mc_preds.mean(axis=0)
     std_probs  = mc_preds.std(axis=0)
@@ -1900,7 +1790,8 @@ def _cam_to_heatmap(cam_raw, _):
 
 def generate_gradcam(image, model, model_name):
     if model is None: raise RuntimeError("Neural engine unavailable.")
-    model.eval(); activations, gradients = [], []
+    model.eval()
+    activations, gradients = [], []
     tl  = _get_target_layer(model, model_name)
     fwd = tl.register_forward_hook(lambda m,i,o: activations.append(o.detach()))
     bwd = tl.register_full_backward_hook(lambda m,gi,go: gradients.append(go[0].detach()))
@@ -1919,17 +1810,19 @@ def generate_gradcam(image, model, model_name):
         ax.axis("off"); fig.tight_layout(pad=0)
         return fig
     except Exception:
-        if fig: plt.close(fig); raise
+        if fig: plt.close(fig)
+        raise
     finally:
         try: fwd.remove()
-        except: pass
+        except Exception: pass
         try: bwd.remove()
-        except: pass
+        except Exception: pass
 
 
 def generate_gradcam_pp(image, model, model_name):
     if model is None: raise RuntimeError("Neural engine unavailable.")
-    model.eval(); activations, gradients = [], []
+    model.eval()
+    activations, gradients = [], []
     tl  = _get_target_layer(model, model_name)
     fwd = tl.register_forward_hook(lambda m,i,o: activations.append(o.detach()))
     bwd = tl.register_full_backward_hook(lambda m,gi,go: gradients.append(go[0].detach()))
@@ -1940,8 +1833,10 @@ def generate_gradcam_pp(image, model, model_name):
         out[0, int(out.argmax(dim=1).item())].backward(retain_graph=True)
         if not activations or not gradients: raise RuntimeError("Hooks failed.")
         act = activations[0][0].cpu().numpy(); grd = gradients[0][0].cpu().numpy()
-        an  = grd ** 2; ad = 2*grd**2 + (act*grd**3).sum(axis=(1,2),keepdims=True) + 1e-8
-        alpha = an/ad; w = (alpha * np.maximum(grd,0)).sum(axis=(1,2))
+        an  = grd ** 2
+        ad = 2*grd**2 + (act*grd**3).sum(axis=(1,2),keepdims=True) + 1e-8
+        alpha = an/ad
+        w = (alpha * np.maximum(grd,0)).sum(axis=(1,2))
         cam_raw = np.zeros(act.shape[1:], dtype=np.float32)
         for ww,aa in zip(w,act): cam_raw += ww * aa
         cam  = _cam_to_heatmap(cam_raw, None)
@@ -1951,50 +1846,80 @@ def generate_gradcam_pp(image, model, model_name):
         ax.axis("off"); fig.tight_layout(pad=0)
         return fig
     except Exception:
-        if fig: plt.close(fig); raise
+        if fig: plt.close(fig)
+        raise
     finally:
         try: fwd.remove()
-        except: pass
+        except Exception: pass
         try: bwd.remove()
-        except: pass
+        except Exception: pass
 
 
 def explanation_agreement(image, model, model_name):
+    """Pearson correlation between Grad-CAM and Grad-CAM++ heatmaps."""
+    if model is None:
+        return None
+    model.eval()
     handles = []
     try:
-        model.eval(); tl = _get_target_layer(model, model_name)
+        tl = _get_target_layer(model, model_name)
         acts_gc, grds_gc, acts_pp, grds_pp = [], [], [], []
         fwd1 = tl.register_forward_hook(lambda m,i,o: acts_gc.append(o.detach()))
         bwd1 = tl.register_full_backward_hook(lambda m,gi,go: grds_gc.append(go[0].detach()))
         handles.extend((fwd1, bwd1))
+
         tensor = test_transforms(image).unsqueeze(0).to(DEVICE)
-        model.zero_grad(); out = model(tensor)
-        idx = int(out.argmax(dim=1).item()); out[0,idx].backward(retain_graph=True)
+        model.zero_grad()
+        out = model(tensor)
+        idx = int(out.argmax(dim=1).item())
+        out[0, idx].backward(retain_graph=True)
+
         fwd1.remove(); bwd1.remove()
-        if not acts_gc or not grds_gc: return None
+
+        if not acts_gc or not grds_gc:
+            return None
+
         act_gc = acts_gc[0][0]; grd_gc = grds_gc[0][0]
         w_gc   = grd_gc.mean(dim=(1,2), keepdim=True)
-        cam_gc = F.relu((w_gc*act_gc).sum(dim=0)).detach().cpu().numpy(); cam_gc /= (cam_gc.max()+1e-8)
+        cam_gc = F.relu((w_gc * act_gc).sum(dim=0)).detach().cpu().numpy()
+        cam_gc /= (cam_gc.max() + 1e-8)
+
         fwd2 = tl.register_forward_hook(lambda m,i,o: acts_pp.append(o.detach()))
         bwd2 = tl.register_full_backward_hook(lambda m,gi,go: grds_pp.append(go[0].detach()))
         handles.extend((fwd2, bwd2))
-        model.zero_grad(); out2 = model(tensor); out2[0,idx].backward()
+
+        model.zero_grad()
+        out2 = model(tensor)
+        out2[0, idx].backward()
         fwd2.remove(); bwd2.remove()
-        if not acts_pp or not grds_pp: return None
-        act_pp = acts_pp[0][0].cpu().numpy(); grd_pp = grds_pp[0][0].cpu().numpy()
-        an  = grd_pp**2; ad = 2*grd_pp**2+(act_pp*grd_pp**3).sum(axis=(1,2),keepdims=True)+1e-8
+
+        if not acts_pp or not grds_pp:
+            return None
+
+        act_pp = acts_pp[0][0].cpu().numpy()
+        grd_pp = grds_pp[0][0].cpu().numpy()
+        an  = grd_pp**2
+        ad  = 2*grd_pp**2 + (act_pp*grd_pp**3).sum(axis=(1,2),keepdims=True) + 1e-8
         w_pp = (an/ad * np.maximum(grd_pp,0)).sum(axis=(1,2))
         cam_pp = np.zeros(act_pp.shape[1:], dtype=np.float32)
-        for ww,aa in zip(w_pp,act_pp): cam_pp += ww*aa
-        cam_pp = np.maximum(cam_pp,0); cam_pp /= (cam_pp.max()+1e-8)
-        f1,f2 = cam_gc.flatten(), cam_pp.flatten()
-        if f1.std() < 1e-8 or f2.std() < 1e-8: return None
-        return float(max(0.0, min(1.0, np.corrcoef(f1,f2)[0,1])))
-    except Exception: return None
+        for ww, aa in zip(w_pp, act_pp):
+            cam_pp += ww * aa
+        cam_pp = np.maximum(cam_pp, 0)
+        cam_pp /= (cam_pp.max() + 1e-8)
+
+        f1, f2 = cam_gc.flatten(), cam_pp.flatten()
+        if f1.std() < 1e-8 or f2.std() < 1e-8:
+            return None
+        corr = float(np.corrcoef(f1, f2)[0, 1])
+        if not np.isfinite(corr):
+            return None
+        return float(max(0.0, min(1.0, corr)))
+    except Exception:
+        return None
     finally:
         for h in handles:
             try: h.remove()
-            except: pass
+            except Exception: pass
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -2005,47 +1930,61 @@ def _dark_fig(w=6, h=2.8):
     fig, ax = plt.subplots(figsize=(w, h))
     bg = "#0f172a"
     fig.patch.set_facecolor(bg); ax.set_facecolor(bg)
-    for side in ("top","right"): ax.spines[side].set_visible(False)
-    for side in ("left","bottom"): ax.spines[side].set_color("#1e2d42")
+    for side in ("top", "right"): ax.spines[side].set_visible(False)
+    for side in ("left", "bottom"): ax.spines[side].set_color("#1e2d42")
     ax.tick_params(colors="#94a3b8", labelsize=8)
     return fig, ax
 
 
 def plot_confidence_trend(history):
     if len(history) < 2: return None
-    fig, ax = _dark_fig(); confs = [h["confidence"] for h in history]; xs = list(range(1, len(history)+1))
+    fig, ax = _dark_fig()
+    confs = [h["confidence"] for h in history]
+    xs = list(range(1, len(history) + 1))
     ax.plot(xs, confs, marker="o", lw=2, ms=4, color="#0891b2")
     ax.fill_between(xs, confs, alpha=0.09, color="#0891b2")
-    ax.set_ylim(0,105); ax.set_xlabel("Analysis #", color="#94a3b8", fontsize=9)
-    ax.set_ylabel("Confidence %", color="#94a3b8", fontsize=9); ax.grid(True, alpha=0.09, ls="--"); fig.tight_layout(pad=0.5)
+    ax.set_ylim(0, 105)
+    ax.set_xlabel("Analysis #", color="#94a3b8", fontsize=9)
+    ax.set_ylabel("Confidence %", color="#94a3b8", fontsize=9)
+    ax.grid(True, alpha=0.09, ls="--")
+    fig.tight_layout(pad=0.5)
     return fig
 
 
 def plot_latency_trend(history):
     if len(history) < 2: return None
-    fig, ax = _dark_fig(); lats = [h.get("latency_ms",0) for h in history]
-    ax.plot(range(1,len(history)+1), lats, marker="o", lw=2, color="#0891b2")
-    ax.set_xlabel("Analysis #", color="#94a3b8", fontsize=9); ax.set_ylabel("Latency ms", color="#94a3b8", fontsize=9)
-    ax.grid(True, alpha=0.09, ls="--"); fig.tight_layout(pad=0.5); return fig
+    fig, ax = _dark_fig()
+    lats = [h.get("latency_ms", 0) for h in history]
+    ax.plot(range(1, len(history) + 1), lats, marker="o", lw=2, color="#0891b2")
+    ax.set_xlabel("Analysis #", color="#94a3b8", fontsize=9)
+    ax.set_ylabel("Latency ms", color="#94a3b8", fontsize=9)
+    ax.grid(True, alpha=0.09, ls="--")
+    fig.tight_layout(pad=0.5)
+    return fig
 
 
 def plot_uncertainty_history(history):
-    data = [(i+1,h["uncertainty"]) for i,h in enumerate(history) if "uncertainty" in h]
+    data = [(i + 1, h["uncertainty"]) for i, h in enumerate(history) if "uncertainty" in h]
     if len(data) < 2: return None
-    fig, ax = _dark_fig(); xs,ys = zip(*data)
-    ax.plot(xs, ys, marker="s", lw=2, ms=4, color="#7c3aed"); ax.fill_between(xs, ys, alpha=0.08, color="#7c3aed")
+    fig, ax = _dark_fig()
+    xs, ys = zip(*data)
+    ax.plot(xs, ys, marker="s", lw=2, ms=4, color="#7c3aed")
+    ax.fill_between(xs, ys, alpha=0.08, color="#7c3aed")
     ax.axhline(0.12, color="#d97706", lw=1, ls="--", alpha=0.55, label="Moderate threshold")
     ax.axhline(0.22, color="#dc2626", lw=1, ls="--", alpha=0.55, label="Low reliability")
-    ax.set_xlabel("Analysis #", color="#94a3b8", fontsize=9); ax.set_ylabel("MC Uncertainty σ", color="#94a3b8", fontsize=9)
+    ax.set_xlabel("Analysis #", color="#94a3b8", fontsize=9)
+    ax.set_ylabel("MC Uncertainty σ", color="#94a3b8", fontsize=9)
     ax.grid(True, alpha=0.09, ls="--")
-    ax.legend(fontsize=7, labelcolor="#94a3b8", facecolor="#0f172a", edgecolor="#1e2d42"); fig.tight_layout(pad=0.5); return fig
+    ax.legend(fontsize=7, labelcolor="#94a3b8", facecolor="#0f172a", edgecolor="#1e2d42")
+    fig.tight_layout(pad=0.5)
+    return fig
 
 
 # ─────────────────────────────────────────────────────────────────────────────
-# SESSION STATE
+# SESSION STATE — FIX #1: use deepcopy to avoid shared mutable references
 # ─────────────────────────────────────────────────────────────────────────────
 
-defaults = {
+DEFAULTS = {
     "nav": "Home", "last_result": None, "last_image": None,
     "gradcam_image": None, "gradcam_pp_image": None,
     "mc_result": None, "agreement_score": None,
@@ -2055,25 +1994,29 @@ defaults = {
     "live_throughput": 0.0, "live_last_confidence": 0.0,
     "live_latency_ms": 0.0, "live_inference_running": False,
 }
-for k,v in defaults.items():
-    if k not in st.session_state: st.session_state[k] = v
+for k, v in DEFAULTS.items():
+    if k not in st.session_state:
+        st.session_state[k] = copy.deepcopy(v)
 
 
 def clear_prediction_history():
-    for fk in ("gradcam_image","gradcam_pp_image"):
+    for fk in ("gradcam_image", "gradcam_pp_image"):
         old = st.session_state.get(fk)
         if old: plt.close(old)
-    for k in ["prediction_history","last_result","last_image","gradcam_image","gradcam_pp_image",
-              "mc_result","agreement_score","live_predictions_count","live_avg_confidence",
-              "live_last_confidence","live_class_counts","live_throughput","live_latency_ms"]:
-        st.session_state[k] = defaults[k]
+    for k in ["prediction_history", "last_result", "last_image",
+              "gradcam_image", "gradcam_pp_image", "mc_result", "agreement_score",
+              "live_predictions_count", "live_avg_confidence", "live_last_confidence",
+              "live_class_counts", "live_throughput", "live_latency_ms"]:
+        st.session_state[k] = copy.deepcopy(DEFAULTS[k])
 
 
 def log_activity(message, level="info"):
     ts = datetime.now().strftime("%H:%M:%S")
-    st.session_state.activity_log.append({"timestamp":ts,"message":message,"level":level})
-    if len(st.session_state.activity_log) > 60:
-        st.session_state.activity_log = st.session_state.activity_log[-60:]
+    log = list(st.session_state.activity_log)
+    log.append({"timestamp": ts, "message": message, "level": level})
+    if len(log) > 60:
+        log = log[-60:]
+    st.session_state.activity_log = log
 
 
 def update_live_stats(result, latency_ms):
@@ -2085,11 +2028,13 @@ def update_live_stats(result, latency_ms):
         st.session_state.live_last_confidence = float(confs[-1])
     st.session_state.live_latency_ms = float(latency_ms)
     counts = {}
-    for h in history: counts[h["prediction"]] = counts.get(h["prediction"],0)+1
+    for h in history:
+        counts[h["prediction"]] = counts.get(h["prediction"], 0) + 1
     st.session_state.live_class_counts = counts
     if st.session_state.live_session_start:
         el = (datetime.now() - st.session_state.live_session_start).total_seconds()
-        if el > 0: st.session_state.live_throughput = len(history)/el*60.0
+        if el > 0:
+            st.session_state.live_throughput = len(history) / el * 60.0
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -2107,17 +2052,17 @@ except Exception as exc:
 # ─────────────────────────────────────────────────────────────────────────────
 NAV_GROUPS = [
     ("Main", [
-        ("Home",        Icons.home(16, "#94a3b8"),        "Home"),
-        ("MRI Analysis",Icons.microscope(16, "#94a3b8"),  "MRI Analysis"),
-        ("Dashboard",   Icons.chart(16, "#94a3b8"),       "Dashboard"),
+        ("Home",         Icons.home(16, "#94a3b8"),       "Home"),
+        ("MRI Analysis", Icons.microscope(16, "#94a3b8"), "MRI Analysis"),
+        ("Dashboard",    Icons.chart(16, "#94a3b8"),      "Dashboard"),
     ]),
     ("Analytics", [
-        ("History",     Icons.history(16, "#94a3b8"),     "History"),
-        ("Grad-CAM",    Icons.heatmap(16, "#94a3b8"),     "Grad-CAM"),
-        ("XAI Lab",     Icons.lab(16, "#94a3b8"),         "XAI Lab"),
+        ("History",  Icons.history(16, "#94a3b8"),  "History"),
+        ("Grad-CAM", Icons.heatmap(16, "#94a3b8"),  "Grad-CAM"),
+        ("XAI Lab",  Icons.lab(16, "#94a3b8"),      "XAI Lab"),
     ]),
     ("System", [
-        ("Settings",    Icons.settings(16, "#94a3b8"),    "Settings"),
+        ("Settings", Icons.settings(16, "#94a3b8"), "Settings"),
     ]),
 ]
 
@@ -2135,7 +2080,7 @@ PAGE_LABELS = {
 def render_live_ticker():
     counts = st.session_state.live_class_counts or {}
     items  = list(counts.items())
-    text   = " · ".join(f"<b>{n}</b>: {v}" for n,v in items) if items else "<b>Awaiting first scan</b>"
+    text   = " · ".join(f"<b>{n}</b>: {v}" for n, v in items) if items else "<b>Awaiting first scan</b>"
     mc  = st.session_state.mc_result
     unc = f" · σ={mc['uncertainty']:.3f} ({mc['band']})" if mc else ""
     _render_html(f"""
@@ -2161,21 +2106,20 @@ def render_live_ticker():
 def render_sticky_header():
     counts = st.session_state.live_class_counts or {}
     if counts:
-        items_html = " ".join(f"<span class='hd-tick'><b>{k}</b>: {v}</span>" for k,v in counts.items())
+        items_html = " ".join(f"<span class='hd-tick'><b>{k}</b>: {v}</span>" for k, v in counts.items())
     else:
         items_html = "<span class='hd-tick hd-tick-idle'>Awaiting first scan…</span>"
 
     mc  = st.session_state.mc_result
     nav = PAGE_LABELS.get(st.session_state.nav, st.session_state.nav)
     eng = model_name or "—"
-    eng_ok    = model_error is None and MODEL_PATH.exists()
-    st_cls    = "hd-status-ok" if eng_ok else "hd-status-err"
-    st_txt    = "Online" if eng_ok else "Offline"
-    dev_tag   = "GPU" if DEVICE.type == "cuda" else "CPU"
-    mc_str    = f"<span class='hd-tick'>σ=<b>{mc['uncertainty']:.3f}</b></span>" if mc else ""
+    eng_ok = model_error is None and MODEL_PATH.exists()
+    st_cls = "hd-status-ok" if eng_ok else "hd-status-err"
+    st_txt = "Online" if eng_ok else "Offline"
+    dev_tag = "GPU" if DEVICE.type == "cuda" else "CPU"
+    mc_str = f"<span class='hd-tick'>σ=<b>{mc['uncertainty']:.3f}</b></span>" if mc else ""
 
     brain_svg = Icons.brain(18, "#22d3ee")
-    scan_svg  = Icons.scan(14, "#22d3ee")
 
     st.markdown(safe_html(f"""
     <div class="sticky-header">
@@ -2212,7 +2156,8 @@ def render_sticky_header():
 
 def render_live_probability_animation(result, mc_result=None):
     items = list(result["probabilities"].items())
-    top   = result["prediction"]; conf = result["confidence"]
+    top   = result["prediction"]
+    conf  = result["confidence"]
 
     mc_rows = ""
     if mc_result:
@@ -2222,25 +2167,27 @@ def render_live_probability_animation(result, mc_result=None):
             f'<span style="color:#a78bfa;font-family:\'JetBrains Mono\',monospace;font-size:.7rem"> ±{mc_std.get(n,0):.1f}%</span></div>'
             f'<div class="lp-track"><div class="lp-fill lp-mc" data-target="{p:.2f}" style="width:0%"></div></div>'
             f'<div class="lp-val">{p:.1f}%</div></div>'
-            for n,p in mc_result["mean_probs"].items()
+            for n, p in mc_result["mean_probs"].items()
         )
 
     bars = "".join(
         f'<div class="lp-row"><div class="lp-label">{n}</div>'
         f'<div class="lp-track"><div class="lp-fill" data-target="{p:.2f}" style="width:0%"></div></div>'
         f'<div class="lp-val">{p:.1f}%</div></div>'
-        for n,p in items
+        for n, p in items
     )
 
     unc_html = ""
     if mc_result:
-        band=mc_result["band"]; uval=mc_result["uncertainty"]; color=mc_result["color"]
-        unc_html=(f'<div style="margin-top:.65rem;padding:.5rem .75rem;border-radius:8px;'
-                  f'background:rgba(124,58,237,0.05);border:1px solid rgba(124,58,237,0.18)">'
-                  f'<span style="font-size:.58rem;color:#a78bfa;text-transform:uppercase;letter-spacing:.12em;font-weight:700;font-family:\'Inter\',sans-serif">MC Uncertainty</span>'
-                  f'<span style="float:right;font-weight:700;color:{color};font-family:\'JetBrains Mono\',monospace;font-size:.74rem">σ={uval:.4f} · {band}</span></div>')
+        band = mc_result["band"]; uval = mc_result["uncertainty"]; color = mc_result["color"]
+        unc_html = (
+            f'<div style="margin-top:.65rem;padding:.5rem .75rem;border-radius:8px;'
+            f'background:rgba(124,58,237,0.05);border:1px solid rgba(124,58,237,0.18)">'
+            f'<span style="font-size:.58rem;color:#a78bfa;text-transform:uppercase;letter-spacing:.12em;font-weight:700;font-family:\'Inter\',sans-serif">MC Uncertainty</span>'
+            f'<span style="float:right;font-weight:700;color:{color};font-family:\'JetBrains Mono\',monospace;font-size:.74rem">σ={uval:.4f} · {band}</span></div>'
+        )
 
-    h = 55 + 34*len(items) + (34*len(items)+80 if mc_result else 0)
+    h = 55 + 34 * len(items) + (34 * len(items) + 80 if mc_result else 0)
     _render_html(f"""
     <style>
     .lp-wrap{{padding:1rem 1.25rem;border-radius:14px;border:1px solid rgba(255,255,255,0.06);background:#0f172a;font-family:Inter,sans-serif;color:#e2e8f0}}
@@ -2262,7 +2209,7 @@ def render_live_probability_animation(result, mc_result=None):
         </div>
         <div class="lp-sec">Standard Inference</div>
         {bars}
-        {"<div class='lp-sec'>MC Dropout · Bayesian</div>"+mc_rows if mc_result else ""}
+        {"<div class='lp-sec'>MC Dropout · Bayesian</div>" + mc_rows if mc_result else ""}
         {unc_html}
     </div>
     <script>
@@ -2304,7 +2251,6 @@ with st.sidebar:
     active_nav  = st.session_state.nav
     engine_ok   = MODEL_PATH.exists() and model_error is None
 
-    # Session uptime (computed at render-time; refreshes on every interaction)
     if st.session_state.live_session_start:
         elapsed = int((datetime.now() - st.session_state.live_session_start).total_seconds())
         if elapsed < 60:
@@ -2341,7 +2287,7 @@ with st.sidebar:
         <span class="sb-session-time">{uptime}</span>
     </div>"""), unsafe_allow_html=True)
 
-    # ── Nav badges (dynamic counts via injected CSS) ──
+    # ── Nav badges ──
     badge_css_parts = []
     if total_scans > 0:
         badge_css_parts.append(f"""
@@ -2526,8 +2472,8 @@ with st.sidebar:
             for fk in ("gradcam_image", "gradcam_pp_image"):
                 old = st.session_state.get(fk)
                 if old: plt.close(old)
-            for k, v in defaults.items():
-                st.session_state[k] = v
+            for k, v in DEFAULTS.items():
+                st.session_state[k] = copy.deepcopy(v)
             st.rerun()
         if c2.button("Cancel", key="sb_reset_no", use_container_width=True):
             st.session_state.confirm_reset = False
@@ -2570,7 +2516,8 @@ if nav == "Home":
     _l, _c, _r = st.columns([1.8, 1, 1.8])
     with _c:
         if st.button("Run MRI Analysis", type="primary", key="home_cta", use_container_width=True):
-            st.session_state.nav = "MRI Analysis"; st.rerun()
+            st.session_state.nav = "MRI Analysis"
+            st.rerun()
 
     st.markdown(
         "<div style='text-align:center;color:#4b5869;font-size:.74rem;margin-top:.5rem;line-height:1.5'>"
@@ -2591,7 +2538,7 @@ if nav == "Home":
         (zap_svg,   f"{st.session_state.live_throughput:.2f}/m", "Throughput"),
         (cpu_svg,   f"{np.mean([x.get('latency_ms',0) for x in h2]):.0f} ms" if h2 else "—", "Avg. Inference"),
     ]
-    for col,(icon,val,lbl) in zip([mc1,mc2,mc3,mc4], metrics):
+    for col, (icon, val, lbl) in zip([mc1, mc2, mc3, mc4], metrics):
         with col:
             st.markdown(safe_html(f"""
             <div class="metric-card">
@@ -2601,18 +2548,18 @@ if nav == "Home":
             </div>"""), unsafe_allow_html=True)
 
     st.write("")
-    c1,c2,c3,c4 = st.columns(4)
-    micro_svg = Icons.microscope(22,"#22d3ee")
-    shld_svg  = Icons.shield(22,"#22d3ee")
-    eye_svg   = Icons.eye(22,"#22d3ee")
-    zap2_svg  = Icons.zap(22,"#22d3ee")
+    c1, c2, c3, c4 = st.columns(4)
+    micro_svg = Icons.microscope(22, "#22d3ee")
+    shld_svg  = Icons.shield(22, "#22d3ee")
+    eye_svg   = Icons.eye(22, "#22d3ee")
+    zap2_svg  = Icons.zap(22, "#22d3ee")
     cards = [
-        (micro_svg, "Brain MRI Classification",   "Four-class classification: Glioma, Meningioma, No Tumor, Pituitary using state-of-the-art CNN architectures."),
-        (shld_svg,  "MC Dropout Uncertainty",     "Bayesian uncertainty estimation via Monte Carlo Dropout. Reliability bands quantify how confident the model really is."),
-        (eye_svg,   "Dual XAI (Grad-CAM++)",      "Side-by-side Grad-CAM and Grad-CAM++ visualizations with an agreement score showing heatmap consistency."),
-        (zap2_svg,  "Real-Time Inference",         "Detailed timing breakdown: preprocessing, inference, and XAI generation with CUDA-accurate latency measurement."),
+        (micro_svg, "Brain MRI Classification",  "Four-class classification: Glioma, Meningioma, No Tumor, Pituitary using state-of-the-art CNN architectures."),
+        (shld_svg,  "MC Dropout Uncertainty",    "Bayesian uncertainty estimation via Monte Carlo Dropout. Reliability bands quantify how confident the model really is."),
+        (eye_svg,   "Dual XAI (Grad-CAM++)",     "Side-by-side Grad-CAM and Grad-CAM++ visualizations with an agreement score showing heatmap consistency."),
+        (zap2_svg,  "Real-Time Inference",       "Detailed timing breakdown: preprocessing, inference, and XAI generation with CUDA-accurate latency measurement."),
     ]
-    for col,(icon,title,desc) in zip([c1,c2,c3,c4], cards):
+    for col, (icon, title, desc) in zip([c1, c2, c3, c4], cards):
         with col:
             st.markdown(safe_html(f"""
             <div class="info-card">
@@ -2624,13 +2571,16 @@ if nav == "Home":
     st.write("")
     st.subheader("How NeuroLens Works")
     steps = [
-        ("1","Upload MRI","JPG, PNG, WEBP"),("2","Preprocess","Resize · Normalize"),
-        ("3","Inference","CNN forward pass"),("4","MC Dropout","20 stochastic passes"),
-        ("5","Dual XAI","Grad-CAM + Grad-CAM++"),("6","Agreement","Explanation correlation"),
-        ("7","Report","Download TXT / PNG"),
+        ("1", "Upload MRI", "JPG, PNG, WEBP"),
+        ("2", "Preprocess", "Resize · Normalize"),
+        ("3", "Inference", "CNN forward pass"),
+        ("4", "MC Dropout", "20 stochastic passes"),
+        ("5", "Dual XAI", "Grad-CAM + Grad-CAM++"),
+        ("6", "Agreement", "Explanation correlation"),
+        ("7", "Report", "Download TXT / PNG"),
     ]
     scols = st.columns(len(steps))
-    for col,(num,title,desc) in zip(scols, steps):
+    for col, (num, title, desc) in zip(scols, steps):
         with col:
             st.markdown(safe_html(f"""
             <div class="step-card">
@@ -2641,7 +2591,7 @@ if nav == "Home":
 
     st.write("")
     if model_error:
-        err_svg = Icons.x_circle(18,"#ef4444")
+        err_svg = Icons.x_circle(18, "#ef4444")
         st.markdown(safe_html(f"""
         <div class="info-card" style="border-color:rgba(220,38,38,.28);background:rgba(220,38,38,.04)">
             <div style="display:flex;align-items:center;gap:.5rem;margin-bottom:.5rem">{err_svg}
@@ -2651,11 +2601,7 @@ if nav == "Home":
         with st.expander("Technical Details"):
             st.code(model_error)
     else:
-        chk_svg = Icons.check_circle(18,"#34d399")
-        lay_svg = Icons.layers(16,"#94a3b8")
-        cpu_s   = Icons.cpu(16,"#94a3b8")
-        tgt_s   = Icons.target(16,"#94a3b8")
-        shd_s   = Icons.shield(16,"#94a3b8")
+        chk_svg = Icons.check_circle(18, "#34d399")
         st.markdown(safe_html(f"""
         <div class="info-card" style="border-color:rgba(5,150,105,.25);background:rgba(5,150,105,.04)">
             <div style="display:flex;align-items:center;gap:.5rem;margin-bottom:.85rem">{chk_svg}
@@ -2681,7 +2627,8 @@ if nav == "Home":
         </div>"""), unsafe_allow_html=True)
 
     if st.session_state.last_result:
-        st.write(""); st.subheader("Last Analysis — Live Stream")
+        st.write("")
+        st.subheader("Last Analysis — Live Stream")
         render_live_probability_animation(st.session_state.last_result, mc_result=st.session_state.mc_result)
 
 
@@ -2696,10 +2643,10 @@ elif nav == "MRI Analysis":
     render_live_ticker()
 
     if model_error:
-        err_svg = Icons.x_circle(18,"#ef4444")
         st.error("Neural engine unavailable. Cannot run inference.")
         st.info(f"Expected model: `{MODEL_PATH}`")
-        with st.expander("Technical Details"): st.code(model_error)
+        with st.expander("Technical Details"):
+            st.code(model_error)
     else:
         up_svg = Icons.upload(26, "#22d3ee")
         st.markdown(safe_html(f"""
@@ -2718,23 +2665,25 @@ elif nav == "MRI Analysis":
             </div>
         </div>"""), unsafe_allow_html=True)
 
-        _ul, _uc, _ur = st.columns([1,2,1])
+        _ul, _uc, _ur = st.columns([1, 2, 1])
         with _uc:
             uploaded_file = st.file_uploader(
-                "Upload Brain MRI Scan", type=["jpg","jpeg","png","webp"],
+                "Upload Brain MRI Scan", type=["jpg", "jpeg", "png", "webp"],
                 key="mri_uploader", label_visibility="collapsed",
             )
 
         image_id = None
+        image = None
         if uploaded_file is not None:
             upload_bytes = uploaded_file.getvalue()
             image_id = hashlib.sha256(upload_bytes).hexdigest()
             prev = st.session_state.last_result
             if prev is not None and prev.get("image_id") != image_id:
-                for fk in ("gradcam_image","gradcam_pp_image"):
+                for fk in ("gradcam_image", "gradcam_pp_image"):
                     old = st.session_state.get(fk)
                     if old: plt.close(old)
-                for k in ["last_result","last_image","gradcam_image","gradcam_pp_image","mc_result","agreement_score"]:
+                for k in ["last_result", "last_image", "gradcam_image", "gradcam_pp_image",
+                          "mc_result", "agreement_score"]:
                     st.session_state[k] = None
             try:
                 image = Image.open(io.BytesIO(upload_bytes)).convert("RGB")
@@ -2743,7 +2692,7 @@ elif nav == "MRI Analysis":
                 image = None
 
             if image is not None:
-                col1, col2 = st.columns([1,2])
+                col1, col2 = st.columns([1, 2])
                 with col1:
                     st.markdown("#### MRI Preview")
                     st.image(image, use_container_width=True)
@@ -2751,7 +2700,7 @@ elif nav == "MRI Analysis":
 
                 with col2:
                     st.markdown("#### Analysis Configuration")
-                    cf1,cf2,cf3 = st.columns(3)
+                    cf1, cf2, cf3 = st.columns(3)
                     cf1.metric("Architecture", model_name or "—")
                     cf2.metric("Device", str(DEVICE).upper())
                     cf3.metric("Classes", len(class_names))
@@ -2767,51 +2716,70 @@ elif nav == "MRI Analysis":
                         status = st.empty(); prog = st.empty()
                         try:
                             total_t0 = time.perf_counter()
-                            stages = ["Image Loaded","Preprocessing","Normalization","Tensor Prep","Neural Inference","Probability Calc"]
+                            stages = ["Image Loaded", "Preprocessing", "Normalization", "Tensor Prep",
+                                      "Neural Inference", "Probability Calc"]
                             if run_mc:    stages.append("MC Dropout")
-                            if run_xai:   stages += ["Grad-CAM","Grad-CAM++"]
+                            if run_xai:   stages += ["Grad-CAM", "Grad-CAM++"]
                             if run_agree: stages.append("Agreement Score")
                             stages.append("Report")
                             total_stages = len(stages)
 
                             for i, stage in enumerate(stages[:-4]):
-                                status.info(f"Processing: {stage}…"); prog.progress((i+1)/total_stages)
+                                status.info(f"Processing: {stage}…")
+                                prog.progress((i + 1) / total_stages)
 
-                            log_activity("MRI uploaded; preprocessing started","info")
+                            log_activity("MRI uploaded; preprocessing started", "info")
                             predicted_class, confidence, probability_dict, preprocessing_ms, inference_ms = predict_image(image, model, class_names)
-                            log_activity(f"Inference complete: {predicted_class} ({confidence:.1f}%)","success")
+                            log_activity(f"Inference complete: {predicted_class} ({confidence:.1f}%)", "success")
 
-                            step_off = 4; mc_result = None
+                            step_off = 4
+                            mc_result = None
                             if run_mc:
-                                status.info("Processing: MC Dropout…"); prog.progress((step_off+1)/total_stages); step_off+=1
+                                status.info("Processing: MC Dropout…")
+                                prog.progress((step_off + 1) / total_stages); step_off += 1
                                 try:
                                     mc_result = mc_dropout_predict(image, model, class_names, MC_SAMPLES)
-                                    log_activity(f"MC Dropout: σ={mc_result['uncertainty']:.4f} ({mc_result['band']})","info")
-                                except Exception: log_activity("MC Dropout failed","warn")
+                                    if mc_result:
+                                        log_activity(f"MC Dropout: σ={mc_result['uncertainty']:.4f} ({mc_result['band']})", "info")
+                                except Exception:
+                                    log_activity("MC Dropout failed", "warn")
 
-                            gradcam_fig=gradcam_ms=gradcam_pp_fig=gradcam_pp_ms=None
+                            gradcam_fig = gradcam_ms = gradcam_pp_fig = gradcam_pp_ms = None
                             if run_xai:
-                                status.info("Processing: Grad-CAM…"); prog.progress((step_off+1)/total_stages); step_off+=1
+                                status.info("Processing: Grad-CAM…")
+                                prog.progress((step_off + 1) / total_stages); step_off += 1
                                 try:
-                                    t_gc=time.perf_counter(); gradcam_fig=generate_gradcam(image,model,model_name)
-                                    gradcam_ms=(time.perf_counter()-t_gc)*1000; log_activity("Grad-CAM generated","info")
-                                except Exception: log_activity("Grad-CAM failed","warn")
-                                status.info("Processing: Grad-CAM++…"); prog.progress((step_off+1)/total_stages); step_off+=1
+                                    t_gc = time.perf_counter()
+                                    gradcam_fig = generate_gradcam(image, model, model_name)
+                                    gradcam_ms = (time.perf_counter() - t_gc) * 1000
+                                    log_activity("Grad-CAM generated", "info")
+                                except Exception:
+                                    log_activity("Grad-CAM failed", "warn")
+
+                                status.info("Processing: Grad-CAM++…")
+                                prog.progress((step_off + 1) / total_stages); step_off += 1
                                 try:
-                                    t_pp=time.perf_counter(); gradcam_pp_fig=generate_gradcam_pp(image,model,model_name)
-                                    gradcam_pp_ms=(time.perf_counter()-t_pp)*1000; log_activity("Grad-CAM++ generated","info")
-                                except Exception: log_activity("Grad-CAM++ failed","warn")
+                                    t_pp = time.perf_counter()
+                                    gradcam_pp_fig = generate_gradcam_pp(image, model, model_name)
+                                    gradcam_pp_ms = (time.perf_counter() - t_pp) * 1000
+                                    log_activity("Grad-CAM++ generated", "info")
+                                except Exception:
+                                    log_activity("Grad-CAM++ failed", "warn")
 
                             agree_score = None
                             if run_agree and run_xai:
-                                status.info("Processing: Agreement Score…"); prog.progress((step_off+1)/total_stages); step_off+=1
+                                status.info("Processing: Agreement Score…")
+                                prog.progress((step_off + 1) / total_stages); step_off += 1
                                 try:
                                     agree_score = explanation_agreement(image, model, model_name)
-                                    if agree_score is not None: log_activity(f"Agreement: {agree_score:.3f}","info")
-                                except Exception: log_activity("Agreement score failed","warn")
+                                    if agree_score is not None:
+                                        log_activity(f"Agreement: {agree_score:.3f}", "info")
+                                except Exception:
+                                    log_activity("Agreement score failed", "warn")
 
-                            total_ms = (time.perf_counter()-total_t0)*1000
-                            status.info("Building report…"); prog.progress(1.0)
+                            total_ms = (time.perf_counter() - total_t0) * 1000
+                            status.info("Building report…")
+                            prog.progress(1.0)
 
                             result = {
                                 "prediction": predicted_class, "confidence": confidence,
@@ -2820,43 +2788,50 @@ elif nav == "MRI Analysis":
                                 "latency_ms": inference_ms, "preprocessing_ms": preprocessing_ms,
                                 "gradcam_ms": gradcam_ms if gradcam_fig else None,
                                 "gradcam_pp_ms": gradcam_pp_ms if gradcam_pp_fig else None,
-                                "total_ms": total_ms, "gradcam_available": gradcam_fig is not None,
+                                "total_ms": total_ms,
+                                "gradcam_available": gradcam_fig is not None,
                                 "gradcam_pp_available": gradcam_pp_fig is not None,
-                                "image_id": image_id, "uncertainty": mc_result["uncertainty"] if mc_result else None,
-                                "mc_band": mc_result["band"] if mc_result else None, "agreement_score": agree_score,
+                                "image_id": image_id,
+                                "uncertainty": mc_result["uncertainty"] if mc_result else None,
+                                "mc_band": mc_result["band"] if mc_result else None,
+                                "agreement_score": agree_score,
                             }
 
-                            for fk,nf in [("gradcam_image",gradcam_fig),("gradcam_pp_image",gradcam_pp_fig)]:
+                            for fk, nf in [("gradcam_image", gradcam_fig), ("gradcam_pp_image", gradcam_pp_fig)]:
                                 old = st.session_state.get(fk)
                                 if old: plt.close(old)
                                 st.session_state[fk] = nf
 
-                            st.session_state.last_result = result; st.session_state.last_image = image.copy()
-                            st.session_state.mc_result = mc_result; st.session_state.agreement_score = agree_score
+                            st.session_state.last_result = result
+                            st.session_state.last_image = image.copy()
+                            st.session_state.mc_result = mc_result
+                            st.session_state.agreement_score = agree_score
                             st.session_state.prediction_history.append(result)
                             st.session_state.prediction_history = st.session_state.prediction_history[-MAX_HISTORY:]
-                            update_live_stats(result, inference_ms); log_activity("Analysis report generated","success")
+                            update_live_stats(result, inference_ms)
+                            log_activity("Analysis report generated", "success")
                             status.success(f"{predicted_class} · {confidence:.2f}% · {inference_ms:.0f} ms")
                             prog.empty()
 
                         except Exception as exc:
                             msg = "CUDA out of memory. Try CPU inference." if "out of memory" in str(exc).lower() else "Analysis failed. Check image and model."
                             status.error(msg)
-                            with st.expander("Technical Details"): st.code(str(exc))
-                            log_activity("Analysis failed","error")
+                            with st.expander("Technical Details"):
+                                st.code(str(exc))
+                            log_activity("Analysis failed", "error")
                         finally:
                             st.session_state.live_inference_running = False
 
         if (image_id is not None and st.session_state.last_result is not None
                 and st.session_state.last_result.get("image_id") == image_id):
 
-            result  = st.session_state.last_result
-            mc_res  = st.session_state.mc_result
-            conf_v  = result["confidence"]
-            conf_lbl= "High" if conf_v>=80 else "Moderate" if conf_v>=60 else "Low"
-            conf_cls= "high" if conf_v>=80 else "moderate" if conf_v>=60 else "low"
+            result = st.session_state.last_result
+            mc_res = st.session_state.mc_result
+            conf_v = result["confidence"]
+            conf_lbl = "High" if conf_v >= 80 else "Moderate" if conf_v >= 60 else "Low"
+            conf_cls = "high" if conf_v >= 80 else "moderate" if conf_v >= 60 else "low"
 
-            shld_r = Icons.shield(16,"#94a3b8")
+            shld_r = Icons.shield(16, "#94a3b8")
             st.markdown(safe_html(f"""
             <div class="diagnostic-panel">
                 <div class="diag-header">
@@ -2870,14 +2845,14 @@ elif nav == "MRI Analysis":
                 </div>
             </div>"""), unsafe_allow_html=True)
 
-            m1,m2,m3,m4 = st.columns(4)
+            m1, m2, m3, m4 = st.columns(4)
             m1.metric("Confidence",    f"{conf_v:.2f}%")
             m2.metric("Inference",     f"{result['latency_ms']:.1f} ms")
             m3.metric("Preprocessing", f"{result.get('preprocessing_ms',0):.1f} ms")
             m4.metric("Total Time",    f"{result.get('total_ms',0):.1f} ms")
 
             if mc_res:
-                unc=mc_res["uncertainty"]; band=mc_res["band"]; color=mc_res["color"]
+                unc = mc_res["uncertainty"]; band = mc_res["band"]; color = mc_res["color"]
                 st.markdown(safe_html(f"""
                 <div class="uncertainty-card">
                     <div class="unc-title">MC Dropout Uncertainty Estimation ({MC_SAMPLES} passes)</div>
@@ -2895,9 +2870,8 @@ elif nav == "MRI Analysis":
 
             agree = result.get("agreement_score")
             if agree is not None:
-                a_color = "#10b981" if agree>=0.7 else "#f59e0b" if agree>=0.5 else "#ef4444"
-                a_label = "High Agreement" if agree>=0.7 else "Moderate Agreement" if agree>=0.5 else "Low Agreement"
-                info_svg = Icons.info(14, a_color)
+                a_color = "#10b981" if agree >= 0.7 else "#f59e0b" if agree >= 0.5 else "#ef4444"
+                a_label = "High Agreement" if agree >= 0.7 else "Moderate Agreement" if agree >= 0.5 else "Low Agreement"
                 st.markdown(safe_html(f"""
                 <div class="xai-card">
                     <div class="xai-title">Explanation Agreement Score</div>
@@ -2913,28 +2887,31 @@ elif nav == "MRI Analysis":
                     </div>
                 </div>"""), unsafe_allow_html=True)
 
-            alert_svg = Icons.alert_triangle(16,"#d97706")
+            alert_svg = Icons.alert_triangle(16, "#d97706")
             st.markdown(safe_html(f"""
             <div class="disclaimer">
                 {alert_svg}
                 <span>NeuroLens AI is a research prototype for educational use. Model outputs are not medical diagnoses and must not replace evaluation by a qualified healthcare professional.</span>
             </div>"""), unsafe_allow_html=True)
 
-            st.write(""); st.markdown("#### Probability Distribution")
+            st.write("")
+            st.markdown("#### Probability Distribution")
             prob_html = '<div class="prob-grid">' + "".join(
-                f'<div class="prob-card {"is-top" if label==result["prediction"] else ""}">'
+                f'<div class="prob-card {"is-top" if label == result["prediction"] else ""}">'
                 f'<div class="prob-value">{prob:.1f}%</div>'
                 f'<div class="prob-label">{label}</div>'
                 f'{"<div class=\"prob-top-tag\">Top Prediction</div>" if label == result["prediction"] else ""}'
-                f'</div>' for label,prob in result["probabilities"].items()
+                f'</div>' for label, prob in result["probabilities"].items()
             ) + '</div>'
             st.markdown(prob_html, unsafe_allow_html=True)
 
-            st.write(""); st.markdown("#### Live Probability Stream")
+            st.write("")
+            st.markdown("#### Live Probability Stream")
             render_live_probability_animation(result, mc_result=mc_res)
 
             if st.session_state.gradcam_image or st.session_state.gradcam_pp_image:
-                st.write(""); st.markdown("#### Dual XAI Visualization")
+                st.write("")
+                st.markdown("#### Dual XAI Visualization")
                 gc_col, pp_col = st.columns(2)
                 with gc_col:
                     st.markdown("**Grad-CAM** · Jet colormap")
@@ -2947,8 +2924,7 @@ elif nav == "MRI Analysis":
                         st.pyplot(st.session_state.gradcam_pp_image, use_container_width=True)
                         st.caption("Second-order gradients · α=0.46")
 
-                eye_svg = Icons.eye(14,"#22d3ee")
-                st.markdown(safe_html(f"""
+                st.markdown(safe_html("""
                 <div class="xai-card">
                     <div class="xai-title">About These Visualizations</div>
                     <div class="xai-text">
@@ -2960,11 +2936,15 @@ elif nav == "MRI Analysis":
 
             gc_buf = pp_buf = None
             if st.session_state.gradcam_image:
-                b=io.BytesIO(); st.session_state.gradcam_image.savefig(b,format="png",bbox_inches="tight",dpi=160); gc_buf=b.getvalue()
+                b = io.BytesIO()
+                st.session_state.gradcam_image.savefig(b, format="png", bbox_inches="tight", dpi=160)
+                gc_buf = b.getvalue()
             if st.session_state.gradcam_pp_image:
-                b2=io.BytesIO(); st.session_state.gradcam_pp_image.savefig(b2,format="png",bbox_inches="tight",dpi=160); pp_buf=b2.getvalue()
+                b2 = io.BytesIO()
+                st.session_state.gradcam_pp_image.savefig(b2, format="png", bbox_inches="tight", dpi=160)
+                pp_buf = b2.getvalue()
 
-            dl_svg = Icons.download(16,"#22d3ee")
+            dl_svg = Icons.download(16, "#22d3ee")
             st.markdown(safe_html(f"""
             <div class="export-head">
                 <div class="export-head-icon">{dl_svg}</div>
@@ -2976,19 +2956,19 @@ elif nav == "MRI Analysis":
             </div>"""), unsafe_allow_html=True)
 
             if gc_buf and pp_buf:
-                dc1,dc2 = st.columns(2)
+                dc1, dc2 = st.columns(2)
                 with dc1:
                     st.markdown('<div class="export-item-label">Grad-CAM · PNG</div>', unsafe_allow_html=True)
-                    st.download_button("Download Grad-CAM", gc_buf, "gradcam.png","image/png",key="dl_gc",use_container_width=True)
+                    st.download_button("Download Grad-CAM", gc_buf, "gradcam.png", "image/png", key="dl_gc", use_container_width=True)
                 with dc2:
                     st.markdown('<div class="export-item-label">Grad-CAM++ · PNG</div>', unsafe_allow_html=True)
-                    st.download_button("Download Grad-CAM++", pp_buf,"gradcam_pp.png","image/png",key="dl_pp",use_container_width=True)
+                    st.download_button("Download Grad-CAM++", pp_buf, "gradcam_pp.png", "image/png", key="dl_pp", use_container_width=True)
             elif gc_buf:
                 st.markdown('<div class="export-item-label">Grad-CAM · PNG</div>', unsafe_allow_html=True)
-                st.download_button("Download Grad-CAM", gc_buf,"gradcam.png","image/png",key="dl_gc",use_container_width=True)
+                st.download_button("Download Grad-CAM", gc_buf, "gradcam.png", "image/png", key="dl_gc", use_container_width=True)
             elif pp_buf:
                 st.markdown('<div class="export-item-label">Grad-CAM++ · PNG</div>', unsafe_allow_html=True)
-                st.download_button("Download Grad-CAM++",pp_buf,"gradcam_pp.png","image/png",key="dl_pp",use_container_width=True)
+                st.download_button("Download Grad-CAM++", pp_buf, "gradcam_pp.png", "image/png", key="dl_pp", use_container_width=True)
 
             st.markdown('<div class="export-item-label" style="margin-top:.85rem">Analysis Report · TXT</div>', unsafe_allow_html=True)
             st.download_button(
@@ -3006,7 +2986,7 @@ elif nav == "MRI Analysis":
                     f"Model Prediction    : {result['prediction']}",
                     f"Model Confidence    : {result['confidence']:.4f}%",
                     "  Class Probabilities:",
-                    *[f"    {k:<16}: {v:.4f}%" for k,v in result["probabilities"].items()],
+                    *[f"    {k:<16}: {v:.4f}%" for k, v in result["probabilities"].items()],
                     "─────────────────────────────────────────────────────",
                     "  UNCERTAINTY ESTIMATION (MC Dropout)",
                     "─────────────────────────────────────────────────────",
@@ -3033,7 +3013,7 @@ elif nav == "MRI Analysis":
                     "  Outputs do NOT constitute medical diagnoses.",
                     "═══════════════════════════════════════════════════════",
                 ]),
-                "neurolens_report.txt","text/plain",key="dl_report",type="primary",use_container_width=True,
+                "neurolens_report.txt", "text/plain", key="dl_report", type="primary", use_container_width=True,
             )
 
 
@@ -3042,7 +3022,7 @@ elif nav == "MRI Analysis":
 # ══════════════════════════════════════════════════════════════════════════════
 
 elif nav == "Dashboard":
-    chart_h = Icons.chart(22,"#22d3ee")
+    chart_h = Icons.chart(22, "#22d3ee")
     st.markdown(f"<h1 style='display:flex;align-items:center;gap:.5rem'>{chart_h} Neurodiagnostic Dashboard</h1>", unsafe_allow_html=True)
     st.caption("Session analytics from completed MRI analyses")
     render_live_ticker()
@@ -3051,7 +3031,7 @@ elif nav == "Dashboard":
     history = st.session_state.prediction_history
 
     if not history:
-        chart_svg = Icons.chart(32,"#4b5869")
+        chart_svg = Icons.chart(32, "#4b5869")
         st.markdown(safe_html(f"""
         <div class="empty-state">
             <div class="empty-icon">{chart_svg}</div>
@@ -3062,21 +3042,23 @@ elif nav == "Dashboard":
         total   = st.session_state.live_predictions_count
         avg_c   = st.session_state.live_avg_confidence
         unique  = len(st.session_state.live_class_counts)
-        avg_lat = float(np.mean([h.get("latency_ms",0) for h in history]))
-        unc_data= [h["uncertainty"] for h in history if h.get("uncertainty") is not None]
+        avg_lat = float(np.mean([h.get("latency_ms", 0) for h in history]))
+        unc_data = [h["uncertainty"] for h in history if h.get("uncertainty") is not None]
         avg_unc = float(np.mean(unc_data)) if unc_data else None
         agree_data = [h["agreement_score"] for h in history if h.get("agreement_score") is not None]
         avg_agree  = float(np.mean(agree_data)) if agree_data else None
 
-        p_svg = Icons.pulse(18,"#22d3ee"); t_svg=Icons.target(18,"#22d3ee")
-        f_svg = Icons.flask(18,"#22d3ee"); z_svg=Icons.zap(18,"#22d3ee"); sh_svg=Icons.shield(18,"#22d3ee")
-        m1,m2,m3,m4,m5 = st.columns(5)
+        p_svg = Icons.pulse(18, "#22d3ee"); t_svg = Icons.target(18, "#22d3ee")
+        f_svg = Icons.flask(18, "#22d3ee"); z_svg = Icons.zap(18, "#22d3ee"); sh_svg = Icons.shield(18, "#22d3ee")
+        m1, m2, m3, m4, m5 = st.columns(5)
         mets = [
-            (p_svg,total,"Total Scans"),(t_svg,f"{avg_c:.1f}%","Avg. Confidence"),
-            (f_svg,unique,"Classes Seen"),(z_svg,f"{avg_lat:.0f} ms","Avg. Latency"),
-            (sh_svg,f"σ={avg_unc:.4f}" if avg_unc is not None else "—","Avg. Uncertainty"),
+            (p_svg, total, "Total Scans"),
+            (t_svg, f"{avg_c:.1f}%", "Avg. Confidence"),
+            (f_svg, unique, "Classes Seen"),
+            (z_svg, f"{avg_lat:.0f} ms", "Avg. Latency"),
+            (sh_svg, f"σ={avg_unc:.4f}" if avg_unc is not None else "—", "Avg. Uncertainty"),
         ]
-        for col,(icon,val,lbl) in zip([m1,m2,m3,m4,m5],mets):
+        for col, (icon, val, lbl) in zip([m1, m2, m3, m4, m5], mets):
             with col:
                 st.markdown(safe_html(f"""
                 <div class="metric-card">
@@ -3093,41 +3075,46 @@ elif nav == "Dashboard":
             </div>"""), unsafe_allow_html=True)
 
         st.write("")
-        col_l, col_r = st.columns([2,1])
+        col_l, col_r = st.columns([2, 1])
         with col_l:
             st.subheader("Prediction Distribution")
-            counts  = st.session_state.live_class_counts; mx = max(counts.values()) if counts else 1
-            for label,count in counts.items():
-                pct = (count/mx)*100; live_pct = (count/total)*100 if total else 0
+            counts = st.session_state.live_class_counts
+            mx = max(counts.values()) if counts else 1
+            for label, count in counts.items():
+                pct = (count / mx) * 100
+                live_pct = (count / total) * 100 if total else 0
                 st.markdown(safe_html(f"""
                 <div class="dist-card">
                     <div class="dist-row"><div class="dist-name">{label}</div><div class="dist-count">{count} · {live_pct:.1f}%</div></div>
                     <div class="dist-track"><div class="dist-fill" style="width:{pct:.0f}%"></div></div>
                 </div>"""), unsafe_allow_html=True)
 
-            st.write(""); st.subheader("Confidence Trend")
+            st.write("")
+            st.subheader("Confidence Trend")
             cf = plot_confidence_trend(history)
             if cf:
-                st.markdown('<div class="chart-wrap">', unsafe_allow_html=True); st.pyplot(cf,use_container_width=True)
-                st.markdown('</div>', unsafe_allow_html=True); plt.close(cf)
-            else: st.caption("Need ≥2 analyses.")
+                st.pyplot(cf, use_container_width=True)
+                plt.close(cf)
+            else:
+                st.caption("Need ≥2 analyses.")
 
             st.subheader("Inference Latency")
             lf = plot_latency_trend(history)
             if lf:
-                st.markdown('<div class="chart-wrap">', unsafe_allow_html=True); st.pyplot(lf,use_container_width=True)
-                st.markdown('</div>', unsafe_allow_html=True); plt.close(lf)
-            else: st.caption("Need ≥2 analyses.")
+                st.pyplot(lf, use_container_width=True)
+                plt.close(lf)
+            else:
+                st.caption("Need ≥2 analyses.")
 
             if unc_data:
                 st.subheader("Uncertainty Trend")
                 uf = plot_uncertainty_history(history)
                 if uf:
-                    st.markdown('<div class="chart-wrap">', unsafe_allow_html=True); st.pyplot(uf,use_container_width=True)
-                    st.markdown('</div>', unsafe_allow_html=True); plt.close(uf)
+                    st.pyplot(uf, use_container_width=True)
+                    plt.close(uf)
 
         with col_r:
-            act_svg = Icons.activity(16,"#22d3ee")
+            act_svg = Icons.activity(16, "#22d3ee")
             st.markdown(f"<div style='display:flex;align-items:center;gap:.4rem;margin-bottom:.5rem'>{act_svg}<b style='font-size:.88rem'>Activity Feed</b></div>", unsafe_allow_html=True)
             render_activity_feed()
 
@@ -3136,20 +3123,21 @@ elif nav == "Dashboard":
             latest = history[-1]
             el = "—"
             if st.session_state.live_session_start:
-                e = datetime.now()-st.session_state.live_session_start; el = f"{int(e.total_seconds())}s"
+                e = datetime.now() - st.session_state.live_session_start
+                el = f"{int(e.total_seconds())}s"
             rows = [
-                ("Prediction",  latest["prediction"]),
-                ("Confidence",  f"{latest['confidence']:.2f}%"),
-                ("Architecture",latest["model"]),
-                ("Inference",   f"{latest.get('latency_ms',0):.0f} ms"),
-                ("Uncertainty σ",f"{latest['uncertainty']:.4f}" if latest.get("uncertainty") is not None else "—"),
-                ("Agreement",   f"{latest['agreement_score']:.3f}" if latest.get("agreement_score") is not None else "—"),
-                ("Session Time",el),
-                ("Analyzed At", latest["timestamp"]),
+                ("Prediction",    latest["prediction"]),
+                ("Confidence",    f"{latest['confidence']:.2f}%"),
+                ("Architecture",  latest["model"]),
+                ("Inference",     f"{latest.get('latency_ms',0):.0f} ms"),
+                ("Uncertainty σ", f"{latest['uncertainty']:.4f}" if latest.get("uncertainty") is not None else "—"),
+                ("Agreement",     f"{latest['agreement_score']:.3f}" if latest.get("agreement_score") is not None else "—"),
+                ("Session Time",  el),
+                ("Analyzed At",   latest["timestamp"]),
             ]
             st.markdown('<div class="latest-card">' + "".join(
                 f'<div class="latest-row"><div class="latest-key">{k}</div><div class="latest-val">{v}</div></div>'
-                for k,v in rows
+                for k, v in rows
             ) + '</div>', unsafe_allow_html=True)
 
 
@@ -3158,14 +3146,14 @@ elif nav == "Dashboard":
 # ══════════════════════════════════════════════════════════════════════════════
 
 elif nav == "History":
-    hist_h = Icons.history(22,"#22d3ee")
+    hist_h = Icons.history(22, "#22d3ee")
     st.markdown(f"<h1 style='display:flex;align-items:center;gap:.5rem'>{hist_h} Analysis History</h1>", unsafe_allow_html=True)
     st.caption("Review all session AI diagnostic reports")
     render_live_ticker()
     history = st.session_state.prediction_history
 
     if not history:
-        hist_svg = Icons.history(32,"#4b5869")
+        hist_svg = Icons.history(32, "#4b5869")
         st.markdown(safe_html(f"""
         <div class="empty-state">
             <div class="empty-icon">{hist_svg}</div>
@@ -3173,10 +3161,10 @@ elif nav == "History":
             <div class="empty-text">Analysis reports appear here after running MRI scans.</div>
         </div>"""), unsafe_allow_html=True)
     else:
-        fc1,fc2,fc3,fc4 = st.columns([1,1,1,2])
-        pred_filter = fc1.selectbox("Prediction",["All"]+CLASS_NAMES)
-        conf_filter = fc2.selectbox("Confidence",["All","High (≥80%)","Moderate (60–79%)","Low (<60%)"])
-        sort_order  = fc3.selectbox("Sort",["Newest first","Oldest first"])
+        fc1, fc2, fc3, fc4 = st.columns([1, 1, 1, 2])
+        pred_filter = fc1.selectbox("Prediction", ["All"] + CLASS_NAMES)
+        conf_filter = fc2.selectbox("Confidence", ["All", "High (≥80%)", "Moderate (60–79%)", "Low (<60%)"])
+        sort_order  = fc3.selectbox("Sort", ["Newest first", "Oldest first"])
         search_q    = fc4.text_input("Search")
 
         filtered = []
@@ -3184,22 +3172,24 @@ elif nav == "History":
             c = rec["confidence"]
             if pred_filter != "All" and rec["prediction"] != pred_filter: continue
             if conf_filter == "High (≥80%)" and c < 80: continue
-            if conf_filter == "Moderate (60–79%)" and not (60<=c<80): continue
+            if conf_filter == "Moderate (60–79%)" and not (60 <= c < 80): continue
             if conf_filter == "Low (<60%)" and c >= 60: continue
             q = search_q.strip().lower()
             if q and q not in rec["model"].lower() and q not in rec["prediction"].lower(): continue
             filtered.append(rec)
 
-        if sort_order == "Newest first": filtered = list(reversed(filtered))
-        if not filtered: st.info("No records match these filters.")
+        if sort_order == "Newest first":
+            filtered = list(reversed(filtered))
+        if not filtered:
+            st.info("No records match these filters.")
         else:
             st.caption(f"Showing {len(filtered)} of {len(history)} records")
-            scan_sm = Icons.scan(18,"#22d3ee")
+            scan_sm = Icons.scan(18, "#22d3ee")
             for item in filtered:
                 conf = item["confidence"]
-                cc   = "conf-hi" if conf>=80 else "conf-mid" if conf>=60 else "conf-lo"
-                unc  = f" · σ={item['uncertainty']:.4f}" if item.get("uncertainty") is not None else ""
-                ag   = f" · Agr={item['agreement_score']:.3f}" if item.get("agreement_score") is not None else ""
+                cc = "conf-hi" if conf >= 80 else "conf-mid" if conf >= 60 else "conf-lo"
+                unc = f" · σ={item['uncertainty']:.4f}" if item.get("uncertainty") is not None else ""
+                ag  = f" · Agr={item['agreement_score']:.3f}" if item.get("agreement_score") is not None else ""
                 st.markdown(safe_html(f"""
                 <div class="thumb-card">
                     <div class="thumb-icon">{scan_sm}</div>
@@ -3210,7 +3200,7 @@ elif nav == "History":
                     <div><span class="conf-badge {cc}">{conf:.1f}%</span></div>
                 </div>"""), unsafe_allow_html=True)
                 with st.expander(f"Details — {item['timestamp']}"):
-                    d1,d2 = st.columns(2)
+                    d1, d2 = st.columns(2)
                     with d1:
                         st.write(f"**Prediction:** {item['prediction']}")
                         st.write(f"**Confidence:** {item['confidence']:.4f}%")
@@ -3223,16 +3213,19 @@ elif nav == "History":
                         if item.get("agreement_score") is not None:
                             st.write(f"**Agreement Score:** {item['agreement_score']:.4f}")
                         st.write("**Probabilities:**")
-                        for lbl,prob in item["probabilities"].items(): st.write(f"  · {lbl}: {prob:.4f}%")
+                        for lbl, prob in item["probabilities"].items():
+                            st.write(f"  · {lbl}: {prob:.4f}%")
 
         st.write("")
         if st.button("Clear History", key="clear_hist_btn"):
             st.session_state.confirm_clear_hist = True
         if st.session_state.get("confirm_clear_hist", False):
             st.warning("Clear all session records?")
-            cc1,cc2,_ = st.columns([1,1,4])
+            cc1, cc2, _ = st.columns([1, 1, 4])
             if cc1.button("Confirm", key="confirm_hist", use_container_width=True):
-                clear_prediction_history(); st.session_state.confirm_clear_hist=False; st.rerun()
+                clear_prediction_history()
+                st.session_state.confirm_clear_hist = False
+                st.rerun()
             if cc2.button("Cancel", key="cancel_hist", use_container_width=True):
                 st.session_state.confirm_clear_hist = False
 
@@ -3242,13 +3235,13 @@ elif nav == "History":
 # ══════════════════════════════════════════════════════════════════════════════
 
 elif nav == "Grad-CAM":
-    hm_h = Icons.heatmap(22,"#22d3ee")
+    hm_h = Icons.heatmap(22, "#22d3ee")
     st.markdown(f"<h1 style='display:flex;align-items:center;gap:.5rem'>{hm_h} Grad-CAM Explainability</h1>", unsafe_allow_html=True)
     st.caption("Visualize which MRI regions influenced the model's classification")
     render_live_ticker()
 
     if not st.session_state.gradcam_image and not st.session_state.gradcam_pp_image:
-        hm_svg = Icons.heatmap(32,"#4b5869")
+        hm_svg = Icons.heatmap(32, "#4b5869")
         st.markdown(safe_html(f"""
         <div class="empty-state">
             <div class="empty-icon">{hm_svg}</div>
@@ -3256,23 +3249,26 @@ elif nav == "Grad-CAM":
             <div class="empty-text">Run an MRI analysis with XAI enabled to generate heatmaps.</div>
         </div>"""), unsafe_allow_html=True)
     else:
-        oc,gc,pc = st.columns(3)
+        oc, gc, pc = st.columns(3)
         with oc:
             st.subheader("Original MRI")
-            if st.session_state.last_image: st.image(st.session_state.last_image, use_container_width=True)
+            if st.session_state.last_image:
+                st.image(st.session_state.last_image, use_container_width=True)
         with gc:
             st.subheader("Grad-CAM · Jet")
-            if st.session_state.gradcam_image: st.pyplot(st.session_state.gradcam_image, use_container_width=True)
+            if st.session_state.gradcam_image:
+                st.pyplot(st.session_state.gradcam_image, use_container_width=True)
         with pc:
             st.subheader("Grad-CAM++ · Inferno")
-            if st.session_state.gradcam_pp_image: st.pyplot(st.session_state.gradcam_pp_image, use_container_width=True)
+            if st.session_state.gradcam_pp_image:
+                st.pyplot(st.session_state.gradcam_pp_image, use_container_width=True)
 
         st.markdown("<div style='font-size:.72rem;color:#4b5869;margin:.5rem 0'>Heatmap influence: Low (dark) ░░░▒▒▒████ High (bright)</div>", unsafe_allow_html=True)
 
         agree = st.session_state.agreement_score
         if agree is not None:
-            a_color = "#10b981" if agree>=0.7 else "#f59e0b" if agree>=0.5 else "#ef4444"
-            a_label = "High Agreement" if agree>=0.7 else "Moderate" if agree>=0.5 else "Low Agreement"
+            a_color = "#10b981" if agree >= 0.7 else "#f59e0b" if agree >= 0.5 else "#ef4444"
+            a_label = "High Agreement" if agree >= 0.7 else "Moderate" if agree >= 0.5 else "Low Agreement"
             st.markdown(safe_html(f"""
             <div class="xai-card">
                 <div class="xai-title">Explanation Agreement Score</div>
@@ -3285,8 +3281,7 @@ elif nav == "Grad-CAM":
                 </div>
             </div>"""), unsafe_allow_html=True)
 
-        eye_svg = Icons.eye(14,"#22d3ee")
-        st.markdown(safe_html(f"""
+        st.markdown(safe_html("""
         <div class="xai-card">
             <div class="xai-title">About These Visualizations</div>
             <div class="xai-text">
@@ -3298,15 +3293,19 @@ elif nav == "Grad-CAM":
 
         if st.session_state.last_result:
             res = st.session_state.last_result
-            c1,c2 = st.columns(2); c1.metric("Prediction",res["prediction"]); c2.metric("Confidence",f"{res['confidence']:.2f}%")
+            c1, c2 = st.columns(2)
+            c1.metric("Prediction", res["prediction"])
+            c2.metric("Confidence", f"{res['confidence']:.2f}%")
 
-        dl1,dl2 = st.columns(2)
+        dl1, dl2 = st.columns(2)
         if st.session_state.gradcam_image:
-            buf=io.BytesIO(); st.session_state.gradcam_image.savefig(buf,format="png",bbox_inches="tight",dpi=160)
-            dl1.download_button("Download Grad-CAM",buf.getvalue(),"gradcam.png","image/png",key="gradcam_dl",use_container_width=True)
+            buf = io.BytesIO()
+            st.session_state.gradcam_image.savefig(buf, format="png", bbox_inches="tight", dpi=160)
+            dl1.download_button("Download Grad-CAM", buf.getvalue(), "gradcam.png", "image/png", key="gradcam_dl", use_container_width=True)
         if st.session_state.gradcam_pp_image:
-            buf2=io.BytesIO(); st.session_state.gradcam_pp_image.savefig(buf2,format="png",bbox_inches="tight",dpi=160)
-            dl2.download_button("Download Grad-CAM++",buf2.getvalue(),"gradcam_pp.png","image/png",key="gradcam_pp_dl",use_container_width=True)
+            buf2 = io.BytesIO()
+            st.session_state.gradcam_pp_image.savefig(buf2, format="png", bbox_inches="tight", dpi=160)
+            dl2.download_button("Download Grad-CAM++", buf2.getvalue(), "gradcam_pp.png", "image/png", key="gradcam_pp_dl", use_container_width=True)
 
 
 # ══════════════════════════════════════════════════════════════════════════════
@@ -3314,14 +3313,14 @@ elif nav == "Grad-CAM":
 # ══════════════════════════════════════════════════════════════════════════════
 
 elif nav == "XAI Lab":
-    lab_h = Icons.lab(22,"#22d3ee")
+    lab_h = Icons.lab(22, "#22d3ee")
     st.markdown(f"<h1 style='display:flex;align-items:center;gap:.5rem'>{lab_h} XAI Research Lab</h1>", unsafe_allow_html=True)
     st.caption("Uncertainty, explainability, and model behavior analysis")
     render_live_ticker()
     history = st.session_state.prediction_history
 
     if not history:
-        lab_svg = Icons.lab(32,"#4b5869")
+        lab_svg = Icons.lab(32, "#4b5869")
         st.markdown(safe_html(f"""
         <div class="empty-state">
             <div class="empty-icon">{lab_svg}</div>
@@ -3330,23 +3329,30 @@ elif nav == "XAI Lab":
         </div>"""), unsafe_allow_html=True)
     else:
         st.subheader("Uncertainty Distribution")
-        unc_data = [(i+1,h["uncertainty"]) for i,h in enumerate(history) if "uncertainty" in h]
-        if len(unc_data)>=2:
+        unc_data = [(i + 1, h["uncertainty"]) for i, h in enumerate(history) if "uncertainty" in h]
+        if len(unc_data) >= 2:
             uf = plot_uncertainty_history(history)
             if uf:
-                st.markdown('<div class="chart-wrap">', unsafe_allow_html=True); st.pyplot(uf,use_container_width=True)
-                st.markdown('</div>', unsafe_allow_html=True); plt.close(uf)
+                st.pyplot(uf, use_container_width=True)
+                plt.close(uf)
 
         bands = {}
         for h in history:
             b = h.get("mc_band")
-            if b: bands[b] = bands.get(b,0)+1
+            if b:
+                bands[b] = bands.get(b, 0) + 1
         if bands:
-            st.write(""); st.subheader("Reliability Band Distribution")
-            bc1,bc2,bc3,bc4 = st.columns(4)
-            band_map = {"Very High Reliability":(bc1,"#10b981"),"High Reliability":(bc2,"#0891b2"),"Moderate Reliability":(bc3,"#d97706"),"Low Reliability":(bc4,"#dc2626")}
-            for band,(col,color) in band_map.items():
-                cnt = bands.get(band,0)
+            st.write("")
+            st.subheader("Reliability Band Distribution")
+            bc1, bc2, bc3, bc4 = st.columns(4)
+            band_map = {
+                "Very High Reliability": (bc1, "#10b981"),
+                "High Reliability":      (bc2, "#0891b2"),
+                "Moderate Reliability":  (bc3, "#d97706"),
+                "Low Reliability":       (bc4, "#dc2626"),
+            }
+            for band, (col, color) in band_map.items():
+                cnt = bands.get(band, 0)
                 with col:
                     st.markdown(safe_html(f"""
                     <div class="metric-card" style="border-color:{color}30">
@@ -3354,28 +3360,46 @@ elif nav == "XAI Lab":
                         <div class="metric-label">{band.replace(' Reliability','')}</div>
                     </div>"""), unsafe_allow_html=True)
 
-        agree_hist = [(i+1,h["agreement_score"]) for i,h in enumerate(history) if h.get("agreement_score") is not None]
-        if len(agree_hist)>=2:
-            st.write(""); st.subheader("Agreement Score Trend")
-            fig2,ax2 = _dark_fig(); xs,ys = zip(*agree_hist)
-            ax2.plot(xs,ys,marker="D",lw=2,ms=4,color="#0891b2"); ax2.fill_between(xs,ys,alpha=0.07,color="#0891b2")
-            ax2.axhline(0.7,color="#059669",lw=1,ls="--",alpha=0.55,label="High agreement"); ax2.axhline(0.5,color="#d97706",lw=1,ls="--",alpha=0.55,label="Moderate")
-            ax2.set_ylim(0,1.05); ax2.set_xlabel("Analysis #",color="#94a3b8",fontsize=9); ax2.set_ylabel("Agreement Score",color="#94a3b8",fontsize=9)
-            ax2.legend(fontsize=7,labelcolor="#94a3b8",facecolor="#0f172a",edgecolor="#1e2d42"); ax2.grid(True,alpha=0.09,ls="--"); fig2.tight_layout(pad=0.5)
-            st.markdown('<div class="chart-wrap">', unsafe_allow_html=True); st.pyplot(fig2,use_container_width=True)
-            st.markdown('</div>', unsafe_allow_html=True); plt.close(fig2)
+        agree_hist = [(i + 1, h["agreement_score"]) for i, h in enumerate(history) if h.get("agreement_score") is not None]
+        if len(agree_hist) >= 2:
+            st.write("")
+            st.subheader("Agreement Score Trend")
+            fig2, ax2 = _dark_fig()
+            xs, ys = zip(*agree_hist)
+            ax2.plot(xs, ys, marker="D", lw=2, ms=4, color="#0891b2")
+            ax2.fill_between(xs, ys, alpha=0.07, color="#0891b2")
+            ax2.axhline(0.7, color="#059669", lw=1, ls="--", alpha=0.55, label="High agreement")
+            ax2.axhline(0.5, color="#d97706", lw=1, ls="--", alpha=0.55, label="Moderate")
+            ax2.set_ylim(0, 1.05)
+            ax2.set_xlabel("Analysis #", color="#94a3b8", fontsize=9)
+            ax2.set_ylabel("Agreement Score", color="#94a3b8", fontsize=9)
+            ax2.legend(fontsize=7, labelcolor="#94a3b8", facecolor="#0f172a", edgecolor="#1e2d42")
+            ax2.grid(True, alpha=0.09, ls="--")
+            fig2.tight_layout(pad=0.5)
+            st.pyplot(fig2, use_container_width=True)
+            plt.close(fig2)
 
-        st.write(""); st.subheader("Per-Class Uncertainty Analysis")
-        class_unc = {c:[] for c in CLASS_NAMES}
+        st.write("")
+        st.subheader("Per-Class Uncertainty Analysis")
+        class_unc = {c: [] for c in CLASS_NAMES}
         for h in history:
             if h.get("uncertainty") is not None and h.get("prediction") in class_unc:
                 class_unc[h["prediction"]].append(h["uncertainty"])
         rows = []
-        for cls,vals in class_unc.items():
-            if vals: rows.append({"Class":cls,"Count":len(vals),"Mean σ":f"{np.mean(vals):.6f}","Min σ":f"{np.min(vals):.6f}","Max σ":f"{np.max(vals):.6f}"})
+        for cls, vals in class_unc.items():
+            if vals:
+                rows.append({
+                    "Class": cls,
+                    "Count": len(vals),
+                    "Mean σ": f"{np.mean(vals):.6f}",
+                    "Min σ": f"{np.min(vals):.6f}",
+                    "Max σ": f"{np.max(vals):.6f}",
+                })
         if rows:
-            import pandas as pd; st.dataframe(pd.DataFrame(rows),use_container_width=True,hide_index=True)
-        else: st.caption("No per-class uncertainty data yet.")
+            import pandas as pd
+            st.dataframe(pd.DataFrame(rows), use_container_width=True, hide_index=True)
+        else:
+            st.caption("No per-class uncertainty data yet.")
 
         with st.expander("Methodology Reference"):
             st.markdown("""
@@ -3400,13 +3424,13 @@ elif nav == "XAI Lab":
 # ══════════════════════════════════════════════════════════════════════════════
 
 elif nav == "Settings":
-    set_h = Icons.settings(22,"#22d3ee")
+    set_h = Icons.settings(22, "#22d3ee")
     st.markdown(f"<h1 style='display:flex;align-items:center;gap:.5rem'>{set_h} System Settings</h1>", unsafe_allow_html=True)
     st.caption("Neural engine configuration and session management")
 
-    c1,c2 = st.columns(2)
+    c1, c2 = st.columns(2)
     with c1:
-        lay_svg = Icons.layers(18,"#22d3ee")
+        lay_svg = Icons.layers(18, "#22d3ee")
         st.markdown(safe_html(f"""
         <div class="info-card">
             <div class="info-card-icon">{lay_svg}</div>
@@ -3421,9 +3445,11 @@ elif nav == "Settings":
         </div>"""), unsafe_allow_html=True)
 
     with c2:
-        cpu_svg = Icons.cpu(18,"#22d3ee")
-        try: tv = metadata.version("torchvision")
-        except Exception: tv = "—"
+        cpu_svg = Icons.cpu(18, "#22d3ee")
+        try:
+            tv = metadata.version("torchvision")
+        except Exception:
+            tv = "—"
         st.markdown(safe_html(f"""
         <div class="info-card">
             <div class="info-card-icon">{cpu_svg}</div>
@@ -3443,10 +3469,11 @@ elif nav == "Settings":
                 st.write(f"Checkpoint: `{MODEL_PATH}`")
                 st.write(f"Device: `{DEVICE}` · Input: `{IMG_SIZE}×{IMG_SIZE}`")
                 st.write(f"Norm mean: `{NORM_MEAN}` · std: `{NORM_STD}`")
-                if model_error: st.code(model_error)
+                if model_error:
+                    st.code(model_error)
 
         st.write("")
-        alert_svg = Icons.alert_triangle(16,"#d97706")
+        alert_svg = Icons.alert_triangle(16, "#d97706")
         st.markdown(safe_html(f"""
         <div class="disclaimer">
             {alert_svg}
@@ -3457,14 +3484,17 @@ elif nav == "Settings":
             st.session_state.settings_confirm_reset = True
         if st.session_state.get("settings_confirm_reset", False):
             st.warning("Reset all session results?")
-            rc1,rc2,_ = st.columns([1,1,4])
+            rc1, rc2, _ = st.columns([1, 1, 4])
             if rc1.button("Confirm", key="settings_confirm_yes", use_container_width=True):
-                for fk in ("gradcam_image","gradcam_pp_image"):
+                for fk in ("gradcam_image", "gradcam_pp_image"):
                     old = st.session_state.get(fk)
-                    if old: plt.close(old)
-                for k,v in defaults.items(): st.session_state[k] = v
+                    if old:
+                        plt.close(old)
+                for k, v in DEFAULTS.items():
+                    st.session_state[k] = copy.deepcopy(v)
                 st.session_state.settings_confirm_reset = False
-                st.success("Session cleared."); st.rerun()
+                st.success("Session cleared.")
+                st.rerun()
             if rc2.button("Cancel", key="settings_confirm_no", use_container_width=True):
                 st.session_state.settings_confirm_reset = False
 
@@ -3480,8 +3510,7 @@ avg_c_f    = st.session_state.live_avg_confidence
 eng_ok     = model_error is None and MODEL_PATH.exists()
 torch_ver  = torch.__version__.split('+')[0]
 st_ver     = st.__version__
-brain_ft   = Icons.brain(22,"#22d3ee")
-lay_ft     = Icons.layers(14,"#94a3b8")
+brain_ft   = Icons.brain(22, "#22d3ee")
 
 st.markdown(safe_html(f"""
 <div class="app-footer">
