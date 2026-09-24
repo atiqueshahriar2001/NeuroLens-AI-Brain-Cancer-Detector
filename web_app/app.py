@@ -2569,11 +2569,29 @@ if nav == "🏠 Home":
             st.code(model_error)
     else:
         st.markdown(safe_html(f"""
-        <div class="info-card" style="border-color:rgba(16,185,129,.3);background:rgba(16,185,129,.05)">
-            <h3 style="color:var(--success-var)">✅ Neural Engine Ready</h3>
-            <p>Architecture: <b>{model_name}</b> · Device: <b>{DEVICE}</b></p>
-            <p>Classes: <b style="color:var(--accent-light)">{', '.join(class_names)}</b></p>
-            <p>MC Dropout Passes: <b>{MC_SAMPLES}</b> · Dual XAI: <b>Grad-CAM + Grad-CAM++</b></p>
+        <div class="info-card" style="border-color:rgba(16,185,129,.3); background:rgba(16,185,129,.05)">
+            <div style="display: flex; align-items: center; gap: 0.6rem; margin-bottom: 1rem;">
+                <span style="font-size: 1.2rem;">✅</span>
+                <h3 style="color:var(--success-var); margin: 0; font-size: 1.1rem;">Neural Engine Ready</h3>
+            </div>
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem;">
+                <div style="background: rgba(0,0,0,0.15); padding: 0.75rem 1rem; border-radius: 10px; border: 1px solid rgba(16,185,129,0.2);">
+                    <div style="font-size: 0.65rem; color: #6b7789; text-transform: uppercase; letter-spacing: 0.08em; font-weight: 600;">Architecture</div>
+                    <div style="font-size: 0.95rem; font-weight: 700; color: #e8edf5; margin-top: 0.3rem; font-family: 'JetBrains Mono', monospace;">{model_name}</div>
+                </div>
+                <div style="background: rgba(0,0,0,0.15); padding: 0.75rem 1rem; border-radius: 10px; border: 1px solid rgba(16,185,129,0.2);">
+                    <div style="font-size: 0.65rem; color: #6b7789; text-transform: uppercase; letter-spacing: 0.08em; font-weight: 600;">Device</div>
+                    <div style="font-size: 0.95rem; font-weight: 700; color: #e8edf5; margin-top: 0.3rem; font-family: 'JetBrains Mono', monospace;">{DEVICE}</div>
+                </div>
+                <div style="background: rgba(0,0,0,0.15); padding: 0.75rem 1rem; border-radius: 10px; border: 1px solid rgba(16,185,129,0.2);">
+                    <div style="font-size: 0.65rem; color: #6b7789; text-transform: uppercase; letter-spacing: 0.08em; font-weight: 600;">Classes</div>
+                    <div style="font-size: 0.9rem; font-weight: 700; color: #38bdf8; margin-top: 0.3rem;">{', '.join(class_names)}</div>
+                </div>
+                <div style="background: rgba(0,0,0,0.15); padding: 0.75rem 1rem; border-radius: 10px; border: 1px solid rgba(16,185,129,0.2);">
+                    <div style="font-size: 0.65rem; color: #6b7789; text-transform: uppercase; letter-spacing: 0.08em; font-weight: 600;">MC Dropout & XAI</div>
+                    <div style="font-size: 0.9rem; font-weight: 700; color: #e8edf5; margin-top: 0.3rem;">{MC_SAMPLES} passes · Grad-CAM + Grad-CAM++</div>
+                </div>
+            </div>
         </div>"""), unsafe_allow_html=True)
 
     if st.session_state.last_result:
