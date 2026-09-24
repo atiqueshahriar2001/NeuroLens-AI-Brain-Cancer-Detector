@@ -240,23 +240,29 @@ code, pre, .activity-feed, .activity-time {
     text-transform: uppercase;
 }
 
-/* Sidebar buttons = nav items */
+/* Sidebar buttons = nav items (compact) */
 [data-testid="stSidebar"] .stButton { margin: 0.1rem 0 !important; }
 [data-testid="stSidebar"] .stButton > button {
     width: 100% !important;
-    min-height: 40px !important;
+    min-height: 34px !important;
     display: flex !important;
     align-items: center !important;
     justify-content: flex-start !important;
-    padding: 0.5rem 0.8rem !important;
+    padding: 0.38rem 0.7rem !important;
     border-radius: var(--r-sm) !important;
     background: transparent !important;
     border: 1px solid transparent !important;
     color: var(--text-2) !important;
-    font-size: 0.85rem !important;
+    font-size: 0.79rem !important;
     font-weight: 500 !important;
     transition: background 140ms ease, color 140ms ease, border-color 140ms ease !important;
     box-shadow: none !important;
+}
+[data-testid="stSidebar"] .stButton > button p {
+    line-height: 1.15 !important;
+    margin: 0 !important;
+    font-size: 0.79rem !important;
+    font-weight: 500 !important;
 }
 [data-testid="stSidebar"] .stButton > button:hover {
     background: rgba(255,255,255,0.035) !important;
@@ -268,12 +274,8 @@ code, pre, .activity-feed, .activity-time {
     box-shadow: var(--sh-focus) !important;
     outline: none !important;
 }
-[data-testid="stSidebar"] .stButton > button p {
-    line-height: 1 !important;
-    margin: 0 !important;
-}
 
-/* Nav active — replaces the old markdown wrapper hack (fixed phantom spacing) */
+/* Nav active — replaces the old markdown wrapper hack */
 .nav-active {
     position: relative !important;
     border-radius: var(--r-sm) !important;
@@ -1081,6 +1083,9 @@ code, pre, .activity-feed, .activity-time {
     color: #041018 !important;
     border: 1px solid var(--accent) !important;
     font-weight: 600 !important;
+    font-size: 0.78rem !important;
+    min-height: 32px !important;
+    padding: 0.4rem 0.85rem !important;
     transition: background 140ms ease, border-color 140ms ease !important;
 }
 [data-testid="stFileUploader"] button:hover {
@@ -1095,40 +1100,58 @@ code, pre, .activity-feed, .activity-time {
 }
 [data-testid="stExpander"]:hover { border-color: var(--line-strong) !important; }
 
+/* ── COMPACT BUTTONS (all pages) ── */
 .stButton > button {
     border-radius: var(--r-sm) !important;
     font-weight: 600 !important;
-    font-size: 0.85rem !important;
+    font-size: 0.78rem !important;
+    padding: 0.42rem 0.9rem !important;
+    min-height: 32px !important;
+    height: auto !important;
+    line-height: 1.2 !important;
     transition: background 140ms ease, border-color 140ms ease, box-shadow 140ms ease !important;
     box-shadow: none !important;
-    min-height: 40px !important;
+}
+.stButton > button p {
+    font-size: 0.78rem !important;
+    font-weight: 600 !important;
+    margin: 0 !important;
+    line-height: 1.2 !important;
 }
 .stButton > button:hover { transform: none !important; box-shadow: var(--sh-1) !important; }
 .stButton > button:focus-visible {
     box-shadow: var(--sh-focus) !important;
     outline: none !important;
 }
+
+/* Primary = slightly larger but still compact */
 .stButton > button[kind="primary"] {
+    padding: 0.5rem 1.1rem !important;
+    min-height: 36px !important;
     background: var(--accent) !important;
     border: 1px solid var(--accent) !important;
     color: #041018 !important;
+}
+.stButton > button[kind="primary"] p {
+    font-size: 0.82rem !important;
+    font-weight: 600 !important;
 }
 .stButton > button[kind="primary"]:hover {
     background: var(--accent-hi) !important;
     border-color: var(--accent-hi) !important;
 }
 
-/* ── DOWNLOAD BUTTONS ── */
+/* ── COMPACT DOWNLOAD BUTTONS ── */
 [data-testid="stDownloadButton"] { margin-bottom: 0.25rem !important; }
 [data-testid="stDownloadButton"] > button {
     width: 100% !important;
-    min-height: 54px !important;
-    padding: 0.85rem 1.15rem !important;
-    border-radius: var(--r-md) !important;
+    min-height: 40px !important;
+    padding: 0.55rem 0.9rem !important;
+    border-radius: var(--r-sm) !important;
     background: var(--surface-3) !important;
     border: 1px solid var(--line) !important;
     color: var(--text-1) !important;
-    font-size: 0.86rem !important;
+    font-size: 0.78rem !important;
     font-weight: 600 !important;
     letter-spacing: -0.005em !important;
     transition: background 180ms ease, border-color 180ms ease,
@@ -1138,38 +1161,45 @@ code, pre, .activity-feed, .activity-time {
     display: flex !important;
     align-items: center !important;
     justify-content: center !important;
-    gap: 0.5rem !important;
+    gap: 0.45rem !important;
+}
+[data-testid="stDownloadButton"] > button p {
+    font-size: 0.78rem !important;
+    font-weight: 600 !important;
+    margin: 0 !important;
+    line-height: 1.2 !important;
+}
+[data-testid="stDownloadButton"] > button svg {
+    width: 14px !important;
+    height: 14px !important;
 }
 [data-testid="stDownloadButton"] > button:hover {
     background: var(--accent-soft) !important;
     border-color: var(--accent-line) !important;
     color: var(--accent-hi) !important;
-    box-shadow: 0 8px 20px rgba(14,165,233,0.16) !important;
+    box-shadow: 0 6px 16px rgba(14,165,233,0.14) !important;
     transform: translateY(-1px) !important;
 }
 [data-testid="stDownloadButton"] > button:focus-visible {
     box-shadow: var(--sh-focus) !important;
     outline: none !important;
 }
-[data-testid="stDownloadButton"] > button p {
-    font-size: 0.86rem !important;
-    font-weight: 600 !important;
-    margin: 0 !important;
-}
-[data-testid="stDownloadButton"] > button svg {
-    width: 15px !important;
-    height: 15px !important;
-}
 [data-testid="stDownloadButton"] > button[kind="primary"] {
     background: linear-gradient(135deg, var(--accent), #0284c7) !important;
     border: 1px solid var(--accent) !important;
     color: #041018 !important;
+    min-height: 42px !important;
+    padding: 0.6rem 1rem !important;
+}
+[data-testid="stDownloadButton"] > button[kind="primary"] p {
+    font-size: 0.82rem !important;
+    font-weight: 600 !important;
 }
 [data-testid="stDownloadButton"] > button[kind="primary"]:hover {
     background: linear-gradient(135deg, var(--accent-hi), var(--accent)) !important;
     border-color: var(--accent-hi) !important;
     color: #041018 !important;
-    box-shadow: 0 10px 26px rgba(14,165,233,0.34) !important;
+    box-shadow: 0 8px 20px rgba(14,165,233,0.30) !important;
     transform: translateY(-1px) !important;
 }
 
@@ -1793,18 +1823,18 @@ def explanation_agreement(image, model, model_name):
 
 
 # ─────────────────────────────────────────────────────────────────────────────
-# CHARTING  (retuned to new design system)
+# CHARTING
 # ─────────────────────────────────────────────────────────────────────────────
 
 def _dark_fig(w=6, h=2.8):
     fig, ax = plt.subplots(figsize=(w, h))
-    fig.patch.set_facecolor("#131a2c")           # --surface-2
+    fig.patch.set_facecolor("#131a2c")
     ax.set_facecolor("#131a2c")
     for side in ("top", "right"):
         ax.spines[side].set_visible(False)
     for side in ("left", "bottom"):
         ax.spines[side].set_color("#1f2937")
-    ax.tick_params(colors="#a4b0c0", labelsize=8)  # --text-2
+    ax.tick_params(colors="#a4b0c0", labelsize=8)
     return fig, ax
 
 
@@ -1814,7 +1844,7 @@ def plot_confidence_trend(history):
     fig, ax = _dark_fig()
     confs = [h["confidence"] for h in history]
     xs    = list(range(1, len(history) + 1))
-    ax.plot(xs, confs, marker="o", lw=2, ms=4, color="#0ea5e9")   # --accent
+    ax.plot(xs, confs, marker="o", lw=2, ms=4, color="#0ea5e9")
     ax.fill_between(xs, confs, alpha=0.10, color="#0ea5e9")
     ax.set_ylim(0, 105)
     ax.set_xlabel("Analysis #", color="#a4b0c0", fontsize=9)
@@ -1843,7 +1873,7 @@ def plot_uncertainty_history(history):
         return None
     fig, ax = _dark_fig()
     xs, ys = zip(*unc_data)
-    ax.plot(xs, ys, marker="s", lw=2, ms=4, color="#8b5cf6")   # violet = σ
+    ax.plot(xs, ys, marker="s", lw=2, ms=4, color="#8b5cf6")
     ax.fill_between(xs, ys, alpha=0.10, color="#8b5cf6")
     ax.axhline(0.12, color="#f59e0b", lw=1, ls="--", alpha=0.55, label="Moderate threshold")
     ax.axhline(0.22, color="#ef4444", lw=1, ls="--", alpha=0.55, label="Low reliability threshold")
@@ -1945,7 +1975,7 @@ except Exception as exc:
 
 
 # ─────────────────────────────────────────────────────────────────────────────
-# NEURAL ANIMATION (retained but no longer called on Home — kept for reuse)
+# NEURAL ANIMATION (retained for reuse)
 # ─────────────────────────────────────────────────────────────────────────────
 
 def render_neural_animation():
@@ -2222,11 +2252,11 @@ with st.sidebar:
     if st.session_state.get("confirm_clear", False):
         st.caption("Clear all session records?")
         c1, c2 = st.columns(2)
-        if c1.button("Confirm", key="sb_clear_yes"):
+        if c1.button("Confirm", key="sb_clear_yes", width="stretch"):
             clear_prediction_history()
             st.session_state.confirm_clear = False
             st.rerun()
-        if c2.button("Cancel", key="sb_clear_no"):
+        if c2.button("Cancel", key="sb_clear_no", width="stretch"):
             st.session_state.confirm_clear = False
 
     if st.button("🔄 Reset Session", key="sb_reset", width="stretch"):
@@ -2234,7 +2264,7 @@ with st.sidebar:
     if st.session_state.get("confirm_reset", False):
         st.caption("Reset entire session?")
         c1, c2 = st.columns(2)
-        if c1.button("Confirm", key="sb_reset_yes"):
+        if c1.button("Confirm", key="sb_reset_yes", width="stretch"):
             for fig_key in ("gradcam_image", "gradcam_pp_image"):
                 old = st.session_state.get(fig_key)
                 if old is not None:
@@ -2242,7 +2272,7 @@ with st.sidebar:
             for k, v in defaults.items():
                 st.session_state[k] = v
             st.rerun()
-        if c2.button("Cancel", key="sb_reset_no"):
+        if c2.button("Cancel", key="sb_reset_no", width="stretch"):
             st.session_state.confirm_reset = False
 
     st.markdown(safe_html("""
@@ -2274,8 +2304,8 @@ if nav == "🏠 Home":
         <p>Deep Learning · Dual XAI (Grad-CAM + Grad-CAM++) · MC Dropout Uncertainty Estimation · Neuroimaging</p>
     </div>""")), unsafe_allow_html=True)
 
-    # ── Centered CTA button ──────────────────────────────────────────────
-    _cta_l, _cta_c, _cta_r = st.columns([1, 1, 1])
+    # ── Centered CTA button (medium-small, narrower columns) ─────────────
+    _cta_l, _cta_c, _cta_r = st.columns([1.6, 1, 1.6])
     with _cta_c:
         if st.button("🔬 Analyze MRI Scan", type="primary", key="home_cta", width="stretch"):
             st.session_state.nav = "🔬 MRI Analysis"
@@ -2463,7 +2493,8 @@ elif nav == "🔬 MRI Analysis":
                     run_xai = st.checkbox("Enable Dual XAI (Grad-CAM + Grad-CAM++)", value=True, key="run_xai_cb")
                     run_agreement = st.checkbox("Compute Explanation Agreement Score", value=True, key="run_agree_cb")
 
-                    if st.button("🔍 Run AI Analysis", type="primary", width="stretch", key="analyze_btn"):
+                    # Medium-small primary CTA — sizes to content
+                    if st.button("🔍 Run AI Analysis", type="primary", width="content", key="analyze_btn"):
                         if st.session_state.live_session_start is None:
                             st.session_state.live_session_start = datetime.now()
 
@@ -2780,7 +2811,7 @@ elif nav == "🔬 MRI Analysis":
             )
             st.download_button(
                 "📄  Download Analysis Report",
-                "\n".join(lines) if False else "\n".join([
+                "\n".join([
                     "═══════════════════════════════════════════════════════",
                     "  NeuroLens AI — MRI Analysis Report",
                     "═══════════════════════════════════════════════════════",
@@ -3035,16 +3066,16 @@ elif nav == "🕘 History":
                             st.write(f"  · {lbl}: {prob:.4f}%")
 
         st.write("")
-        if st.button("🗑️ Clear History", key="clear_hist_btn"):
+        if st.button("🗑️ Clear History", key="clear_hist_btn", width="content"):
             st.session_state.confirm_clear_hist = True
         if st.session_state.get("confirm_clear_hist", False):
             st.warning("Clear all records from this session?")
-            cc1, cc2 = st.columns(2)
-            if cc1.button("Confirm", key="confirm_hist"):
+            cc1, cc2, _ = st.columns([1, 1, 4])
+            if cc1.button("Confirm", key="confirm_hist", width="stretch"):
                 clear_prediction_history()
                 st.session_state.confirm_clear_hist = False
                 st.rerun()
-            if cc2.button("Cancel", key="cancel_hist"):
+            if cc2.button("Cancel", key="cancel_hist", width="stretch"):
                 st.session_state.confirm_clear_hist = False
 
 
@@ -3123,11 +3154,11 @@ elif nav == "🔥 Grad-CAM":
         if st.session_state.gradcam_image:
             buf = io.BytesIO()
             st.session_state.gradcam_image.savefig(buf, format="png", bbox_inches="tight", dpi=160)
-            dl1.download_button("⬇️ Grad-CAM PNG", buf.getvalue(), "gradcam.png", "image/png", key="gradcam_dl")
+            dl1.download_button("⬇️ Grad-CAM PNG", buf.getvalue(), "gradcam.png", "image/png", key="gradcam_dl", width="stretch")
         if st.session_state.gradcam_pp_image:
             buf2 = io.BytesIO()
             st.session_state.gradcam_pp_image.savefig(buf2, format="png", bbox_inches="tight", dpi=160)
-            dl2.download_button("⬇️ Grad-CAM++ PNG", buf2.getvalue(), "gradcam_pp.png", "image/png", key="gradcam_pp_dl")
+            dl2.download_button("⬇️ Grad-CAM++ PNG", buf2.getvalue(), "gradcam_pp.png", "image/png", key="gradcam_pp_dl", width="stretch")
 
 
 # ══════════════════════════════════════════════════════════════════════════════
@@ -3299,12 +3330,12 @@ elif nav == "⚙️ Settings":
 
         st.write("")
         st.markdown('<div class="disclaimer"><b>⚠️ Reset Session</b><br>Permanently clears all diagnostic reports and session data.</div>', unsafe_allow_html=True)
-        if st.button("🧹 Reset Session", type="primary", width="stretch", key="settings_reset"):
+        if st.button("🧹 Reset Session", type="primary", width="content", key="settings_reset"):
             st.session_state.settings_confirm_reset = True
         if st.session_state.get("settings_confirm_reset", False):
             st.warning("Reset all session results?")
-            rc1, rc2 = st.columns(2)
-            if rc1.button("Confirm", key="settings_confirm_yes"):
+            rc1, rc2, _ = st.columns([1, 1, 4])
+            if rc1.button("Confirm", key="settings_confirm_yes", width="stretch"):
                 for fk in ("gradcam_image", "gradcam_pp_image"):
                     old = st.session_state.get(fk)
                     if old is not None:
@@ -3314,7 +3345,7 @@ elif nav == "⚙️ Settings":
                 st.session_state.settings_confirm_reset = False
                 st.success("Session cleared.")
                 st.rerun()
-            if rc2.button("Cancel", key="settings_confirm_no"):
+            if rc2.button("Cancel", key="settings_confirm_no", width="stretch"):
                 st.session_state.settings_confirm_reset = False
 
 
