@@ -980,6 +980,88 @@ code, pre, .activity-feed, .activity-time {
     box-shadow: 0 0 8px rgba(16,185,129,0.55);
 }
 
+/* ── EXPORT PANEL ── */
+.export-panel-head {
+    display: flex;
+    align-items: center;
+    gap: 0.85rem;
+    padding: 1.15rem 1.35rem;
+    border-radius: var(--r-lg) var(--r-lg) 0 0;
+    background: var(--surface-2);
+    border: 1px solid var(--line);
+    border-bottom: 1px solid var(--line);
+    margin-top: 1.5rem;
+    position: relative;
+    overflow: hidden;
+}
+.export-panel-head::before {
+    content: "";
+    position: absolute;
+    top: -60%; left: -5%;
+    width: 320px; height: 320px;
+    background: radial-gradient(circle, rgba(14,165,233,0.10), transparent 62%);
+    pointer-events: none;
+}
+.export-head-icon {
+    position: relative;
+    width: 42px; height: 42px;
+    border-radius: 12px;
+    background: linear-gradient(135deg, rgba(14,165,233,0.22), rgba(14,165,233,0.04));
+    border: 1px solid var(--accent-line);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1.15rem;
+    flex-shrink: 0;
+    box-shadow: 0 8px 20px rgba(14,165,233,0.14);
+}
+.export-head-text { display: flex; flex-direction: column; gap: 2px; position: relative; }
+.export-head-title {
+    font-family: var(--font-display);
+    font-size: 1rem;
+    font-weight: 700;
+    color: var(--text-1);
+    letter-spacing: -0.015em;
+    line-height: 1.2;
+}
+.export-head-sub {
+    font-size: 0.74rem;
+    color: var(--text-3);
+    letter-spacing: 0.01em;
+}
+.export-head-badge {
+    margin-left: auto;
+    padding: 0.28rem 0.65rem;
+    border-radius: var(--r-pill);
+    background: rgba(16,185,129,0.10);
+    border: 1px solid rgba(16,185,129,0.24);
+    color: #34d399;
+    font-family: var(--font-mono);
+    font-size: 0.62rem;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+}
+
+.export-item-label {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-family: var(--font-mono);
+    font-size: 0.63rem;
+    color: var(--text-3);
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    font-weight: 700;
+    margin: 0 0 0.55rem 0;
+    padding-left: 0.15rem;
+}
+.export-item-label::before {
+    content: "";
+    width: 3px; height: 10px;
+    border-radius: 1px;
+    background: var(--accent);
+    opacity: 0.9;
+    flex-shrink: 0;
+}
+
 /* ── STREAMLIT NATIVE OVERRIDES ── */
 [data-testid="stFileUploader"] {
     background: linear-gradient(180deg, rgba(14,165,233,0.035), rgba(14,165,233,0.005));
@@ -1034,6 +1116,61 @@ code, pre, .activity-feed, .activity-time {
 .stButton > button[kind="primary"]:hover {
     background: var(--accent-hi) !important;
     border-color: var(--accent-hi) !important;
+}
+
+/* ── DOWNLOAD BUTTONS ── */
+[data-testid="stDownloadButton"] { margin-bottom: 0.25rem !important; }
+[data-testid="stDownloadButton"] > button {
+    width: 100% !important;
+    min-height: 54px !important;
+    padding: 0.85rem 1.15rem !important;
+    border-radius: var(--r-md) !important;
+    background: var(--surface-3) !important;
+    border: 1px solid var(--line) !important;
+    color: var(--text-1) !important;
+    font-size: 0.86rem !important;
+    font-weight: 600 !important;
+    letter-spacing: -0.005em !important;
+    transition: background 180ms ease, border-color 180ms ease,
+                color 180ms ease, box-shadow 180ms ease,
+                transform 180ms ease !important;
+    box-shadow: none !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 0.5rem !important;
+}
+[data-testid="stDownloadButton"] > button:hover {
+    background: var(--accent-soft) !important;
+    border-color: var(--accent-line) !important;
+    color: var(--accent-hi) !important;
+    box-shadow: 0 8px 20px rgba(14,165,233,0.16) !important;
+    transform: translateY(-1px) !important;
+}
+[data-testid="stDownloadButton"] > button:focus-visible {
+    box-shadow: var(--sh-focus) !important;
+    outline: none !important;
+}
+[data-testid="stDownloadButton"] > button p {
+    font-size: 0.86rem !important;
+    font-weight: 600 !important;
+    margin: 0 !important;
+}
+[data-testid="stDownloadButton"] > button svg {
+    width: 15px !important;
+    height: 15px !important;
+}
+[data-testid="stDownloadButton"] > button[kind="primary"] {
+    background: linear-gradient(135deg, var(--accent), #0284c7) !important;
+    border: 1px solid var(--accent) !important;
+    color: #041018 !important;
+}
+[data-testid="stDownloadButton"] > button[kind="primary"]:hover {
+    background: linear-gradient(135deg, var(--accent-hi), var(--accent)) !important;
+    border-color: var(--accent-hi) !important;
+    color: #041018 !important;
+    box-shadow: 0 10px 26px rgba(14,165,233,0.34) !important;
+    transform: translateY(-1px) !important;
 }
 
 [data-testid="stMetricValue"] {
@@ -1245,6 +1382,10 @@ hr { border-color: var(--line) !important; margin: 1.25rem 0 !important; }
     .upload-subtitle { font-size: 0.78rem; }
     .upload-icon { width: 52px; height: 52px; }
     .upload-icon svg { width: 22px; height: 22px; }
+    .export-panel-head { padding: 1rem 1rem; gap: 0.65rem; }
+    .export-head-badge { display: none; }
+    .export-head-icon { width: 38px; height: 38px; font-size: 1rem; }
+    .export-head-title { font-size: 0.92rem; }
 }
 
 @media (min-width: 769px) and (max-width: 1024px) {
@@ -2238,7 +2379,7 @@ elif nav == "🔬 MRI Analysis":
             st.code(model_error)
     else:
         # ═══════════════════════════════════════════════════════════
-        # ELEGANT UPLOAD ZONE  ← ← ← (REDESIGNED)
+        # ELEGANT UPLOAD ZONE
         # ═══════════════════════════════════════════════════════════
         st.markdown(safe_html("""
         <div class="upload-hero">
@@ -2569,65 +2710,123 @@ elif nav == "🔬 MRI Analysis":
                     </div>
                 </div>"""), unsafe_allow_html=True)
 
-                cam_col, pp_col2 = st.columns(2)
-                if st.session_state.gradcam_image:
-                    buf = io.BytesIO()
-                    st.session_state.gradcam_image.savefig(buf, format="png", bbox_inches="tight", dpi=160)
-                    cam_col.download_button("⬇️ Grad-CAM PNG", buf.getvalue(), "gradcam.png", "image/png", key="dl_gc")
-                if st.session_state.gradcam_pp_image:
-                    buf2 = io.BytesIO()
-                    st.session_state.gradcam_pp_image.savefig(buf2, format="png", bbox_inches="tight", dpi=160)
-                    pp_col2.download_button("⬇️ Grad-CAM++ PNG", buf2.getvalue(), "gradcam_pp.png", "image/png", key="dl_pp")
+            # ─────────────────────────────────────────────────
+            # UNIFIED EXPORT PANEL
+            # ─────────────────────────────────────────────────
+            gc_buf = None
+            if st.session_state.gradcam_image is not None:
+                _b = io.BytesIO()
+                st.session_state.gradcam_image.savefig(
+                    _b, format="png", bbox_inches="tight", dpi=160
+                )
+                gc_buf = _b.getvalue()
 
-            lines = [
-                "═══════════════════════════════════════════════════════",
-                "  NeuroLens AI — MRI Analysis Report",
-                "═══════════════════════════════════════════════════════",
-                f"Timestamp           : {result['timestamp']}",
-                f"Model Architecture  : {result['model']}",
-                f"Inference Device    : {DEVICE}",
-                "─────────────────────────────────────────────────────",
-                "  AI CLASSIFICATION RESULT",
-                "─────────────────────────────────────────────────────",
-                f"Model Prediction    : {result['prediction']}",
-                f"Model Confidence    : {result['confidence']:.4f}%",
-                "  Class Probabilities:",
-                *[f"    {k:<16}: {v:.4f}%" for k, v in result["probabilities"].items()],
-                "─────────────────────────────────────────────────────",
-                "  UNCERTAINTY ESTIMATION (MC Dropout)",
-                "─────────────────────────────────────────────────────",
-                f"MC Uncertainty σ    : {result.get('uncertainty', 'N/A')}",
-                f"Reliability Band    : {result.get('mc_band', 'N/A')}",
-                "─────────────────────────────────────────────────────",
-                "  EXPLAINABILITY",
-                "─────────────────────────────────────────────────────",
-                f"Grad-CAM Available  : {'Yes' if result.get('gradcam_available') else 'No'}",
-                f"Grad-CAM++ Available: {'Yes' if result.get('gradcam_pp_available') else 'No'}",
-                "Agreement Score     : " + (f"{result.get('agreement_score'):.4f}" if result.get('agreement_score') is not None else 'N/A'),
-                "─────────────────────────────────────────────────────",
-                "  TIMING",
-                "─────────────────────────────────────────────────────",
-                f"Preprocessing       : {result.get('preprocessing_ms', 0):.2f} ms",
-                f"Inference           : {result['latency_ms']:.2f} ms",
-                f"Grad-CAM            : {result.get('gradcam_ms') or 0:.2f} ms",
-                f"Grad-CAM++          : {result.get('gradcam_pp_ms') or 0:.2f} ms",
-                f"Total               : {result.get('total_ms', 0):.2f} ms",
-                "═══════════════════════════════════════════════════════",
-                "  DISCLAIMER",
-                "─────────────────────────────────────────────────────",
-                "  NeuroLens AI is an AI research prototype intended for",
-                "  educational and research purposes only. Model outputs",
-                "  do NOT constitute medical diagnoses and must NOT replace",
-                "  evaluation by a qualified healthcare professional.",
-                "═══════════════════════════════════════════════════════",
-            ]
-            st.write("")
+            pp_buf = None
+            if st.session_state.gradcam_pp_image is not None:
+                _b2 = io.BytesIO()
+                st.session_state.gradcam_pp_image.savefig(
+                    _b2, format="png", bbox_inches="tight", dpi=160
+                )
+                pp_buf = _b2.getvalue()
+
+            st.markdown(safe_html("""
+            <div class="export-panel-head">
+                <div class="export-head-icon">📥</div>
+                <div class="export-head-text">
+                    <div class="export-head-title">Export Results</div>
+                    <div class="export-head-sub">Download your AI analysis outputs</div>
+                </div>
+                <div class="export-head-badge">READY</div>
+            </div>
+            """), unsafe_allow_html=True)
+
+            has_gc = gc_buf is not None
+            has_pp = pp_buf is not None
+
+            if has_gc and has_pp:
+                dc1, dc2 = st.columns(2)
+                with dc1:
+                    st.markdown('<div class="export-item-label">Grad-CAM · PNG</div>', unsafe_allow_html=True)
+                    st.download_button(
+                        "⬇️  Download Grad-CAM",
+                        gc_buf, "gradcam.png", "image/png",
+                        key="dl_gc", width="stretch",
+                    )
+                with dc2:
+                    st.markdown('<div class="export-item-label">Grad-CAM++ · PNG</div>', unsafe_allow_html=True)
+                    st.download_button(
+                        "⬇️  Download Grad-CAM++",
+                        pp_buf, "gradcam_pp.png", "image/png",
+                        key="dl_pp", width="stretch",
+                    )
+            elif has_gc:
+                st.markdown('<div class="export-item-label">Grad-CAM · PNG</div>', unsafe_allow_html=True)
+                st.download_button(
+                    "⬇️  Download Grad-CAM",
+                    gc_buf, "gradcam.png", "image/png",
+                    key="dl_gc", width="stretch",
+                )
+            elif has_pp:
+                st.markdown('<div class="export-item-label">Grad-CAM++ · PNG</div>', unsafe_allow_html=True)
+                st.download_button(
+                    "⬇️  Download Grad-CAM++",
+                    pp_buf, "gradcam_pp.png", "image/png",
+                    key="dl_pp", width="stretch",
+                )
+
+            st.markdown(
+                '<div class="export-item-label" style="margin-top:1rem">Analysis Report · TXT</div>',
+                unsafe_allow_html=True,
+            )
             st.download_button(
-                "📄 Download Analysis Report (TXT)",
-                "\n".join(lines),
+                "📄  Download Analysis Report",
+                "\n".join(lines) if False else "\n".join([
+                    "═══════════════════════════════════════════════════════",
+                    "  NeuroLens AI — MRI Analysis Report",
+                    "═══════════════════════════════════════════════════════",
+                    f"Timestamp           : {result['timestamp']}",
+                    f"Model Architecture  : {result['model']}",
+                    f"Inference Device    : {DEVICE}",
+                    "─────────────────────────────────────────────────────",
+                    "  AI CLASSIFICATION RESULT",
+                    "─────────────────────────────────────────────────────",
+                    f"Model Prediction    : {result['prediction']}",
+                    f"Model Confidence    : {result['confidence']:.4f}%",
+                    "  Class Probabilities:",
+                    *[f"    {k:<16}: {v:.4f}%" for k, v in result["probabilities"].items()],
+                    "─────────────────────────────────────────────────────",
+                    "  UNCERTAINTY ESTIMATION (MC Dropout)",
+                    "─────────────────────────────────────────────────────",
+                    f"MC Uncertainty σ    : {result.get('uncertainty', 'N/A')}",
+                    f"Reliability Band    : {result.get('mc_band', 'N/A')}",
+                    "─────────────────────────────────────────────────────",
+                    "  EXPLAINABILITY",
+                    "─────────────────────────────────────────────────────",
+                    f"Grad-CAM Available  : {'Yes' if result.get('gradcam_available') else 'No'}",
+                    f"Grad-CAM++ Available: {'Yes' if result.get('gradcam_pp_available') else 'No'}",
+                    "Agreement Score     : " + (f"{result.get('agreement_score'):.4f}" if result.get('agreement_score') is not None else 'N/A'),
+                    "─────────────────────────────────────────────────────",
+                    "  TIMING",
+                    "─────────────────────────────────────────────────────",
+                    f"Preprocessing       : {result.get('preprocessing_ms', 0):.2f} ms",
+                    f"Inference           : {result['latency_ms']:.2f} ms",
+                    f"Grad-CAM            : {result.get('gradcam_ms') or 0:.2f} ms",
+                    f"Grad-CAM++          : {result.get('gradcam_pp_ms') or 0:.2f} ms",
+                    f"Total               : {result.get('total_ms', 0):.2f} ms",
+                    "═══════════════════════════════════════════════════════",
+                    "  DISCLAIMER",
+                    "─────────────────────────────────────────────────────",
+                    "  NeuroLens AI is an AI research prototype intended for",
+                    "  educational and research purposes only. Model outputs",
+                    "  do NOT constitute medical diagnoses and must NOT replace",
+                    "  evaluation by a qualified healthcare professional.",
+                    "═══════════════════════════════════════════════════════",
+                ]),
                 "neurolens_report.txt",
                 "text/plain",
                 key="dl_report",
+                width="stretch",
+                type="primary",
             )
 
     st.write("")
