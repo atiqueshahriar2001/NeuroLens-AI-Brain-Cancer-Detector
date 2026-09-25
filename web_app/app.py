@@ -1,6 +1,6 @@
 # =============================================================================
 # NeuroLens AI — Neurodiagnostic Intelligence Platform
-# Production SaaS Edition v3.6.4 — Vibrant Blue Edition + Premium UI v6.4
+# Production SaaS Edition v3.6.5 — Vibrant Blue Edition + Premium UI v6.5
 # =============================================================================
 
 import warnings
@@ -1779,6 +1779,74 @@ html, body, [data-testid="stAppViewContainer"], [data-testid="stApp"] {
   color: #f87171 !important;
 }
 
+/* ── SIDEBAR CONFIRM / CANCEL (compact inline-action buttons) ── */
+[data-testid="stSidebar"] .st-key-sb_clear_yes button,
+[data-testid="stSidebar"] .st-key-sb_clear_no button,
+[data-testid="stSidebar"] .st-key-sb_reset_yes button,
+[data-testid="stSidebar"] .st-key-sb_reset_no button {
+  padding: .5rem .55rem !important;
+  justify-content: center !important;
+  text-align: center !important;
+  font-size: .74rem !important;
+  font-weight: 700 !important;
+  letter-spacing: .04em !important;
+  min-height: 36px !important;
+  border-radius: 8px !important;
+  transform: none !important;
+}
+[data-testid="stSidebar"] .st-key-sb_clear_yes button::before,
+[data-testid="stSidebar"] .st-key-sb_clear_no button::before,
+[data-testid="stSidebar"] .st-key-sb_reset_yes button::before,
+[data-testid="stSidebar"] .st-key-sb_reset_no button::before {
+  display: none !important;
+  content: none !important;
+  background-image: none !important;
+}
+
+/* Confirm (Clear History) — amber */
+[data-testid="stSidebar"] .st-key-sb_clear_yes button {
+  background: linear-gradient(135deg, rgba(245,158,11,.22), rgba(245,158,11,.10)) !important;
+  border-color: rgba(245,158,11,.55) !important;
+  color: #fbbf24 !important;
+}
+[data-testid="stSidebar"] .st-key-sb_clear_yes button:hover {
+  background: linear-gradient(135deg, rgba(245,158,11,.38), rgba(245,158,11,.18)) !important;
+  border-color: rgba(245,158,11,.80) !important;
+  color: #fcd34d !important;
+  box-shadow: 0 0 20px rgba(245,158,11,.35) !important;
+  transform: translateY(-1px) !important;
+}
+
+/* Confirm (Reset) — red */
+[data-testid="stSidebar"] .st-key-sb_reset_yes button {
+  background: linear-gradient(135deg, rgba(239,68,68,.22), rgba(239,68,68,.10)) !important;
+  border-color: rgba(239,68,68,.55) !important;
+  color: #f87171 !important;
+}
+[data-testid="stSidebar"] .st-key-sb_reset_yes button:hover {
+  background: linear-gradient(135deg, rgba(239,68,68,.38), rgba(239,68,68,.18)) !important;
+  border-color: rgba(239,68,68,.80) !important;
+  color: #fca5a5 !important;
+  box-shadow: 0 0 20px rgba(239,68,68,.35) !important;
+  transform: translateY(-1px) !important;
+}
+
+/* Cancel — muted slate */
+[data-testid="stSidebar"] .st-key-sb_clear_no button,
+[data-testid="stSidebar"] .st-key-sb_reset_no button {
+  background: linear-gradient(135deg, rgba(148,163,184,.12), rgba(148,163,184,.04)) !important;
+  border-color: rgba(148,163,184,.30) !important;
+  color: #a8bcd8 !important;
+}
+[data-testid="stSidebar"] .st-key-sb_clear_no button:hover,
+[data-testid="stSidebar"] .st-key-sb_reset_no button:hover {
+  background: linear-gradient(135deg, rgba(148,163,184,.20), rgba(148,163,184,.08)) !important;
+  border-color: rgba(148,163,184,.50) !important;
+  color: #cbd5e1 !important;
+  box-shadow: 0 0 14px rgba(148,163,184,.18) !important;
+  transform: translateY(-1px) !important;
+}
+
 [data-testid="stSidebar"] [class*="st-key-nav_"] button[data-active="true"]::before {
   filter: drop-shadow(0 0 6px rgba(34,211,238,.65));
 }
@@ -2627,7 +2695,7 @@ with st.sidebar:
             <span class="sb-brand-pulse"></span>
         </div>
         <div class="sb-brand-text">
-            <div class="sb-brand-name">NeuroLens <span class="sb-brand-ai">AI</span><span class="sb-brand-ver">v3.6.4</span></div>
+            <div class="sb-brand-name">NeuroLens <span class="sb-brand-ai">AI</span><span class="sb-brand-ver">v3.6.5</span></div>
             <div class="sb-brand-sub">Neurodiagnostic Intelligence</div>
         </div>
     </div>"""), unsafe_allow_html=True)
