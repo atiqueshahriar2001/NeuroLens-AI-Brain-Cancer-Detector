@@ -1,6 +1,6 @@
 # =============================================================================
 # NeuroLens AI — Neurodiagnostic Intelligence Platform
-# Production SaaS Edition v3.8.1 
+# Production SaaS Edition v3.8.2 
 # =============================================================================
 
 import warnings
@@ -552,7 +552,8 @@ st.markdown(
 
 
 # ─────────────────────────────────────────────────────────────────────────────
-# UI CSS
+# UI CSS  (FIXED: native toggle z-index below sticky header, removed display
+#          force, expanded selectors for Streamlit 1.64)
 # ─────────────────────────────────────────────────────────────────────────────
 UI_CSS = r"""
 :root {
@@ -628,7 +629,7 @@ body.nl-page-transition [data-testid="stMainBlockContainer"] {
 }
 
 /* ═══════════════════════════════════════════════════════════════════════
-   NATIVE SIDEBAR TOGGLE — force visible + theme it
+   NATIVE SIDEBAR TOGGLE — expanded selectors, z-index below sticky header
    ═══════════════════════════════════════════════════════════════════════ */
 [data-testid="stSidebarCollapseButton"],
 [data-testid="stSidebarCollapseButton"] button,
@@ -637,15 +638,17 @@ body.nl-page-transition [data-testid="stMainBlockContainer"] {
 [data-testid="collapsedControl"] button,
 [data-testid="collapsedControl"] > div,
 [data-testid="stSidebarNavCollapseButton"] button,
+[data-testid="stExpandSidebarButton"],
+[data-testid="stCollapseSidebarButton"],
+[data-testid="stSidebarHeader"] button,
 button[kind="header"],
 button[kind="headerNoPadding"],
 [data-testid="baseButton-header"],
 [data-testid="baseButton-headerNoPadding"] {
   visibility: visible !important;
   opacity: 1 !important;
-  display: flex !important;
   pointer-events: auto !important;
-  z-index: 2147483647 !important;
+  z-index: 999980 !important;   /* below sticky header */
 }
 
 [data-testid="stSidebarCollapseButton"] *,
@@ -695,8 +698,15 @@ button[kind="headerNoPadding"] svg {
   height: 18px !important;
 }
 
+/* Mobile: keep collapsedControl clear of our custom ☰ */
+@media (max-width: 760px) {
+  [data-testid="collapsedControl"] button {
+    margin-left: 4.5rem !important;
+  }
+}
+
 /* ═══════════════════════════════════════════════════════════════════════
-   SIDEBAR — visuals only (NO width override so native toggle works)
+   SIDEBAR — visuals only, NO width override
    ═══════════════════════════════════════════════════════════════════════ */
 [data-testid="stSidebar"] {
   background:
@@ -707,7 +717,7 @@ button[kind="headerNoPadding"] svg {
 }
 
 [data-testid="stSidebar"] > div:first-child {
-  padding: 3.25rem .85rem 1rem !important;
+  padding: .75rem .85rem 1rem !important;
 }
 
 [data-testid="stSidebar"] .stButton { width:100% !important; margin:.22rem 0 !important; }
@@ -2446,6 +2456,7 @@ def render_live_ticker():
 
 # ─────────────────────────────────────────────────────────────────────────────
 # STICKY HEADER + CUSTOM SIDEBAR TOGGLE
+# FIXED: height=0 → height=1 so iframe script actually runs
 # ─────────────────────────────────────────────────────────────────────────────
 
 def render_sticky_header():
@@ -2469,7 +2480,6 @@ def render_sticky_header():
 
     brain_svg = Icons.brain(20, "#22d3ee")
 
-    # Custom hamburger toggle button + brand
     header_html = safe_html(f"""
     <div class="sticky-header">
         <button id="nl-sb-toggle" class="hd-sb-toggle" aria-label="Toggle sidebar" title="Show / hide sidebar">
@@ -2519,6 +2529,7 @@ def render_sticky_header():
         "setTimeout(()=>d.body.classList.remove('nl-page-transition'), 400);"
     ) if page_changed else ""
 
+    # FIX: height=1 (not 0) — some Chrome versions skip scripts in zero-height iframes
     components.html(f"""
     <script>
     (function() {{
@@ -2531,7 +2542,6 @@ def render_sticky_header():
             {scroll_js}
             {transition_js}
 
-            // Inject / refresh sticky header
             let old = d.getElementById('nl-sticky-header-root');
             if (old) old.remove();
             const root = d.createElement('div');
@@ -2572,7 +2582,14 @@ def render_sticky_header():
                     ev.preventDefault();
                     ev.stopPropagation();
 
+                    // Expanded candidate list — covers Streamlit 1.42 → 1.64+
                     const candidates = [
+                        // Streamlit 1.64+ specific
+                        '[data-testid="stExpandSidebarButton"]',
+                        '[data-testid="stCollapseSidebarButton"]',
+                        '[data-testid="stSidebarHeader"] button',
+                        'button[aria-label*="idebar"]',
+                        // Streamlit 1.42–1.63
                         'button[data-testid="stSidebarCollapseButton"]',
                         '[data-testid="stSidebarCollapseButton"] button',
                         '[data-testid="stSidebarCollapseButton"]',
@@ -2591,7 +2608,7 @@ def render_sticky_header():
                         }}
                     }}
 
-                    // Fallback: send Streamlit's keyboard shortcut
+                    // Last-resort keyboard shortcut fallback
                     try {{
                         const evt = new KeyboardEvent('keydown', {{
                             key: '[', code: 'BracketLeft',
@@ -2606,8 +2623,11 @@ def render_sticky_header():
                 }});
             }}
 
-            // ── Force native toggle into visible state ──
+            // ── Force native toggle into visible state (no display override) ──
             const nativeSelectors = [
+                '[data-testid="stExpandSidebarButton"]',
+                '[data-testid="stCollapseSidebarButton"]',
+                '[data-testid="stSidebarHeader"] button',
                 '[data-testid="stSidebarCollapseButton"]',
                 '[data-testid="stSidebarCollapseButton"] button',
                 '[data-testid="collapsedControl"]',
@@ -2620,7 +2640,6 @@ def render_sticky_header():
                     el.style.setProperty('visibility', 'visible', 'important');
                     el.style.setProperty('opacity', '1', 'important');
                     el.style.setProperty('pointer-events', 'auto', 'important');
-                    el.style.setProperty('display', 'flex', 'important');
                 }});
             }});
         }} catch (e) {{
@@ -2628,7 +2647,7 @@ def render_sticky_header():
         }}
     }})();
     </script>
-    """, height=0, scrolling=False)
+    """, height=1, scrolling=False)
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -2758,7 +2777,7 @@ with st.sidebar:
             <span class="sb-brand-pulse"></span>
         </div>
         <div class="sb-brand-text">
-            <div class="sb-brand-name">NeuroLens <span class="sb-brand-ai">AI</span><span class="sb-brand-ver">v3.8.1</span></div>
+            <div class="sb-brand-name">NeuroLens <span class="sb-brand-ai">AI</span><span class="sb-brand-ver">v3.8.2</span></div>
             <div class="sb-brand-sub">Neurodiagnostic Intelligence</div>
         </div>
     </div>"""), unsafe_allow_html=True)
