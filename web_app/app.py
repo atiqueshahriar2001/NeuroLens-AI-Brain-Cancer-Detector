@@ -554,7 +554,7 @@ st.markdown(
 
 
 # ─────────────────────────────────────────────────────────────────────────────
-# UI CSS  (FIXED: sidebar toggle now works — no forced width, aria-expanded aware)
+# UI CSS  (FIXED: sidebar native toggle safe — no width:0 on collapse, control above header)
 # ─────────────────────────────────────────────────────────────────────────────
 UI_CSS = r"""
 :root {
@@ -631,10 +631,10 @@ body.nl-page-transition [data-testid="stMainBlockContainer"] {
 }
 
 /* ═══════════════════════════════════════════════════════════════════════
-   SIDEBAR — TOGGLE FRIENDLY
-   The width is only forced when the sidebar is EXPANDED. When Streamlit
-   collapses it (aria-expanded="false"), we let it shrink to 0 so the
-   native toggle button continues to work.
+   SIDEBAR — NATIVE TOGGLE SAFE
+   Never force width:0 / min-width:0 on the outer section when collapsed —
+   that breaks Streamlit's expand/collapse. Prefer a fixed content width
+   only while expanded; when collapsed, leave dimensions to Streamlit.
    ═══════════════════════════════════════════════════════════════════════ */
 [data-testid="stSidebar"] {
   background:
@@ -642,38 +642,37 @@ body.nl-page-transition [data-testid="stMainBlockContainer"] {
     radial-gradient(circle at 0% 0%, rgba(34,211,238,.10), transparent 25rem) !important;
   border-right:1px solid var(--line-strong) !important;
   box-shadow:inset -1px 0 0 rgba(34,211,238,.08), 4px 0 24px rgba(0,0,0,.20);
-  transition: margin-left .28s cubic-bezier(.2,.8,.2,1),
-              transform .28s cubic-bezier(.2,.8,.2,1),
-              width .28s cubic-bezier(.2,.8,.2,1),
-              min-width .28s cubic-bezier(.2,.8,.2,1),
-              max-width .28s cubic-bezier(.2,.8,.2,1) !important;
 }
 
-/* Only force width when the sidebar is EXPANDED */
+/* Preferred width only while expanded — do NOT set width on collapsed state */
 [data-testid="stSidebar"][aria-expanded="true"] {
-  min-width:var(--sb-w) !important;
-  max-width:var(--sb-w) !important;
-  width:var(--sb-w) !important;
+  min-width: var(--sb-w) !important;
+  max-width: var(--sb-w) !important;
 }
 
-/* Let Streamlit's native collapse fully hide it */
+/* Collapsed: only clear chrome; never override width/transform (Streamlit owns it) */
 [data-testid="stSidebar"][aria-expanded="false"] {
-  min-width:0 !important;
-  max-width:0 !important;
-  width:0 !important;
-  margin-left:0 !important;
-  border-right:none !important;
-  box-shadow:none !important;
+  border-right: none !important;
+  box-shadow: none !important;
 }
 
 [data-testid="stSidebar"] > div:first-child {
-  width:100% !important;
-  padding:0 .85rem 1rem !important;
+  width: 100% !important;
+  padding: 0 .85rem 1rem !important;
 }
 
-/* Sticky header shifts left when sidebar is collapsed (JS toggles body class) */
+/* Keep the native collapse/expand control always clickable above sticky header */
+[data-testid="stSidebarCollapsedControl"],
+[data-testid="collapsedControl"],
+button[kind="headerNoPadding"],
+button[data-testid="stBaseButton-headerNoPadding"] {
+  z-index: 1000001 !important;
+  position: relative !important;
+}
+
+/* Sticky header shifts left when sidebar is collapsed, but leaves room for the toggle */
 body.nl-sb-collapsed .sticky-header {
-  left: .75rem !important;
+  left: 3.25rem !important;
 }
 
 [data-testid="stSidebar"] .stButton { width:100% !important; margin:.22rem 0 !important; }
@@ -974,11 +973,17 @@ body.nl-sb-collapsed .sticky-header {
 [data-testid="stMetricValue"] { color:#e2e8f0 !important; }
 
 /* STICKY HEADER */
-#nl-sticky-header-root { all: initial; }
+#nl-sticky-header-root {
+  all: initial;
+  pointer-events: none !important;
+}
 #nl-sticky-header-root * { box-sizing: border-box; }
+#nl-sticky-header-root .sticky-header {
+  pointer-events: auto !important;
+}
 
 .sticky-header {
-  position:fixed; z-index:999999;
+  position:fixed; z-index:99990;
   top:.7rem; left:calc(var(--sb-w) + .75rem); right:.75rem;
   min-height:var(--hd-h);
   display:flex; align-items:center; gap:.9rem;
