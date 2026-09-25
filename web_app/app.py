@@ -1,6 +1,6 @@
 # =============================================================================
 # NeuroLens AI — Neurodiagnostic Intelligence Platform
-# Production SaaS Edition v3.8.0 — Sidebar Native Toggle Edition
+# Production SaaS Edition v3.8.1 — Custom Sidebar Toggle Edition
 # =============================================================================
 
 import warnings
@@ -552,7 +552,7 @@ st.markdown(
 
 
 # ─────────────────────────────────────────────────────────────────────────────
-# UI CSS — KEY FIX: no width override on sidebar, toggle button forced visible
+# UI CSS
 # ─────────────────────────────────────────────────────────────────────────────
 UI_CSS = r"""
 :root {
@@ -594,7 +594,6 @@ UI_CSS = r"""
   --font-display:'Sora','Inter',system-ui,sans-serif;
   --font-mono:'JetBrains Mono',ui-monospace,SFMono-Regular,Menlo,monospace;
 
-  /* --sb-w is updated dynamically by JS to match the real sidebar width */
   --sb-w: 336px;
   --hd-h:64px;
 }
@@ -620,7 +619,6 @@ html, body, [data-testid="stAppViewContainer"], [data-testid="stApp"] {
   padding:calc(var(--hd-h) + 1.5rem) 1.25rem 2.5rem !important;
 }
 
-/* ── Page transition ── */
 @keyframes nl-page-enter {
   from { opacity:0; transform:translateY(8px); }
   to   { opacity:1; transform:translateY(0); }
@@ -630,9 +628,7 @@ body.nl-page-transition [data-testid="stMainBlockContainer"] {
 }
 
 /* ═══════════════════════════════════════════════════════════════════════
-   SIDEBAR TOGGLE BUTTONS — FORCE VISIBLE + PROMINENT
-   Streamlit places these at various test IDs depending on version.
-   We cover all known variants and force-show them.
+   NATIVE SIDEBAR TOGGLE — force visible + theme it
    ═══════════════════════════════════════════════════════════════════════ */
 [data-testid="stSidebarCollapseButton"],
 [data-testid="stSidebarCollapseButton"] button,
@@ -652,7 +648,6 @@ button[kind="headerNoPadding"],
   z-index: 2147483647 !important;
 }
 
-/* Kill any inherited "hidden" flags on these controls */
 [data-testid="stSidebarCollapseButton"] *,
 [data-testid="collapsedControl"] *,
 button[kind="header"] *,
@@ -662,7 +657,6 @@ button[kind="headerNoPadding"] * {
   pointer-events: auto !important;
 }
 
-/* Style the toggle buttons to match our theme */
 [data-testid="stSidebarCollapseButton"] button,
 [data-testid="collapsedControl"] button,
 button[kind="header"],
@@ -688,7 +682,6 @@ button[kind="headerNoPadding"]:hover {
   transform: translateY(-1px) !important;
 }
 
-/* Force SVG icons inside the toggle buttons to be visible + cyan */
 [data-testid="stSidebarCollapseButton"] svg,
 [data-testid="collapsedControl"] svg,
 button[kind="header"] svg,
@@ -703,8 +696,7 @@ button[kind="headerNoPadding"] svg {
 }
 
 /* ═══════════════════════════════════════════════════════════════════════
-   SIDEBAR — NO WIDTH OVERRIDES (let Streamlit handle collapse natively)
-   We only style the visuals: background, border, shadow.
+   SIDEBAR — visuals only (NO width override so native toggle works)
    ═══════════════════════════════════════════════════════════════════════ */
 [data-testid="stSidebar"] {
   background:
@@ -712,18 +704,10 @@ button[kind="headerNoPadding"] svg {
     radial-gradient(circle at 0% 0%, rgba(34,211,238,.10), transparent 25rem) !important;
   border-right:1px solid var(--line-strong) !important;
   box-shadow:inset -1px 0 0 rgba(34,211,238,.08), 4px 0 24px rgba(0,0,0,.20);
-  /* Note: do NOT set width/min-width/max-width — Streamlit needs to animate these */
 }
 
 [data-testid="stSidebar"] > div:first-child {
-  padding:0 .85rem 1rem !important;
-  /* Top padding so our brand shows below the collapse button */
-  padding-top: 3.25rem !important;
-}
-
-/* When sidebar is collapsed, hide our brand + nav content (they're off-screen anyway) */
-[data-testid="stSidebar"][aria-expanded="false"] > div:first-child {
-  padding-top: 0 !important;
+  padding: 3.25rem .85rem 1rem !important;
 }
 
 [data-testid="stSidebar"] .stButton { width:100% !important; margin:.22rem 0 !important; }
@@ -993,7 +977,7 @@ button[kind="headerNoPadding"] svg {
 [data-testid="stMetricLabel"] { color:#7ba3d6 !important; }
 [data-testid="stMetricValue"] { color:#e2e8f0 !important; }
 
-/* STICKY HEADER — left edge tracks the actual sidebar width via --sb-w (JS syncs it) */
+/* STICKY HEADER */
 #nl-sticky-header-root { all: initial; }
 #nl-sticky-header-root * { box-sizing: border-box; }
 
@@ -1036,6 +1020,43 @@ button[kind="headerNoPadding"] svg {
   50%  { background-position:0% 50%;   opacity:.95; }
   100% { background-position:-200% 50%; opacity:.3; }
 }
+
+/* Custom sidebar toggle button */
+.hd-sb-toggle {
+  all: unset;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  flex: 0 0 auto;
+  cursor: pointer;
+  border-radius: 10px;
+  color: #22d3ee;
+  background: linear-gradient(135deg, rgba(37,99,235,.55), rgba(13,37,81,.75));
+  border: 1px solid rgba(34,211,238,.55);
+  box-shadow: 0 0 14px rgba(34,211,238,.20), inset 0 1px 0 rgba(255,255,255,.08);
+  transition: all .18s ease;
+  position: relative;
+  z-index: 2;
+}
+.hd-sb-toggle:hover {
+  background: linear-gradient(135deg, #0ea5e9, #22d3ee);
+  border-color: rgba(34,211,238,.85);
+  box-shadow: 0 0 22px rgba(34,211,238,.55), inset 0 1px 0 rgba(255,255,255,.20);
+  transform: translateY(-1px);
+}
+.hd-sb-toggle:active {
+  transform: translateY(0) scale(.96);
+}
+.hd-sb-toggle svg {
+  display: block;
+  width: 18px;
+  height: 18px;
+  stroke: currentColor;
+  fill: none;
+}
+.hd-sb-toggle:hover svg { stroke: #ffffff; }
 
 .hd-brand { display:flex; align-items:center; gap:.65rem; flex:0 0 auto; position:relative; z-index:1; }
 .hd-brand-icon {
@@ -1311,7 +1332,7 @@ button[kind="headerNoPadding"] svg {
 }
 .diag-confidence { margin-top:.25rem; color:#a8bcd8; font:500 .82rem Inter,sans-serif; }
 
-/* XAI / UNCERTAINTY CARDS */
+/* XAI / UNCERTAINTY */
 .uncertainty-card {
   margin:.85rem 0; padding:1.05rem 1.2rem; border-radius:12px;
   background:linear-gradient(135deg,rgba(139,92,246,.12),rgba(34,211,238,.06));
@@ -1722,37 +1743,16 @@ button[kind="headerNoPadding"] svg {
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23f1f5f9' stroke-width='1.9' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='12' cy='12' r='3'/%3E%3Cpath d='M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z'/%3E%3C/svg%3E") !important;
 }
 
-/* CLEAR HISTORY */
+/* CLEAR HISTORY / RESET */
 [data-testid="stSidebar"] .st-key-sb_clear button::before {
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23fbbf24' stroke-width='1.75' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='3 6 5 6 21 6'/%3E%3Cpath d='M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2'/%3E%3C/svg%3E") !important;
 }
-[data-testid="stSidebar"] .st-key-sb_clear button:hover::before {
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23fcd34d' stroke-width='2.1' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='3 6 5 6 21 6'/%3E%3Cpath d='M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2'/%3E%3C/svg%3E") !important;
-  filter: drop-shadow(0 0 6px rgba(251,191,36,.75)) !important;
-}
-[data-testid="stSidebar"] .st-key-sb_clear button:hover {
-  background: linear-gradient(90deg, rgba(245,158,11,0.12), rgba(245,158,11,0.04)) !important;
-  border-color: rgba(245,158,11,0.45) !important;
-  color: #fbbf24 !important;
-}
-[data-testid="stSidebar"] .st-key-sb_clear button:hover p { color: #fbbf24 !important; }
-
-/* RESET */
 [data-testid="stSidebar"] .st-key-sb_reset button::before {
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23f87171' stroke-width='1.75' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8'/%3E%3Cpath d='M21 3v5h-5'/%3E%3Cpath d='M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16'/%3E%3Cpath d='M8 16H3v5'/%3E%3C/svg%3E") !important;
 }
-[data-testid="stSidebar"] .st-key-sb_reset button:hover::before {
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23fca5a5' stroke-width='2.1' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8'/%3E%3Cpath d='M21 3v5h-5'/%3E%3Cpath d='M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16'/%3E%3Cpath d='M8 16H3v5'/%3E%3C/svg%3E") !important;
-  filter: drop-shadow(0 0 6px rgba(248,113,113,.75)) !important;
-}
-[data-testid="stSidebar"] .st-key-sb_reset button:hover {
-  background: linear-gradient(90deg, rgba(239,68,68,0.12), rgba(239,68,68,0.04)) !important;
-  border-color: rgba(239,68,68,0.45) !important;
-  color: #f87171 !important;
-}
+[data-testid="stSidebar"] .st-key-sb_clear button:hover p { color: #fbbf24 !important; }
 [data-testid="stSidebar"] .st-key-sb_reset button:hover p { color: #f87171 !important; }
 
-/* CONFIRM / CANCEL */
 [data-testid="stSidebar"] .st-key-sb_clear_yes button,
 [data-testid="stSidebar"] .st-key-sb_clear_no button,
 [data-testid="stSidebar"] .st-key-sb_reset_yes button,
@@ -2445,7 +2445,7 @@ def render_live_ticker():
 
 
 # ─────────────────────────────────────────────────────────────────────────────
-# STICKY HEADER + SIDEBAR WIDTH SYNC
+# STICKY HEADER + CUSTOM SIDEBAR TOGGLE
 # ─────────────────────────────────────────────────────────────────────────────
 
 def render_sticky_header():
@@ -2469,8 +2469,18 @@ def render_sticky_header():
 
     brain_svg = Icons.brain(20, "#22d3ee")
 
+    # Custom hamburger toggle button + brand
     header_html = safe_html(f"""
     <div class="sticky-header">
+        <button id="nl-sb-toggle" class="hd-sb-toggle" aria-label="Toggle sidebar" title="Show / hide sidebar">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none"
+                 stroke="currentColor" stroke-width="2"
+                 stroke-linecap="round" stroke-linejoin="round">
+                <line x1="3"  y1="6"  x2="21" y2="6"/>
+                <line x1="3"  y1="12" x2="21" y2="12"/>
+                <line x1="3"  y1="18" x2="21" y2="18"/>
+            </svg>
+        </button>
         <div class="hd-brand">
             <div class="hd-brand-icon">
                 {brain_svg}
@@ -2516,16 +2526,12 @@ def render_sticky_header():
             const w = window.parent;
             const d = w.document;
 
-            // 1. Sync document title
             d.title = {json.dumps(nav + " · NeuroLens AI")};
 
-            // 2. Scroll to top on page change
             {scroll_js}
-
-            // 3. Page fade-in animation
             {transition_js}
 
-            // 4. Inject / refresh sticky header
+            // Inject / refresh sticky header
             let old = d.getElementById('nl-sticky-header-root');
             if (old) old.remove();
             const root = d.createElement('div');
@@ -2534,15 +2540,13 @@ def render_sticky_header():
             root.innerHTML = new TextDecoder().decode(bytes);
             d.body.appendChild(root);
 
-            // 5. Sidebar width watchdog
-            //    --sb-w reflects the ACTUAL sidebar width, so the sticky header
-            //    always sits flush against the sidebar edge — collapsed or not.
+            // ── Sidebar width watchdog ──
             function syncSbWidth() {{
                 const sb = d.querySelector('[data-testid="stSidebar"]');
                 if (!sb) return;
-                const w = sb.offsetWidth;
-                d.documentElement.style.setProperty('--sb-w', w + 'px');
-                d.body.classList.toggle('nl-sb-collapsed', w < 100);
+                const wd = sb.offsetWidth;
+                d.documentElement.style.setProperty('--sb-w', wd + 'px');
+                d.body.classList.toggle('nl-sb-collapsed', wd < 100);
             }}
             syncSbWidth();
 
@@ -2559,6 +2563,66 @@ def render_sticky_header():
             if (!w.__nl_sb_poller) {{
                 w.__nl_sb_poller = setInterval(syncSbWidth, 250);
             }}
+
+            // ── Bind custom sidebar toggle button ──
+            const toggleBtn = d.getElementById('nl-sb-toggle');
+            if (toggleBtn && !toggleBtn.__bound) {{
+                toggleBtn.__bound = true;
+                toggleBtn.addEventListener('click', function(ev) {{
+                    ev.preventDefault();
+                    ev.stopPropagation();
+
+                    const candidates = [
+                        'button[data-testid="stSidebarCollapseButton"]',
+                        '[data-testid="stSidebarCollapseButton"] button',
+                        '[data-testid="stSidebarCollapseButton"]',
+                        'button[data-testid="collapsedControl"]',
+                        '[data-testid="collapsedControl"] button',
+                        '[data-testid="collapsedControl"]',
+                        '[data-testid="stSidebarNavCollapseButton"] button',
+                        'button[kind="header"]',
+                        'button[kind="headerNoPadding"]'
+                    ];
+                    for (let sel of candidates) {{
+                        const el = d.querySelector(sel);
+                        if (el && typeof el.click === 'function') {{
+                            el.click();
+                            return;
+                        }}
+                    }}
+
+                    // Fallback: send Streamlit's keyboard shortcut
+                    try {{
+                        const evt = new KeyboardEvent('keydown', {{
+                            key: '[', code: 'BracketLeft',
+                            keyCode: 219, which: 219,
+                            bubbles: true, cancelable: true
+                        }});
+                        d.dispatchEvent(evt);
+                        d.body.dispatchEvent(evt);
+                    }} catch (err) {{
+                        console.warn('[NeuroLens] toggle fallback failed:', err);
+                    }}
+                }});
+            }}
+
+            // ── Force native toggle into visible state ──
+            const nativeSelectors = [
+                '[data-testid="stSidebarCollapseButton"]',
+                '[data-testid="stSidebarCollapseButton"] button',
+                '[data-testid="collapsedControl"]',
+                '[data-testid="collapsedControl"] button',
+                'button[kind="header"]',
+                'button[kind="headerNoPadding"]'
+            ];
+            nativeSelectors.forEach(function(sel) {{
+                d.querySelectorAll(sel).forEach(function(el) {{
+                    el.style.setProperty('visibility', 'visible', 'important');
+                    el.style.setProperty('opacity', '1', 'important');
+                    el.style.setProperty('pointer-events', 'auto', 'important');
+                    el.style.setProperty('display', 'flex', 'important');
+                }});
+            }});
         }} catch (e) {{
             console.error('[NeuroLens] Header sync failed:', e);
         }}
@@ -2694,7 +2758,7 @@ with st.sidebar:
             <span class="sb-brand-pulse"></span>
         </div>
         <div class="sb-brand-text">
-            <div class="sb-brand-name">NeuroLens <span class="sb-brand-ai">AI</span><span class="sb-brand-ver">v3.8.0</span></div>
+            <div class="sb-brand-name">NeuroLens <span class="sb-brand-ai">AI</span><span class="sb-brand-ver">v3.8.1</span></div>
             <div class="sb-brand-sub">Neurodiagnostic Intelligence</div>
         </div>
     </div>"""), unsafe_allow_html=True)
