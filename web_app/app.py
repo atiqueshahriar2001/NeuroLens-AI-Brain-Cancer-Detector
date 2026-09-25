@@ -757,8 +757,8 @@ html, body, [data-testid="stAppViewContainer"], [data-testid="stApp"] {
 
 .sb-session {
   display:flex; align-items:center; justify-content:center; gap:.4rem;
-  min-height:28px;
-  padding:.3rem .75rem;
+  min-height:38px;
+  padding:.5rem .4rem;
   margin:.05rem .05rem .5rem;
   border:1px solid rgba(34,211,238,.28);
   border-radius:999px;
@@ -767,6 +767,10 @@ html, body, [data-testid="stAppViewContainer"], [data-testid="stApp"] {
   color:#a8bcd8;
   position:relative;
   overflow:hidden;
+  width:fit-content;
+  min-width:140px;
+  margin-left:auto;
+  margin-right:auto;
 }
 .sb-session::before {
   content:'';
