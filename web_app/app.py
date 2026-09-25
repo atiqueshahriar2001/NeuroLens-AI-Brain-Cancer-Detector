@@ -1,6 +1,6 @@
 # =============================================================================
 # NeuroLens AI — Neurodiagnostic Intelligence Platform
-# Production SaaS Edition v3.8.3
+# Production SaaS Edition v3.9.0 — Full Bug-Fix Edition
 # =============================================================================
 
 import warnings
@@ -453,7 +453,7 @@ def _icon_header(svg_svg: str, text: str, level: int = 3) -> str:
     return (
         f"<{tag} style='display:flex;align-items:center;gap:.5rem;"
         f"flex-wrap:wrap;margin:.6rem 0 .6rem'>{svg_svg}"
-        f"<span>{text}</span></{tag}>"
+        f"<span>{_escape_html(text)}</span></{tag}>"
     )
 
 
@@ -552,7 +552,7 @@ st.markdown(
 
 
 # ─────────────────────────────────────────────────────────────────────────────
-# UI CSS — Native toggle hidden, custom ☰ only
+# UI CSS
 # ─────────────────────────────────────────────────────────────────────────────
 UI_CSS = r"""
 :root {
@@ -628,9 +628,8 @@ body.nl-page-transition [data-testid="stMainBlockContainer"] {
 }
 
 /* ═══════════════════════════════════════════════════════════════════════
-   NATIVE SIDEBAR TOGGLE — HIDDEN
-   The native toggle buttons are hidden from the user entirely. Our
-   custom ☰ button clicks them programmatically via JS.
+   NATIVE SIDEBAR TOGGLE — visually hidden but present in DOM
+   (sr-only pattern, so JS .click() still fires React handlers)
    ═══════════════════════════════════════════════════════════════════════ */
 [data-testid="stSidebarCollapseButton"],
 [data-testid="stSidebarCollapseButton"] button,
@@ -647,18 +646,21 @@ button[kind="header"],
 button[kind="headerNoPadding"],
 [data-testid="baseButton-header"],
 [data-testid="baseButton-headerNoPadding"] {
-  display: none !important;
-  visibility: hidden !important;
+  position: absolute !important;
+  width: 1px !important;
+  height: 1px !important;
+  padding: 0 !important;
+  margin: -1px !important;
+  overflow: hidden !important;
+  clip: rect(0, 0, 0, 0) !important;
+  white-space: nowrap !important;
+  border: 0 !important;
   opacity: 0 !important;
   pointer-events: none !important;
-  width: 0 !important;
-  height: 0 !important;
-  padding: 0 !important;
-  margin: 0 !important;
 }
 
 /* ═══════════════════════════════════════════════════════════════════════
-   SIDEBAR — visuals only, NO width override
+   SIDEBAR
    ═══════════════════════════════════════════════════════════════════════ */
 [data-testid="stSidebar"] {
   background:
@@ -939,6 +941,15 @@ button[kind="headerNoPadding"],
 [data-testid="stMetricLabel"] { color:#7ba3d6 !important; }
 [data-testid="stMetricValue"] { color:#e2e8f0 !important; }
 
+/* Hide the 1px iframe that runs our sticky-header JS */
+iframe[height="1"][scrolling="no"] {
+  height: 0 !important;
+  border: 0 !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  display: block !important;
+}
+
 /* STICKY HEADER */
 #nl-sticky-header-root { all: initial; }
 #nl-sticky-header-root * { box-sizing: border-box; }
@@ -983,9 +994,10 @@ button[kind="headerNoPadding"],
   100% { background-position:-200% 50%; opacity:.3; }
 }
 
-/* Custom sidebar toggle button */
+/* Custom ☰ toggle button */
 .hd-sb-toggle {
   all: unset;
+  box-sizing: border-box !important;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1705,7 +1717,7 @@ button[kind="headerNoPadding"],
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23f1f5f9' stroke-width='1.9' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='12' cy='12' r='3'/%3E%3Cpath d='M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z'/%3E%3C/svg%3E") !important;
 }
 
-/* CLEAR HISTORY / RESET */
+/* CLEAR / RESET BUTTONS */
 [data-testid="stSidebar"] .st-key-sb_clear button::before {
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23fbbf24' stroke-width='1.75' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='3 6 5 6 21 6'/%3E%3Cpath d='M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2'/%3E%3C/svg%3E") !important;
 }
@@ -1942,6 +1954,8 @@ def predict_image(image, model, class_names):
 def mc_dropout_predict(image, model, class_names, n_samples=MC_SAMPLES):
     if model is None:
         return None
+    if n_samples <= 0:
+        return None
 
     def _enable_dropout(m):
         if isinstance(m, (nn.Dropout, nn.Dropout2d)):
@@ -1957,6 +1971,9 @@ def mc_dropout_predict(image, model, class_names, n_samples=MC_SAMPLES):
                 mc_preds.append(F.softmax(model(tensor), dim=1)[0].detach().cpu().numpy())
     finally:
         model.eval()
+
+    if not mc_preds:
+        return None
 
     mc_preds   = np.stack(mc_preds)
     mean_probs = mc_preds.mean(axis=0)
@@ -2259,6 +2276,8 @@ for k, v in DEFAULTS.items():
 
 
 def navigate_to(page: str):
+    if page not in PAGE_LABELS:
+        return
     st.session_state.nav = page
     try:
         st.query_params["page"] = page
@@ -2271,7 +2290,10 @@ def clear_prediction_history():
     for fk in ("gradcam_image", "gradcam_pp_image"):
         old = st.session_state.get(fk)
         if old:
-            plt.close(old)
+            try:
+                plt.close(old)
+            except Exception:
+                pass
     for k in [
         "prediction_history", "last_result", "last_image",
         "gradcam_image", "gradcam_pp_image", "mc_result", "agreement_score",
@@ -2407,7 +2429,7 @@ def render_live_ticker():
 
 
 # ─────────────────────────────────────────────────────────────────────────────
-# STICKY HEADER + CUSTOM ☰ TOGGLE
+# STICKY HEADER
 # ─────────────────────────────────────────────────────────────────────────────
 
 def render_sticky_header():
@@ -2500,7 +2522,6 @@ def render_sticky_header():
             root.innerHTML = new TextDecoder().decode(bytes);
             d.body.appendChild(root);
 
-            // ── Sidebar width watchdog ──
             function syncSbWidth() {{
                 const sb = d.querySelector('[data-testid="stSidebar"]');
                 if (!sb) return;
@@ -2524,7 +2545,6 @@ def render_sticky_header():
                 w.__nl_sb_poller = setInterval(syncSbWidth, 250);
             }}
 
-            // ── Bind custom ☰ button: forward click to native (hidden) button ──
             const toggleBtn = d.getElementById('nl-sb-toggle');
             if (toggleBtn && !toggleBtn.__bound) {{
                 toggleBtn.__bound = true;
@@ -2533,12 +2553,10 @@ def render_sticky_header():
                     ev.stopPropagation();
 
                     const candidates = [
-                        // Streamlit 1.64+ specific
                         '[data-testid="stExpandSidebarButton"]',
                         '[data-testid="stCollapseSidebarButton"]',
                         '[data-testid="stSidebarHeader"] button',
                         'button[aria-label*="idebar"]',
-                        // Streamlit 1.42–1.63
                         'button[data-testid="stSidebarCollapseButton"]',
                         '[data-testid="stSidebarCollapseButton"] button',
                         '[data-testid="stSidebarCollapseButton"]',
@@ -2551,13 +2569,16 @@ def render_sticky_header():
                     ];
                     for (let sel of candidates) {{
                         const el = d.querySelector(sel);
-                        if (el && typeof el.click === 'function') {{
-                            el.click();
-                            return;
+                        if (el) {{
+                            try {{
+                                el.click();
+                                return;
+                            }} catch (err) {{
+                                // continue to next
+                            }}
                         }}
                     }}
 
-                    // Fallback: keyboard shortcut
                     try {{
                         const evt = new KeyboardEvent('keydown', {{
                             key: '[', code: 'BracketLeft',
@@ -2706,7 +2727,7 @@ with st.sidebar:
             <span class="sb-brand-pulse"></span>
         </div>
         <div class="sb-brand-text">
-            <div class="sb-brand-name">NeuroLens <span class="sb-brand-ai">AI</span><span class="sb-brand-ver">v3.8.3</span></div>
+            <div class="sb-brand-name">NeuroLens <span class="sb-brand-ai">AI</span><span class="sb-brand-ver">v3.9.0</span></div>
             <div class="sb-brand-sub">Neurodiagnostic Intelligence</div>
         </div>
     </div>"""), unsafe_allow_html=True)
@@ -2881,7 +2902,10 @@ with st.sidebar:
             for fk in ("gradcam_image", "gradcam_pp_image"):
                 old = st.session_state.get(fk)
                 if old:
-                    plt.close(old)
+                    try:
+                        plt.close(old)
+                    except Exception:
+                        pass
             for k, v in DEFAULTS.items():
                 st.session_state[k] = copy.deepcopy(v)
             navigate_to("Home")
@@ -3118,7 +3142,10 @@ elif nav == "MRI Analysis":
                 for fk in ("gradcam_image", "gradcam_pp_image"):
                     old = st.session_state.get(fk)
                     if old:
-                        plt.close(old)
+                        try:
+                            plt.close(old)
+                        except Exception:
+                            pass
                 for k in [
                     "last_result", "last_image", "gradcam_image",
                     "gradcam_pp_image", "mc_result", "agreement_score",
@@ -3165,21 +3192,25 @@ elif nav == "MRI Analysis":
                         prog = st.empty()
                         try:
                             total_t0 = time.perf_counter()
-                            stages = ["Image Loaded", "Preprocessing", "Normalization",
-                                      "Tensor Prep", "Neural Inference", "Probability Calc"]
-                            if run_mc: stages.append("MC Dropout")
-                            if run_xai: stages += ["Grad-CAM", "Grad-CAM++"]
-                            if run_agree and run_xai: stages.append("Agreement Score")
-                            stages.append("Report")
-                            total_stages = len(stages)
 
-                            pre_loop = stages[:-4] if len(stages) > 4 else stages[:0]
-                            for i, stage in enumerate(pre_loop):
-                                status.info(f"Processing: {stage}…")
-                                prog.progress((i + 1) / total_stages)
+                            # Build the ordered list of stages that will actually run
+                            stage_list = ["Preprocessing", "Neural Inference", "Probability Calc"]
+                            if run_mc:                stage_list.append("MC Dropout")
+                            if run_xai:
+                                stage_list.append("Grad-CAM")
+                                stage_list.append("Grad-CAM++")
+                            if run_agree and run_xai:  stage_list.append("Agreement Score")
+                            stage_list.append("Report")
+                            total_stages = len(stage_list)
+                            _idx = 0
 
-                            step_off = len(pre_loop)
+                            def _stage(label):
+                                nonlocal _idx
+                                status.info(f"Processing: {label}…")
+                                prog.progress(min((_idx + 1) / total_stages, 1.0))
+                                _idx += 1
 
+                            _stage("Preprocessing")
                             log_activity("MRI uploaded; preprocessing started", "info")
                             (predicted_class, confidence, probability_dict,
                              preprocessing_ms, inference_ms) = predict_image(
@@ -3189,12 +3220,12 @@ elif nav == "MRI Analysis":
                                 f"Inference complete: {predicted_class} ({confidence:.1f}%)",
                                 "success",
                             )
+                            _stage("Neural Inference")
+                            _stage("Probability Calc")
 
                             mc_result = None
                             if run_mc:
-                                status.info("Processing: MC Dropout…")
-                                step_off += 1
-                                prog.progress(step_off / total_stages)
+                                _stage("MC Dropout")
                                 try:
                                     mc_result = mc_dropout_predict(image, model, class_names, MC_SAMPLES)
                                     if mc_result:
@@ -3208,9 +3239,7 @@ elif nav == "MRI Analysis":
                             gradcam_fig = gradcam_ms = None
                             gradcam_pp_fig = gradcam_pp_ms = None
                             if run_xai:
-                                status.info("Processing: Grad-CAM…")
-                                step_off += 1
-                                prog.progress(step_off / total_stages)
+                                _stage("Grad-CAM")
                                 try:
                                     t_gc = time.perf_counter()
                                     gradcam_fig = generate_gradcam(image, model, model_name)
@@ -3219,9 +3248,7 @@ elif nav == "MRI Analysis":
                                 except Exception:
                                     log_activity("Grad-CAM failed", "warn")
 
-                                status.info("Processing: Grad-CAM++…")
-                                step_off += 1
-                                prog.progress(step_off / total_stages)
+                                _stage("Grad-CAM++")
                                 try:
                                     t_pp = time.perf_counter()
                                     gradcam_pp_fig = generate_gradcam_pp(image, model, model_name)
@@ -3232,9 +3259,7 @@ elif nav == "MRI Analysis":
 
                             agree_score = None
                             if run_agree and run_xai:
-                                status.info("Processing: Agreement Score…")
-                                step_off += 1
-                                prog.progress(step_off / total_stages)
+                                _stage("Agreement Score")
                                 try:
                                     agree_score = explanation_agreement(image, model, model_name)
                                     if agree_score is not None:
@@ -3242,9 +3267,10 @@ elif nav == "MRI Analysis":
                                 except Exception:
                                     log_activity("Agreement score failed", "warn")
 
-                            total_ms = (time.perf_counter() - total_t0) * 1000
-                            status.info("Building report…")
+                            _stage("Report")
                             prog.progress(1.0)
+
+                            total_ms = (time.perf_counter() - total_t0) * 1000
 
                             result = {
                                 "prediction": predicted_class,
@@ -3269,7 +3295,10 @@ elif nav == "MRI Analysis":
                                            ("gradcam_pp_image", gradcam_pp_fig)]:
                                 old = st.session_state.get(fk)
                                 if old:
-                                    plt.close(old)
+                                    try:
+                                        plt.close(old)
+                                    except Exception:
+                                        pass
                                 st.session_state[fk] = nf
 
                             st.session_state.last_result = result
@@ -4065,7 +4094,10 @@ elif nav == "Settings":
                 for fk in ("gradcam_image", "gradcam_pp_image"):
                     old = st.session_state.get(fk)
                     if old:
-                        plt.close(old)
+                        try:
+                            plt.close(old)
+                        except Exception:
+                            pass
                 for k, v in DEFAULTS.items():
                     st.session_state[k] = copy.deepcopy(v)
                 st.session_state.settings_confirm_reset = False
