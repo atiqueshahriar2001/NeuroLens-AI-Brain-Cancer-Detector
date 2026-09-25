@@ -554,7 +554,7 @@ st.markdown(
 
 
 # ─────────────────────────────────────────────────────────────────────────────
-# UI CSS  (FIXED: sidebar native toggle safe — no width:0 on collapse, control above header)
+# UI CSS  (FIXED: sidebar native toggle safe + sticky header visible)
 # ─────────────────────────────────────────────────────────────────────────────
 UI_CSS = r"""
 :root {
@@ -632,9 +632,8 @@ body.nl-page-transition [data-testid="stMainBlockContainer"] {
 
 /* ═══════════════════════════════════════════════════════════════════════
    SIDEBAR — NATIVE TOGGLE SAFE
-   Never force width:0 / min-width:0 on the outer section when collapsed —
-   that breaks Streamlit's expand/collapse. Prefer a fixed content width
-   only while expanded; when collapsed, leave dimensions to Streamlit.
+   Never force width:0 on collapse (breaks Streamlit expand). Only set
+   preferred width while expanded; leave collapsed dimensions to Streamlit.
    ═══════════════════════════════════════════════════════════════════════ */
 [data-testid="stSidebar"] {
   background:
@@ -644,13 +643,13 @@ body.nl-page-transition [data-testid="stMainBlockContainer"] {
   box-shadow:inset -1px 0 0 rgba(34,211,238,.08), 4px 0 24px rgba(0,0,0,.20);
 }
 
-/* Preferred width only while expanded — do NOT set width on collapsed state */
+/* Preferred width only while expanded */
 [data-testid="stSidebar"][aria-expanded="true"] {
   min-width: var(--sb-w) !important;
   max-width: var(--sb-w) !important;
 }
 
-/* Collapsed: only clear chrome; never override width/transform (Streamlit owns it) */
+/* Collapsed: clear chrome only — do NOT force width/transform */
 [data-testid="stSidebar"][aria-expanded="false"] {
   border-right: none !important;
   box-shadow: none !important;
@@ -661,7 +660,7 @@ body.nl-page-transition [data-testid="stMainBlockContainer"] {
   padding: 0 .85rem 1rem !important;
 }
 
-/* Keep the native collapse/expand control always clickable above sticky header */
+/* Native collapse/expand control always above sticky header */
 [data-testid="stSidebarCollapsedControl"],
 [data-testid="collapsedControl"],
 button[kind="headerNoPadding"],
@@ -670,7 +669,7 @@ button[data-testid="stBaseButton-headerNoPadding"] {
   position: relative !important;
 }
 
-/* Sticky header shifts left when sidebar is collapsed, but leaves room for the toggle */
+/* Sticky header shifts left when collapsed, leaves room for toggle */
 body.nl-sb-collapsed .sticky-header {
   left: 3.25rem !important;
 }
@@ -972,10 +971,23 @@ body.nl-sb-collapsed .sticky-header {
 [data-testid="stMetricLabel"] { color:#7ba3d6 !important; }
 [data-testid="stMetricValue"] { color:#e2e8f0 !important; }
 
-/* STICKY HEADER */
+/* STICKY HEADER
+   Root must NOT use `all: initial` alone in a way that hides children.
+   Header is injected into parent document body via components.html JS.
+*/
 #nl-sticky-header-root {
-  all: initial;
+  display: block !important;
+  visibility: visible !important;
+  opacity: 1 !important;
   pointer-events: none !important;
+  position: fixed !important;
+  top: 0 !important;
+  left: 0 !important;
+  right: 0 !important;
+  width: 100% !important;
+  height: 0 !important;
+  z-index: 99990 !important;
+  overflow: visible !important;
 }
 #nl-sticky-header-root * { box-sizing: border-box; }
 #nl-sticky-header-root .sticky-header {
@@ -983,10 +995,18 @@ body.nl-sb-collapsed .sticky-header {
 }
 
 .sticky-header {
-  position:fixed; z-index:99990;
-  top:.7rem; left:calc(var(--sb-w) + .75rem); right:.75rem;
+  position:fixed !important;
+  z-index:99990 !important;
+  top:.7rem !important;
+  left:calc(var(--sb-w) + .75rem) !important;
+  right:.75rem !important;
   min-height:var(--hd-h);
-  display:flex; align-items:center; gap:.9rem;
+  height: auto !important;
+  display:flex !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+  align-items:center;
+  gap:.9rem;
   padding:.55rem 1.05rem;
   border:1px solid rgba(59,130,246,.42);
   border-radius:14px;
@@ -1002,6 +1022,7 @@ body.nl-sb-collapsed .sticky-header {
   overflow:hidden;
   font-family:'Inter',system-ui,sans-serif;
   transition:left .28s cubic-bezier(.2,.8,.2,1) !important;
+  color: #f1f5f9 !important;
 }
 .sticky-header::before {
   content:'';
@@ -2669,8 +2690,24 @@ def render_sticky_header():
             if (old) old.remove();
             const root = d.createElement('div');
             root.id = 'nl-sticky-header-root';
+            root.setAttribute('style',
+              'display:block!important;visibility:visible!important;opacity:1!important;' +
+              'pointer-events:none!important;position:fixed!important;top:0;left:0;right:0;' +
+              'width:100%!important;height:0!important;z-index:99990!important;overflow:visible!important;'
+            );
             const bytes = Uint8Array.from(atob("{header_b64}"), c => c.charCodeAt(0));
             root.innerHTML = new TextDecoder().decode(bytes);
+            const hdr = root.querySelector('.sticky-header');
+            if (hdr) {{
+              hdr.style.setProperty('display', 'flex', 'important');
+              hdr.style.setProperty('visibility', 'visible', 'important');
+              hdr.style.setProperty('opacity', '1', 'important');
+              hdr.style.setProperty('pointer-events', 'auto', 'important');
+              hdr.style.setProperty('position', 'fixed', 'important');
+              hdr.style.setProperty('z-index', '99990', 'important');
+              hdr.style.setProperty('top', '0.7rem', 'important');
+              hdr.style.setProperty('right', '0.75rem', 'important');
+            }}
             d.body.appendChild(root);
 
             // ── 5. Sidebar state watchdog ──
@@ -2683,6 +2720,13 @@ def render_sticky_header():
                 let expanded = sb.getAttribute('aria-expanded') !== 'false';
                 if (sb.offsetWidth < 80) expanded = false;
                 d.body.classList.toggle('nl-sb-collapsed', !expanded);
+                const hdr = d.querySelector('#nl-sticky-header-root .sticky-header');
+                if (hdr) {{
+                  hdr.style.setProperty('left', expanded ? 'calc(var(--sb-w, 280px) + 0.75rem)' : '3.25rem', 'important');
+                  hdr.style.setProperty('display', 'flex', 'important');
+                  hdr.style.setProperty('visibility', 'visible', 'important');
+                  hdr.style.setProperty('opacity', '1', 'important');
+                }}
             }}
 
             syncSidebarState();
