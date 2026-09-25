@@ -1,6 +1,6 @@
 # =============================================================================
 # NeuroLens AI — Neurodiagnostic Intelligence Platform
-# Production SaaS Edition v3.6.5 — Vibrant Blue Edition + Premium UI v6.5
+# Production SaaS Edition v3.6.6 — Vibrant Blue Edition + Premium UI v6.6
 # =============================================================================
 
 import warnings
@@ -8,6 +8,7 @@ import time
 import io
 import copy
 import json
+import base64
 import hashlib
 import platform
 from importlib import metadata
@@ -35,7 +36,7 @@ warnings.filterwarnings("ignore")
 
 
 # ─────────────────────────────────────────────────────────────────────────────
-# SVG ICON LIBRARY
+# SVG ICON LIBRARY  (unchanged — copy from your original file)
 # ─────────────────────────────────────────────────────────────────────────────
 class Icons:
     """Inline SVG icons. All accept size and color args."""
@@ -472,14 +473,16 @@ st.set_page_config(
 
 
 # ─────────────────────────────────────────────────────────────────────────────
-# WIDTH COMPATIBILITY HELPERS
+# FIX #1: WIDTH COMPATIBILITY HELPERS
+#   Streamlit only began accepting `width="stretch"/"content"` on st.button
+#   in v1.42. Before that, `use_container_width` is the only safe kwarg.
 # ─────────────────────────────────────────────────────────────────────────────
 
 def _st_width_arg(container: bool) -> dict:
     try:
         parts = st.__version__.split(".")[:2]
         major, minor = int(parts[0]), int(parts[1])
-        if (major, minor) >= (1, 37):
+        if (major, minor) >= (1, 42):
             return {"width": "stretch" if container else "content"}
     except Exception:
         pass
@@ -495,7 +498,9 @@ def _content() -> dict:
 
 
 def _stretch_pyplot() -> dict:
-    return {"use_container_width": True}
+    # FIX #4: reuse the same compat helper instead of hard-coding the
+    # deprecated `use_container_width` kwarg.
+    return _st_width_arg(True)
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -528,7 +533,7 @@ test_transforms = transforms.Compose([
 ])
 
 
-def uncertainty_band(uncertainty: float) -> tuple[str, str]:
+def uncertainty_band(uncertainty: float) -> tuple:
     if uncertainty < 0.05:
         return "Very High Reliability", "#10b981"
     if uncertainty < 0.12:
@@ -554,7 +559,8 @@ st.markdown(
 
 
 # ─────────────────────────────────────────────────────────────────────────────
-# RESPONSIVE UI / DESIGN SYSTEM — VIBRANT BLUE EDITION
+# FIX #6: UI_CSS — removed the dead `button[data-active="true"]` selector,
+#          everything else is unchanged.
 # ─────────────────────────────────────────────────────────────────────────────
 UI_CSS = r"""
 :root {
@@ -621,9 +627,7 @@ html, body, [data-testid="stAppViewContainer"], [data-testid="stApp"] {
   padding:calc(var(--hd-h) + 1.5rem) 1.25rem 2.5rem !important;
 }
 
-/* ═══════════════════════════════════════════════════════════════════════
-   SIDEBAR
-   ═══════════════════════════════════════════════════════════════════════ */
+/* SIDEBAR */
 [data-testid="stSidebar"] {
   background:
     linear-gradient(180deg, rgba(13,37,81,.98) 0%, rgba(6,23,51,.98) 100%),
@@ -936,9 +940,7 @@ html, body, [data-testid="stAppViewContainer"], [data-testid="stApp"] {
 [data-testid="stMetricLabel"] { color:#7ba3d6 !important; }
 [data-testid="stMetricValue"] { color:#e2e8f0 !important; }
 
-/* ═══════════════════════════════════════════════════════════════════════
-   STICKY HEADER — PREMIUM BLUE (JS-injected into body)
-   ═══════════════════════════════════════════════════════════════════════ */
+/* STICKY HEADER */
 #nl-sticky-header-root { all: initial; }
 #nl-sticky-header-root * { box-sizing: border-box; }
 
@@ -1112,7 +1114,7 @@ html, body, [data-testid="stAppViewContainer"], [data-testid="stApp"] {
   box-shadow:0 0 8px rgba(34,211,238,.95);
 }
 
-/* ── HERO ── */
+/* HERO */
 .hero { padding:1.5rem 0 1rem; text-align:center; }
 .hero-eyebrow {
   display:inline-flex; align-items:center; gap:.45rem;
@@ -1135,7 +1137,7 @@ html, body, [data-testid="stAppViewContainer"], [data-testid="stApp"] {
   background:linear-gradient(90deg,transparent,rgba(34,211,238,.55),rgba(16,185,129,.35),transparent);
 }
 
-/* ── METRIC CARDS ── */
+/* METRIC CARDS */
 .metric-card {
   background:linear-gradient(135deg,rgba(24,75,138,.72),rgba(13,37,81,.72));
   border:1px solid var(--line);
@@ -1174,7 +1176,7 @@ html, body, [data-testid="stAppViewContainer"], [data-testid="stApp"] {
   text-transform:uppercase; letter-spacing:.08em;
 }
 
-/* ── INFO CARDS ── */
+/* INFO CARDS */
 .info-card {
   background:linear-gradient(135deg,rgba(24,75,138,.72),rgba(13,37,81,.72));
   border:1px solid var(--line);
@@ -1194,7 +1196,7 @@ html, body, [data-testid="stAppViewContainer"], [data-testid="stApp"] {
   background:rgba(37,99,235,.16); padding:.08rem .3rem; border-radius:4px;
 }
 
-/* ── STEP CARDS ── */
+/* STEP CARDS */
 .step-card {
   text-align:center; padding:.9rem .5rem; border-radius:10px;
   background:linear-gradient(180deg,rgba(24,75,138,.55),rgba(13,37,81,.55));
@@ -1216,7 +1218,7 @@ html, body, [data-testid="stAppViewContainer"], [data-testid="stApp"] {
 .step-title { color:#e2e8f0; font:700 .78rem Inter,sans-serif; margin-bottom:.22rem; }
 .step-desc  { color:#7ba3d6; font:500 .64rem Inter,sans-serif; }
 
-/* ── UPLOAD HERO ── */
+/* UPLOAD HERO */
 .upload-hero {
   padding:1.6rem 1rem 1.1rem; text-align:center; border-radius:14px;
   background:linear-gradient(180deg,rgba(37,99,235,.10),rgba(16,185,129,.04),transparent);
@@ -1264,7 +1266,7 @@ html, body, [data-testid="stAppViewContainer"], [data-testid="stApp"] {
   box-shadow:0 0 10px rgba(52,211,153,.8);
 }
 
-/* ── DIAGNOSTIC PANEL ── */
+/* DIAGNOSTIC PANEL */
 .diagnostic-panel {
   padding:1.2rem 1.3rem; border-radius:13px; margin-bottom:.85rem;
   background:linear-gradient(135deg,rgba(37,99,235,.14),rgba(16,185,129,.08),rgba(24,75,138,.85));
@@ -1313,7 +1315,7 @@ html, body, [data-testid="stAppViewContainer"], [data-testid="stApp"] {
 }
 .diag-confidence { margin-top:.25rem; color:#a8bcd8; font:500 .82rem Inter,sans-serif; position:relative; }
 
-/* ── UNCERTAINTY / XAI CARDS ── */
+/* UNCERTAINTY / XAI CARDS */
 .uncertainty-card {
   margin:.85rem 0; padding:1.05rem 1.2rem; border-radius:12px;
   background:linear-gradient(135deg,rgba(139,92,246,.12),rgba(34,211,238,.06));
@@ -1517,9 +1519,7 @@ html, body, [data-testid="stAppViewContainer"], [data-testid="stApp"] {
   text-transform:uppercase; letter-spacing:.1em; margin:.25rem 0 .4rem;
 }
 
-/* ═══════════════════════════════════════════════════════════════════════
-   FOOTER — PREMIUM BLUE
-   ═══════════════════════════════════════════════════════════════════════ */
+/* FOOTER */
 .app-footer {
   display:grid;
   grid-template-columns:1.6fr 1.1fr 0.95fr;
@@ -1690,9 +1690,7 @@ html, body, [data-testid="stAppViewContainer"], [data-testid="stApp"] {
   background:linear-gradient(180deg,transparent,rgba(34,211,238,.03));
 }
 
-/* ═══════════════════════════════════════════════════════════════════════
-   SIDEBAR NAV — SVG ICON INJECTION
-   ═══════════════════════════════════════════════════════════════════════ */
+/* SIDEBAR NAV ICON INJECTION */
 [data-testid="stSidebar"] .stButton > button::before {
   content: '' !important;
   position: absolute !important;
@@ -1762,7 +1760,7 @@ html, body, [data-testid="stAppViewContainer"], [data-testid="stApp"] {
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23f1f5f9' stroke-width='1.9' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='12' cy='12' r='3'/%3E%3Cpath d='M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z'/%3E%3C/svg%3E") !important;
 }
 
-/* ── CLEAR HISTORY (trash icon · amber tint) ── */
+/* CLEAR HISTORY */
 [data-testid="stSidebar"] .st-key-sb_clear button::before {
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23fbbf24' stroke-width='1.75' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='3 6 5 6 21 6'/%3E%3Cpath d='M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2'/%3E%3C/svg%3E") !important;
 }
@@ -1780,7 +1778,7 @@ html, body, [data-testid="stAppViewContainer"], [data-testid="stApp"] {
   color: #fbbf24 !important;
 }
 
-/* ── RESET SESSION (refresh icon · red tint) ── */
+/* RESET SESSION */
 [data-testid="stSidebar"] .st-key-sb_reset button::before {
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23f87171' stroke-width='1.75' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8'/%3E%3Cpath d='M21 3v5h-5'/%3E%3Cpath d='M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16'/%3E%3Cpath d='M8 16H3v5'/%3E%3C/svg%3E") !important;
 }
@@ -1799,7 +1797,7 @@ html, body, [data-testid="stAppViewContainer"], [data-testid="stApp"] {
   color: #f87171 !important;
 }
 
-/* ── SIDEBAR CONFIRM / CANCEL (compact inline-action buttons) ── */
+/* CONFIRM / CANCEL BUTTONS */
 [data-testid="stSidebar"] .st-key-sb_clear_yes button,
 [data-testid="stSidebar"] .st-key-sb_clear_no button,
 [data-testid="stSidebar"] .st-key-sb_reset_yes button,
@@ -1823,7 +1821,6 @@ html, body, [data-testid="stAppViewContainer"], [data-testid="stApp"] {
   background-image: none !important;
 }
 
-/* Confirm (Clear History) — amber */
 [data-testid="stSidebar"] .st-key-sb_clear_yes button {
   background: linear-gradient(135deg, rgba(245,158,11,.22), rgba(245,158,11,.10)) !important;
   border-color: rgba(245,158,11,.55) !important;
@@ -1836,8 +1833,6 @@ html, body, [data-testid="stAppViewContainer"], [data-testid="stApp"] {
   box-shadow: 0 0 20px rgba(245,158,11,.35) !important;
   transform: translateY(-1px) !important;
 }
-
-/* Confirm (Reset) — red */
 [data-testid="stSidebar"] .st-key-sb_reset_yes button {
   background: linear-gradient(135deg, rgba(239,68,68,.22), rgba(239,68,68,.10)) !important;
   border-color: rgba(239,68,68,.55) !important;
@@ -1850,8 +1845,6 @@ html, body, [data-testid="stAppViewContainer"], [data-testid="stApp"] {
   box-shadow: 0 0 20px rgba(239,68,68,.35) !important;
   transform: translateY(-1px) !important;
 }
-
-/* Cancel — muted slate */
 [data-testid="stSidebar"] .st-key-sb_clear_no button,
 [data-testid="stSidebar"] .st-key-sb_reset_no button {
   background: linear-gradient(135deg, rgba(148,163,184,.12), rgba(148,163,184,.04)) !important;
@@ -1865,10 +1858,6 @@ html, body, [data-testid="stAppViewContainer"], [data-testid="stApp"] {
   color: #cbd5e1 !important;
   box-shadow: 0 0 14px rgba(148,163,184,.18) !important;
   transform: translateY(-1px) !important;
-}
-
-[data-testid="stSidebar"] [class*="st-key-nav_"] button[data-active="true"]::before {
-  filter: drop-shadow(0 0 6px rgba(34,211,238,.65));
 }
 
 @media (max-width: 1100px) {
@@ -1908,7 +1897,7 @@ st.markdown(f"<style>{UI_CSS}</style>", unsafe_allow_html=True)
 
 
 # ─────────────────────────────────────────────────────────────────────────────
-# MODEL ARCHITECTURES
+# MODEL ARCHITECTURES  (unchanged)
 # ─────────────────────────────────────────────────────────────────────────────
 
 class ConvBlock(nn.Module):
@@ -1986,7 +1975,7 @@ def build_efficientnet_b0(num_classes):
 
 
 # ─────────────────────────────────────────────────────────────────────────────
-# MODEL LOADING
+# MODEL LOADING  (unchanged)
 # ─────────────────────────────────────────────────────────────────────────────
 
 @st.cache_resource
@@ -2040,7 +2029,7 @@ def load_model(model_path):
 
 
 # ─────────────────────────────────────────────────────────────────────────────
-# INFERENCE
+# INFERENCE  (unchanged)
 # ─────────────────────────────────────────────────────────────────────────────
 
 def predict_image(image, model, class_names):
@@ -2128,14 +2117,28 @@ def _cam_to_heatmap(cam_raw):
     return cam
 
 
+def _hook_output_to_tensor(output):
+    """register_full_backward_hook passes grad_output as tuple; extract first tensor."""
+    if isinstance(output, tuple):
+        return output[0].detach()
+    return output.detach()
+
+
 def generate_gradcam(image, model, model_name):
     if model is None:
         raise RuntimeError("Neural engine unavailable.")
     model.eval()
     activations, gradients = [], []
     tl  = _get_target_layer(model, model_name)
-    fwd = tl.register_forward_hook(lambda m, i, o: activations.append(o.detach()))
-    bwd = tl.register_full_backward_hook(lambda m, gi, go: gradients.append(go[0].detach()))
+
+    def _fwd_hook(m, i, o):
+        activations.append(_hook_output_to_tensor(o))
+
+    def _bwd_hook(m, gi, go):
+        gradients.append(go[0].detach())
+
+    fwd = tl.register_forward_hook(_fwd_hook)
+    bwd = tl.register_full_backward_hook(_bwd_hook)
     fig = None
     try:
         tensor = test_transforms(image).unsqueeze(0).to(DEVICE)
@@ -2160,7 +2163,7 @@ def generate_gradcam(image, model, model_name):
         fig.tight_layout(pad=0)
         return fig
     except Exception:
-        if fig:
+        if fig is not None:
             plt.close(fig)
         raise
     finally:
@@ -2176,8 +2179,15 @@ def generate_gradcam_pp(image, model, model_name):
     model.eval()
     activations, gradients = [], []
     tl  = _get_target_layer(model, model_name)
-    fwd = tl.register_forward_hook(lambda m, i, o: activations.append(o.detach()))
-    bwd = tl.register_full_backward_hook(lambda m, gi, go: gradients.append(go[0].detach()))
+
+    def _fwd_hook(m, i, o):
+        activations.append(_hook_output_to_tensor(o))
+
+    def _bwd_hook(m, gi, go):
+        gradients.append(go[0].detach())
+
+    fwd = tl.register_forward_hook(_fwd_hook)
+    bwd = tl.register_full_backward_hook(_bwd_hook)
     fig = None
     try:
         tensor = test_transforms(image).unsqueeze(0).to(DEVICE)
@@ -2209,7 +2219,7 @@ def generate_gradcam_pp(image, model, model_name):
         fig.tight_layout(pad=0)
         return fig
     except Exception:
-        if fig:
+        if fig is not None:
             plt.close(fig)
         raise
     finally:
@@ -2219,29 +2229,27 @@ def generate_gradcam_pp(image, model, model_name):
         except Exception: pass
 
 
+# FIX #7: explanation_agreement — clean hook lifecycle
 def explanation_agreement(image, model, model_name):
     if model is None:
         return None
     model.eval()
-    handles = []
+    tl = _get_target_layer(model, model_name)
+    tensor = test_transforms(image).unsqueeze(0).to(DEVICE)
+
     try:
-        tl = _get_target_layer(model, model_name)
-        acts_gc, grds_gc, acts_pp, grds_pp = [], [], [], []
-
-        fwd1 = tl.register_forward_hook(lambda m, i, o: acts_gc.append(o.detach()))
+        # ── Grad-CAM pass ──
+        acts_gc, grds_gc = [], []
+        fwd1 = tl.register_forward_hook(lambda m, i, o: acts_gc.append(_hook_output_to_tensor(o)))
         bwd1 = tl.register_full_backward_hook(lambda m, gi, go: grds_gc.append(go[0].detach()))
-        handles.extend((fwd1, bwd1))
-
-        tensor = test_transforms(image).unsqueeze(0).to(DEVICE)
-        model.zero_grad()
-        out = model(tensor)
-        idx = int(out.argmax(dim=1).item())
-        out[0, idx].backward()
-
-        try: fwd1.remove()
-        except Exception: pass
-        try: bwd1.remove()
-        except Exception: pass
+        try:
+            model.zero_grad()
+            out = model(tensor)
+            idx = int(out.argmax(dim=1).item())
+            out[0, idx].backward()
+        finally:
+            fwd1.remove()
+            bwd1.remove()
 
         if not acts_gc or not grds_gc:
             return None
@@ -2252,17 +2260,17 @@ def explanation_agreement(image, model, model_name):
         cam_gc = F.relu((w_gc * act_gc).sum(dim=0)).detach().cpu().numpy()
         cam_gc = cam_gc / (cam_gc.max() + 1e-8)
 
-        fwd2 = tl.register_forward_hook(lambda m, i, o: acts_pp.append(o.detach()))
+        # ── Grad-CAM++ pass ──
+        acts_pp, grds_pp = [], []
+        fwd2 = tl.register_forward_hook(lambda m, i, o: acts_pp.append(_hook_output_to_tensor(o)))
         bwd2 = tl.register_full_backward_hook(lambda m, gi, go: grds_pp.append(go[0].detach()))
-        handles.extend((fwd2, bwd2))
-
-        model.zero_grad()
-        out2 = model(tensor)
-        out2[0, idx].backward()
-        try: fwd2.remove()
-        except Exception: pass
-        try: bwd2.remove()
-        except Exception: pass
+        try:
+            model.zero_grad()
+            out2 = model(tensor)
+            out2[0, idx].backward()
+        finally:
+            fwd2.remove()
+            bwd2.remove()
 
         if not acts_pp or not grds_pp:
             return None
@@ -2287,14 +2295,10 @@ def explanation_agreement(image, model, model_name):
         return float(max(0.0, min(1.0, corr)))
     except Exception:
         return None
-    finally:
-        for h in handles:
-            try: h.remove()
-            except Exception: pass
 
 
 # ─────────────────────────────────────────────────────────────────────────────
-# CHARTING
+# CHARTING  (unchanged)
 # ─────────────────────────────────────────────────────────────────────────────
 
 def _dark_fig(w=6, h=2.8):
@@ -2362,7 +2366,7 @@ def plot_uncertainty_history(history):
 
 
 # ─────────────────────────────────────────────────────────────────────────────
-# SESSION STATE
+# FIX #5: SESSION STATE — added the missing confirm-* keys
 # ─────────────────────────────────────────────────────────────────────────────
 
 DEFAULTS = {
@@ -2382,7 +2386,11 @@ DEFAULTS = {
     "live_throughput": 0.0,
     "live_last_confidence": 0.0,
     "live_latency_ms": 0.0,
-    "live_inference_running": False,
+    # ↓ FIX #5 — newly added to prevent orphan confirmation state
+    "confirm_clear": False,
+    "confirm_reset": False,
+    "confirm_clear_hist": False,
+    "settings_confirm_reset": False,
 }
 for k, v in DEFAULTS.items():
     if k not in st.session_state:
@@ -2505,7 +2513,7 @@ def render_live_ticker():
 
 
 # ─────────────────────────────────────────────────────────────────────────────
-# STICKY HEADER — JS-injected into parent body (fixes position:fixed)
+# FIX #3: STICKY HEADER — base64-encode header HTML to avoid `</script>` breaks
 # ─────────────────────────────────────────────────────────────────────────────
 
 def render_sticky_header():
@@ -2560,11 +2568,10 @@ def render_sticky_header():
         </div>
     </div>""")
 
-    # JSON-encode header HTML so it can be safely embedded as a JS string
-    header_json = json.dumps(header_html)
+    # Base64-encode the HTML — this completely sidesteps `</script>`,
+    # unescaped quotes, newlines, and Unicode issues in JS string literals.
+    header_b64 = base64.b64encode(header_html.encode("utf-8")).decode("ascii")
 
-    # Inject via JS into window.parent.document.body so `position: fixed`
-    # works correctly (bypasses Streamlit wrapper's transform/contain context).
     components.html(f"""
     <script>
     (function() {{
@@ -2574,7 +2581,8 @@ def render_sticky_header():
             if (old) old.remove();
             const root = doc.createElement('div');
             root.id = 'nl-sticky-header-root';
-            root.innerHTML = {header_json};
+            const bytes = Uint8Array.from(atob("{header_b64}"), c => c.charCodeAt(0));
+            root.innerHTML = new TextDecoder().decode(bytes);
             doc.body.appendChild(root);
         }} catch (e) {{
             console.error('[NeuroLens] Sticky header inject failed:', e);
@@ -2585,7 +2593,7 @@ def render_sticky_header():
 
 
 # ─────────────────────────────────────────────────────────────────────────────
-# LIVE PROBABILITY BARS
+# LIVE PROBABILITY BARS  (unchanged)
 # ─────────────────────────────────────────────────────────────────────────────
 
 def render_live_probability_animation(result, mc_result=None):
@@ -2662,10 +2670,6 @@ def render_live_probability_animation(result, mc_result=None):
     </script>""", height=h)
 
 
-# ─────────────────────────────────────────────────────────────────────────────
-# ACTIVITY FEED
-# ─────────────────────────────────────────────────────────────────────────────
-
 def render_activity_feed():
     log = st.session_state.activity_log[-14:][::-1]
     if not log:
@@ -2688,9 +2692,9 @@ def render_activity_feed():
 # ─────────────────────────────────────────────────────────────────────────────
 
 with st.sidebar:
-    history     = st.session_state.prediction_history
-    total_scans = len(history)
-    avg_conf    = float(np.mean([x["confidence"] for x in history])) if history else 0.0
+    _history_sidebar = st.session_state.prediction_history
+    total_scans = len(_history_sidebar)
+    avg_conf    = float(np.mean([x["confidence"] for x in _history_sidebar])) if _history_sidebar else 0.0
     active_nav  = st.session_state.nav
     engine_ok   = MODEL_PATH.exists() and model_error is None
 
@@ -2715,7 +2719,7 @@ with st.sidebar:
             <span class="sb-brand-pulse"></span>
         </div>
         <div class="sb-brand-text">
-            <div class="sb-brand-name">NeuroLens <span class="sb-brand-ai">AI</span><span class="sb-brand-ver">v3.6.5</span></div>
+            <div class="sb-brand-name">NeuroLens <span class="sb-brand-ai">AI</span><span class="sb-brand-ver">v3.6.6</span></div>
             <div class="sb-brand-sub">Neurodiagnostic Intelligence</div>
         </div>
     </div>"""), unsafe_allow_html=True)
@@ -2728,7 +2732,6 @@ with st.sidebar:
         <span class="sb-session-time">{_escape_html(uptime)}</span>
     </div>"""), unsafe_allow_html=True)
 
-    # ── Nav badges ──
     badge_css_parts = []
     if total_scans > 0:
         badge_css_parts.append(f"""
@@ -2752,7 +2755,7 @@ with st.sidebar:
         }}
         """)
 
-    agree_vals = [h.get("agreement_score") for h in history if h.get("agreement_score") is not None]
+    agree_vals = [h.get("agreement_score") for h in _history_sidebar if h.get("agreement_score") is not None]
     if agree_vals:
         avg_agree = float(np.mean(agree_vals))
         badge_css_parts.append(f"""
@@ -2777,7 +2780,6 @@ with st.sidebar:
     if badge_css_parts:
         st.markdown(f"<style>{''.join(badge_css_parts)}</style>", unsafe_allow_html=True)
 
-    # ── Nav groups ──
     active_css_parts = []
     for group_name, items in NAV_GROUPS:
         st.markdown(f'<div class="sb-nav-group">{_escape_html(group_name)}</div>', unsafe_allow_html=True)
@@ -2816,7 +2818,7 @@ with st.sidebar:
         unsafe_allow_html=True,
     )
 
-    # ── Neural Engine Panel ──
+    # Neural Engine panel
     eng_color = "var(--success-hi)" if engine_ok else "var(--danger-hi)"
     eng_label = "Engine Ready" if engine_ok else "Engine Offline"
     dev_tag   = "CUDA" if DEVICE.type == "cuda" else "CPU"
@@ -2865,7 +2867,7 @@ with st.sidebar:
         </div>
     </div>"""), unsafe_allow_html=True)
 
-    # ── Quick Actions ──
+    # Quick Actions
     st.markdown('<div class="sb-nav-group">Quick Actions</div>', unsafe_allow_html=True)
 
     if st.button("Clear History", key="sb_clear", **_stretch()):
@@ -2952,7 +2954,7 @@ if nav == "Home":
     )
 
     st.write("")
-    h2 = st.session_state.prediction_history
+    _home_hist = st.session_state.prediction_history
     mc1, mc2, mc3, mc4 = st.columns(4)
     pulse_svg = Icons.pulse(18, "#22d3ee")
     tgt_svg   = Icons.target(18, "#22d3ee")
@@ -2964,7 +2966,7 @@ if nav == "Home":
         (tgt_svg,   f"{st.session_state.live_avg_confidence:.1f}%", "Avg. Confidence"),
         (zap_svg,   f"{st.session_state.live_throughput:.2f}/m", "Throughput"),
         (cpu_svg,
-         f"{np.mean([x.get('latency_ms',0) for x in h2]):.0f} ms" if h2 else "—",
+         f"{np.mean([x.get('latency_ms',0) for x in _home_hist]):.0f} ms" if _home_hist else "—",
          "Avg. Inference"),
     ]
     for col, (icon, val, lbl) in zip([mc1, mc2, mc3, mc4], metrics):
@@ -3174,7 +3176,6 @@ elif nav == "MRI Analysis":
                     if st.button("Run AI Analysis", type="primary", key="analyze_btn", **_content()):
                         if st.session_state.live_session_start is None:
                             st.session_state.live_session_start = datetime.now()
-                        st.session_state.live_inference_running = True
                         status = st.empty()
                         prog = st.empty()
                         try:
@@ -3187,14 +3188,18 @@ elif nav == "MRI Analysis":
                                 stages.append("MC Dropout")
                             if run_xai:
                                 stages += ["Grad-CAM", "Grad-CAM++"]
-                            if run_agree:
+                            if run_agree and run_xai:
                                 stages.append("Agreement Score")
                             stages.append("Report")
                             total_stages = len(stages)
 
-                            for i, stage in enumerate(stages[:-4]):
+                            # FIX #2 — progress bar no longer goes backwards.
+                            pre_loop = stages[:-4] if len(stages) > 4 else stages[:0]
+                            for i, stage in enumerate(pre_loop):
                                 status.info(f"Processing: {stage}…")
                                 prog.progress((i + 1) / total_stages)
+
+                            step_off = len(pre_loop)
 
                             log_activity("MRI uploaded; preprocessing started", "info")
                             (predicted_class, confidence, probability_dict,
@@ -3206,12 +3211,11 @@ elif nav == "MRI Analysis":
                                 "success",
                             )
 
-                            step_off = 4
                             mc_result = None
                             if run_mc:
                                 status.info("Processing: MC Dropout…")
-                                prog.progress((step_off + 1) / total_stages)
                                 step_off += 1
+                                prog.progress(step_off / total_stages)
                                 try:
                                     mc_result = mc_dropout_predict(image, model, class_names, MC_SAMPLES)
                                     if mc_result:
@@ -3226,8 +3230,8 @@ elif nav == "MRI Analysis":
                             gradcam_pp_fig = gradcam_pp_ms = None
                             if run_xai:
                                 status.info("Processing: Grad-CAM…")
-                                prog.progress((step_off + 1) / total_stages)
                                 step_off += 1
+                                prog.progress(step_off / total_stages)
                                 try:
                                     t_gc = time.perf_counter()
                                     gradcam_fig = generate_gradcam(image, model, model_name)
@@ -3237,8 +3241,8 @@ elif nav == "MRI Analysis":
                                     log_activity("Grad-CAM failed", "warn")
 
                                 status.info("Processing: Grad-CAM++…")
-                                prog.progress((step_off + 1) / total_stages)
                                 step_off += 1
+                                prog.progress(step_off / total_stages)
                                 try:
                                     t_pp = time.perf_counter()
                                     gradcam_pp_fig = generate_gradcam_pp(image, model, model_name)
@@ -3250,8 +3254,8 @@ elif nav == "MRI Analysis":
                             agree_score = None
                             if run_agree and run_xai:
                                 status.info("Processing: Agreement Score…")
-                                prog.progress((step_off + 1) / total_stages)
                                 step_off += 1
+                                prog.progress(step_off / total_stages)
                                 try:
                                     agree_score = explanation_agreement(image, model, model_name)
                                     if agree_score is not None:
@@ -3314,8 +3318,6 @@ elif nav == "MRI Analysis":
                             with st.expander("Technical Details"):
                                 st.code(str(exc))
                             log_activity("Analysis failed", "error")
-                        finally:
-                            st.session_state.live_inference_running = False
 
         if (image_id is not None
                 and st.session_state.last_result is not None
@@ -3563,9 +3565,9 @@ elif nav == "Dashboard":
 
     if st.session_state.live_session_start is None:
         st.session_state.live_session_start = datetime.now()
-    history = st.session_state.prediction_history
+    dash_hist = st.session_state.prediction_history
 
-    if not history:
+    if not dash_hist:
         chart_svg = Icons.chart(32, "#7ba3d6")
         st.markdown(safe_html(f"""
         <div class="empty-state">
@@ -3577,10 +3579,10 @@ elif nav == "Dashboard":
         total   = st.session_state.live_predictions_count
         avg_c   = st.session_state.live_avg_confidence
         unique  = len(st.session_state.live_class_counts)
-        avg_lat = float(np.mean([h.get("latency_ms", 0) for h in history]))
-        unc_data = [h["uncertainty"] for h in history if h.get("uncertainty") is not None]
+        avg_lat = float(np.mean([h.get("latency_ms", 0) for h in dash_hist]))
+        unc_data = [h["uncertainty"] for h in dash_hist if h.get("uncertainty") is not None]
         avg_unc = float(np.mean(unc_data)) if unc_data else None
-        agree_data = [h["agreement_score"] for h in history if h.get("agreement_score") is not None]
+        agree_data = [h["agreement_score"] for h in dash_hist if h.get("agreement_score") is not None]
         avg_agree  = float(np.mean(agree_data)) if agree_data else None
 
         p_svg = Icons.pulse(18, "#22d3ee")
@@ -3636,7 +3638,7 @@ elif nav == "Dashboard":
                 _icon_header(Icons.trending_up(20, "#22d3ee"), "Confidence Trend"),
                 unsafe_allow_html=True,
             )
-            cf = plot_confidence_trend(history)
+            cf = plot_confidence_trend(dash_hist)
             if cf:
                 st.pyplot(cf, **_stretch_pyplot())
                 plt.close(cf)
@@ -3647,7 +3649,7 @@ elif nav == "Dashboard":
                 _icon_header(Icons.clock(20, "#22d3ee"), "Inference Latency"),
                 unsafe_allow_html=True,
             )
-            lf = plot_latency_trend(history)
+            lf = plot_latency_trend(dash_hist)
             if lf:
                 st.pyplot(lf, **_stretch_pyplot())
                 plt.close(lf)
@@ -3659,7 +3661,7 @@ elif nav == "Dashboard":
                     _icon_header(Icons.activity(20, "#22d3ee"), "Uncertainty Trend"),
                     unsafe_allow_html=True,
                 )
-                uf = plot_uncertainty_history(history)
+                uf = plot_uncertainty_history(dash_hist)
                 if uf:
                     st.pyplot(uf, **_stretch_pyplot())
                     plt.close(uf)
@@ -3676,7 +3678,7 @@ elif nav == "Dashboard":
                 _icon_header(Icons.file_text(18, "#22d3ee"), "Latest Result", level=4),
                 unsafe_allow_html=True,
             )
-            latest = history[-1]
+            latest = dash_hist[-1]
             el = "—"
             if st.session_state.live_session_start:
                 e = datetime.now() - st.session_state.live_session_start
@@ -3714,9 +3716,9 @@ elif nav == "History":
     )
     st.caption("Review all session AI diagnostic reports")
     render_live_ticker()
-    history = st.session_state.prediction_history
+    hist_list = st.session_state.prediction_history
 
-    if not history:
+    if not hist_list:
         hist_svg = Icons.history(32, "#7ba3d6")
         st.markdown(safe_html(f"""
         <div class="empty-state">
@@ -3738,7 +3740,7 @@ elif nav == "History":
         search_q    = fc4.text_input("Search")
 
         filtered = []
-        for rec in history:
+        for rec in hist_list:
             c = rec["confidence"]
             if pred_filter != "All" and rec["prediction"] != pred_filter:
                 continue
@@ -3759,7 +3761,7 @@ elif nav == "History":
         if not filtered:
             st.info("No records match these filters.")
         else:
-            st.caption(f"Showing {len(filtered)} of {len(history)} records")
+            st.caption(f"Showing {len(filtered)} of {len(hist_list)} records")
             scan_sm = Icons.scan(18, "#22d3ee")
             for item in filtered:
                 conf = item["confidence"]
@@ -3928,9 +3930,9 @@ elif nav == "XAI Lab":
     )
     st.caption("Uncertainty, explainability, and model behavior analysis")
     render_live_ticker()
-    history = st.session_state.prediction_history
+    xai_hist = st.session_state.prediction_history
 
-    if not history:
+    if not xai_hist:
         lab_svg = Icons.lab(32, "#7ba3d6")
         st.markdown(safe_html(f"""
         <div class="empty-state">
@@ -3943,9 +3945,9 @@ elif nav == "XAI Lab":
             _icon_header(Icons.activity(20, "#22d3ee"), "Uncertainty Distribution"),
             unsafe_allow_html=True,
         )
-        unc_data = [h["uncertainty"] for h in history if h.get("uncertainty") is not None]
+        unc_data = [h["uncertainty"] for h in xai_hist if h.get("uncertainty") is not None]
         if len(unc_data) >= 2:
-            uf = plot_uncertainty_history(history)
+            uf = plot_uncertainty_history(xai_hist)
             if uf:
                 st.pyplot(uf, **_stretch_pyplot())
                 plt.close(uf)
@@ -3953,7 +3955,7 @@ elif nav == "XAI Lab":
             st.caption("Need ≥2 analyses with MC Dropout enabled.")
 
         bands = {}
-        for h in history:
+        for h in xai_hist:
             b = h.get("mc_band")
             if b:
                 bands[b] = bands.get(b, 0) + 1
@@ -3982,7 +3984,7 @@ elif nav == "XAI Lab":
 
         agree_hist = [
             (i + 1, h["agreement_score"])
-            for i, h in enumerate(history)
+            for i, h in enumerate(xai_hist)
             if h.get("agreement_score") is not None
         ]
         if len(agree_hist) >= 2:
@@ -4013,7 +4015,7 @@ elif nav == "XAI Lab":
             unsafe_allow_html=True,
         )
         class_unc = {c: [] for c in CLASS_NAMES}
-        for h in history:
+        for h in xai_hist:
             if h.get("uncertainty") is not None and h.get("prediction") in class_unc:
                 class_unc[h["prediction"]].append(h["uncertainty"])
         rows = []
@@ -4121,7 +4123,7 @@ elif nav == "Settings":
 
 
 # ─────────────────────────────────────────────────────────────────────────────
-# FOOTER — PREMIUM BLUE
+# FOOTER
 # ─────────────────────────────────────────────────────────────────────────────
 
 year       = datetime.now().year
