@@ -756,18 +756,18 @@ html, body, [data-testid="stAppViewContainer"], [data-testid="stApp"] {
 }
 
 .sb-session {
-  display:flex; align-items:center; justify-content:center; gap:.5rem;
-  min-height:34px;
-  padding:.4rem .65rem;
-  margin:.05rem .05rem .6rem;
+  display:flex; align-items:center; justify-content:center; gap:.35rem;
+  min-height:24px;
+  padding:.25rem .5rem;
+  margin:.05rem .05rem .4rem;
   border:1px solid var(--line);
-  border-radius:9px;
+  border-radius:7px;
   background:linear-gradient(135deg,rgba(24,75,138,.75),rgba(13,37,81,.65));
   color:#a8bcd8;
 }
-.sb-session-txt { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font:600 .68rem Inter,sans-serif; }
-.sb-session-time { color:#7ba3d6; font:600 .6rem var(--font-mono); }
-.sb-session-dot { width:7px; height:7px; border-radius:50%; flex:0 0 auto; }
+.sb-session-txt { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font:600 .6rem Inter,sans-serif; }
+.sb-session-time { color:#7ba3d6; font:600 .54rem var(--font-mono); }
+.sb-session-dot { width:5px; height:5px; border-radius:50%; flex:0 0 auto; }
 
 .sb-engine {
   margin:.85rem .05rem .95rem;
