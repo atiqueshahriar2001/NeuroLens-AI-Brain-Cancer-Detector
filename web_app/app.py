@@ -1109,7 +1109,7 @@ html, body, [data-testid="stAppViewContainer"], [data-testid="stApp"] {
   -webkit-background-clip:text; -webkit-text-fill-color:transparent;
   background-clip:text;
 }
-.hero-sub { color:#a8bcd8; font:400 .95rem/1.55 Inter,sans-serif; max-width:68ch; margin:0 auto; }
+.hero-sub { color:#a8bcd8; font:400 .95rem/1.55 Inter,sans-serif; max-width:68ch; margin:0 auto; text-align:center; }
 .hero-divider {
   height:1px; max-width:480px; margin:1.2rem auto 0;
   background:linear-gradient(90deg,transparent,rgba(34,211,238,.55),rgba(16,185,129,.35),transparent);
