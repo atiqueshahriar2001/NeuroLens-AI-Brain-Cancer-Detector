@@ -1,6 +1,6 @@
 # =============================================================================
 # NeuroLens AI — Neurodiagnostic Intelligence Platform
-# Production SaaS Edition v3.8.1 — Custom Sidebar Toggle Edition
+# Production SaaS Edition v3.8.1 
 # =============================================================================
 
 import warnings
