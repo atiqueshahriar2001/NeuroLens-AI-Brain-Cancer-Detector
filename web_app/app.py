@@ -1,6 +1,6 @@
 # =============================================================================
 # NeuroLens AI — Neurodiagnostic Intelligence Platform
-# Production SaaS Edition v3.9.0 — Full Bug-Fix Edition
+# Production SaaS Edition v3.9.1 
 # =============================================================================
 
 import warnings
@@ -627,10 +627,7 @@ body.nl-page-transition [data-testid="stMainBlockContainer"] {
   animation: nl-page-enter .34s cubic-bezier(.2,.8,.2,1) both;
 }
 
-/* ═══════════════════════════════════════════════════════════════════════
-   NATIVE SIDEBAR TOGGLE — visually hidden but present in DOM
-   (sr-only pattern, so JS .click() still fires React handlers)
-   ═══════════════════════════════════════════════════════════════════════ */
+/* Native toggle hidden via sr-only pattern */
 [data-testid="stSidebarCollapseButton"],
 [data-testid="stSidebarCollapseButton"] button,
 [data-testid="stSidebarCollapseButton"] > div,
@@ -659,9 +656,7 @@ button[kind="headerNoPadding"],
   pointer-events: none !important;
 }
 
-/* ═══════════════════════════════════════════════════════════════════════
-   SIDEBAR
-   ═══════════════════════════════════════════════════════════════════════ */
+/* SIDEBAR */
 [data-testid="stSidebar"] {
   background:
     linear-gradient(180deg, rgba(13,37,81,.98) 0%, rgba(6,23,51,.98) 100%),
@@ -941,7 +936,6 @@ button[kind="headerNoPadding"],
 [data-testid="stMetricLabel"] { color:#7ba3d6 !important; }
 [data-testid="stMetricValue"] { color:#e2e8f0 !important; }
 
-/* Hide the 1px iframe that runs our sticky-header JS */
 iframe[height="1"][scrolling="no"] {
   height: 0 !important;
   border: 0 !important;
@@ -994,7 +988,7 @@ iframe[height="1"][scrolling="no"] {
   100% { background-position:-200% 50%; opacity:.3; }
 }
 
-/* Custom ☰ toggle button */
+/* Custom toggle */
 .hd-sb-toggle {
   all: unset;
   box-sizing: border-box !important;
@@ -1717,7 +1711,7 @@ iframe[height="1"][scrolling="no"] {
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23f1f5f9' stroke-width='1.9' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='12' cy='12' r='3'/%3E%3Cpath d='M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z'/%3E%3C/svg%3E") !important;
 }
 
-/* CLEAR / RESET BUTTONS */
+/* CLEAR / RESET */
 [data-testid="stSidebar"] .st-key-sb_clear button::before {
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23fbbf24' stroke-width='1.75' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='3 6 5 6 21 6'/%3E%3Cpath d='M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2'/%3E%3C/svg%3E") !important;
 }
@@ -2574,7 +2568,7 @@ def render_sticky_header():
                                 el.click();
                                 return;
                             }} catch (err) {{
-                                // continue to next
+                                // continue
                             }}
                         }}
                     }}
@@ -2727,7 +2721,7 @@ with st.sidebar:
             <span class="sb-brand-pulse"></span>
         </div>
         <div class="sb-brand-text">
-            <div class="sb-brand-name">NeuroLens <span class="sb-brand-ai">AI</span><span class="sb-brand-ver">v3.9.0</span></div>
+            <div class="sb-brand-name">NeuroLens <span class="sb-brand-ai">AI</span><span class="sb-brand-ver">v3.9.1</span></div>
             <div class="sb-brand-sub">Neurodiagnostic Intelligence</div>
         </div>
     </div>"""), unsafe_allow_html=True)
@@ -3193,22 +3187,23 @@ elif nav == "MRI Analysis":
                         try:
                             total_t0 = time.perf_counter()
 
-                            # Build the ordered list of stages that will actually run
+                            # Build ordered stage list
                             stage_list = ["Preprocessing", "Neural Inference", "Probability Calc"]
-                            if run_mc:                stage_list.append("MC Dropout")
+                            if run_mc:                 stage_list.append("MC Dropout")
                             if run_xai:
                                 stage_list.append("Grad-CAM")
                                 stage_list.append("Grad-CAM++")
                             if run_agree and run_xai:  stage_list.append("Agreement Score")
                             stage_list.append("Report")
                             total_stages = len(stage_list)
-                            _idx = 0
+
+                            # FIX: use a mutable container instead of `nonlocal`
+                            _idx_box = [0]
 
                             def _stage(label):
-                                nonlocal _idx
                                 status.info(f"Processing: {label}…")
-                                prog.progress(min((_idx + 1) / total_stages, 1.0))
-                                _idx += 1
+                                prog.progress(min((_idx_box[0] + 1) / total_stages, 1.0))
+                                _idx_box[0] += 1
 
                             _stage("Preprocessing")
                             log_activity("MRI uploaded; preprocessing started", "info")
