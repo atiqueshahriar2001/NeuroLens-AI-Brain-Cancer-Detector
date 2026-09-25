@@ -2915,7 +2915,7 @@ if nav == "Home":
             AI-Powered Brain MRI Analysis · Research Prototype
         </div>
         <h1>NeuroLens AI</h1>
-        <p class="hero-sub">Deep Learning neuroimaging with dual XAI explainability, Bayesian uncertainty estimation, and real-time inference diagnostics.</p>
+        <p class="hero-sub" style="text-align:center;">Deep Learning neuroimaging with dual XAI explainability, Bayesian uncertainty estimation, and real-time inference diagnostics.</p>
         <div class="hero-divider"></div>
     </div>"""), unsafe_allow_html=True)
 
