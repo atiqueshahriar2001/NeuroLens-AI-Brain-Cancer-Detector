@@ -2469,11 +2469,11 @@ def render_live_ticker():
 
     _render_html(f"""
     <style>
-    .tw{{overflow:hidden;border-radius:9px;border:1px solid rgba(34,211,238,.28);
-    background:linear-gradient(90deg,rgba(24,75,138,.9),rgba(13,37,81,.9));padding:.45rem 0;}}
+    .tw{{overflow:hidden;border-radius:11px;border:1px solid rgba(34,211,238,.28);
+    background:linear-gradient(90deg,rgba(24,75,138,.9),rgba(13,37,81,.9));padding:.75rem 0;width:100%;}}
     .tt{{display:inline-block;white-space:nowrap;padding-left:100%;
-    animation:mq 28s linear infinite;color:#a8bcd8;font:500 .72rem 'JetBrains Mono',monospace}}
-    .lp{{display:inline-block;width:6px;height:6px;border-radius:50%;background:#22d3ee;
+    animation:mq 28s linear infinite;color:#a8bcd8;font:500 .8rem 'JetBrains Mono',monospace}}
+    .lp{{display:inline-block;width:7px;height:7px;border-radius:50%;background:#22d3ee;
     box-shadow:0 0 8px #22d3ee;margin-right:8px;vertical-align:middle}}
     @keyframes mq{{0%{{transform:translateX(0);}}100%{{transform:translateX(-100%);}}}}
     </style>
@@ -2481,7 +2481,7 @@ def render_live_ticker():
     {text} · Throughput: {st.session_state.live_throughput:.2f}/min ·
     Last Conf: {st.session_state.live_last_confidence:.1f}% ·
     Avg Conf: {st.session_state.live_avg_confidence:.1f}%{unc}
-    </div></div>""", height=36)
+    </div></div>""", height=52)
 
 
 # ─────────────────────────────────────────────────────────────────────────────
