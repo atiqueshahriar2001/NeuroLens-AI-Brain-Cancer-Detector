@@ -1093,7 +1093,7 @@ html, body, [data-testid="stAppViewContainer"], [data-testid="stApp"] {
 }
 
 /* ── HERO ── */
-.hero { padding:1.5rem 0 1rem; }
+.hero { padding:1.5rem 0 1rem; text-align:center; }
 .hero-eyebrow {
   display:inline-flex; align-items:center; gap:.45rem;
   padding:.32rem .75rem; border-radius:999px;
@@ -1109,10 +1109,10 @@ html, body, [data-testid="stAppViewContainer"], [data-testid="stApp"] {
   -webkit-background-clip:text; -webkit-text-fill-color:transparent;
   background-clip:text;
 }
-.hero-sub { color:#a8bcd8; font:400 .95rem/1.55 Inter,sans-serif; max-width:68ch; margin:0; }
+.hero-sub { color:#a8bcd8; font:400 .95rem/1.55 Inter,sans-serif; max-width:68ch; margin:0 auto; }
 .hero-divider {
-  height:1px; max-width:480px; margin:1.2rem 0 0;
-  background:linear-gradient(90deg,rgba(34,211,238,.55),rgba(16,185,129,.35),transparent);
+  height:1px; max-width:480px; margin:1.2rem auto 0;
+  background:linear-gradient(90deg,transparent,rgba(34,211,238,.55),rgba(16,185,129,.35),transparent);
 }
 
 /* ── METRIC CARDS ── */
