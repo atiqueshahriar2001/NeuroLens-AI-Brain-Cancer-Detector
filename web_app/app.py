@@ -1,6 +1,6 @@
 # =============================================================================
 # NeuroLens AI — Neurodiagnostic Intelligence Platform
-# Production SaaS Edition v3.8.2 
+# Production SaaS Edition v3.8.3
 # =============================================================================
 
 import warnings
@@ -552,8 +552,7 @@ st.markdown(
 
 
 # ─────────────────────────────────────────────────────────────────────────────
-# UI CSS  (FIXED: native toggle z-index below sticky header, removed display
-#          force, expanded selectors for Streamlit 1.64)
+# UI CSS — Native toggle hidden, custom ☰ only
 # ─────────────────────────────────────────────────────────────────────────────
 UI_CSS = r"""
 :root {
@@ -629,7 +628,9 @@ body.nl-page-transition [data-testid="stMainBlockContainer"] {
 }
 
 /* ═══════════════════════════════════════════════════════════════════════
-   NATIVE SIDEBAR TOGGLE — expanded selectors, z-index below sticky header
+   NATIVE SIDEBAR TOGGLE — HIDDEN
+   The native toggle buttons are hidden from the user entirely. Our
+   custom ☰ button clicks them programmatically via JS.
    ═══════════════════════════════════════════════════════════════════════ */
 [data-testid="stSidebarCollapseButton"],
 [data-testid="stSidebarCollapseButton"] button,
@@ -637,6 +638,7 @@ body.nl-page-transition [data-testid="stMainBlockContainer"] {
 [data-testid="collapsedControl"],
 [data-testid="collapsedControl"] button,
 [data-testid="collapsedControl"] > div,
+[data-testid="stSidebarNavCollapseButton"],
 [data-testid="stSidebarNavCollapseButton"] button,
 [data-testid="stExpandSidebarButton"],
 [data-testid="stCollapseSidebarButton"],
@@ -645,64 +647,14 @@ button[kind="header"],
 button[kind="headerNoPadding"],
 [data-testid="baseButton-header"],
 [data-testid="baseButton-headerNoPadding"] {
-  visibility: visible !important;
-  opacity: 1 !important;
-  pointer-events: auto !important;
-  z-index: 999980 !important;   /* below sticky header */
-}
-
-[data-testid="stSidebarCollapseButton"] *,
-[data-testid="collapsedControl"] *,
-button[kind="header"] *,
-button[kind="headerNoPadding"] * {
-  visibility: visible !important;
-  opacity: 1 !important;
-  pointer-events: auto !important;
-}
-
-[data-testid="stSidebarCollapseButton"] button,
-[data-testid="collapsedControl"] button,
-button[kind="header"],
-button[kind="headerNoPadding"] {
-  color: #22d3ee !important;
-  background: linear-gradient(135deg, rgba(37,99,235,.92), rgba(13,37,81,.92)) !important;
-  border: 1px solid rgba(34,211,238,.55) !important;
-  border-radius: 10px !important;
-  min-width: 36px !important;
-  min-height: 36px !important;
-  padding: 4px !important;
-  box-shadow: 0 4px 18px rgba(34,211,238,.28) !important;
-  transition: all .18s ease !important;
-  cursor: pointer !important;
-}
-[data-testid="stSidebarCollapseButton"] button:hover,
-[data-testid="collapsedControl"] button:hover,
-button[kind="header"]:hover,
-button[kind="headerNoPadding"]:hover {
-  background: linear-gradient(135deg, #0ea5e9, #22d3ee) !important;
-  border-color: rgba(34,211,238,.85) !important;
-  box-shadow: 0 6px 24px rgba(34,211,238,.50) !important;
-  transform: translateY(-1px) !important;
-}
-
-[data-testid="stSidebarCollapseButton"] svg,
-[data-testid="collapsedControl"] svg,
-button[kind="header"] svg,
-button[kind="headerNoPadding"] svg {
-  color: #22d3ee !important;
-  fill: #22d3ee !important;
-  stroke: #22d3ee !important;
-  visibility: visible !important;
-  opacity: 1 !important;
-  width: 18px !important;
-  height: 18px !important;
-}
-
-/* Mobile: keep collapsedControl clear of our custom ☰ */
-@media (max-width: 760px) {
-  [data-testid="collapsedControl"] button {
-    margin-left: 4.5rem !important;
-  }
+  display: none !important;
+  visibility: hidden !important;
+  opacity: 0 !important;
+  pointer-events: none !important;
+  width: 0 !important;
+  height: 0 !important;
+  padding: 0 !important;
+  margin: 0 !important;
 }
 
 /* ═══════════════════════════════════════════════════════════════════════
@@ -2455,8 +2407,7 @@ def render_live_ticker():
 
 
 # ─────────────────────────────────────────────────────────────────────────────
-# STICKY HEADER + CUSTOM SIDEBAR TOGGLE
-# FIXED: height=0 → height=1 so iframe script actually runs
+# STICKY HEADER + CUSTOM ☰ TOGGLE
 # ─────────────────────────────────────────────────────────────────────────────
 
 def render_sticky_header():
@@ -2529,7 +2480,6 @@ def render_sticky_header():
         "setTimeout(()=>d.body.classList.remove('nl-page-transition'), 400);"
     ) if page_changed else ""
 
-    # FIX: height=1 (not 0) — some Chrome versions skip scripts in zero-height iframes
     components.html(f"""
     <script>
     (function() {{
@@ -2574,7 +2524,7 @@ def render_sticky_header():
                 w.__nl_sb_poller = setInterval(syncSbWidth, 250);
             }}
 
-            // ── Bind custom sidebar toggle button ──
+            // ── Bind custom ☰ button: forward click to native (hidden) button ──
             const toggleBtn = d.getElementById('nl-sb-toggle');
             if (toggleBtn && !toggleBtn.__bound) {{
                 toggleBtn.__bound = true;
@@ -2582,7 +2532,6 @@ def render_sticky_header():
                     ev.preventDefault();
                     ev.stopPropagation();
 
-                    // Expanded candidate list — covers Streamlit 1.42 → 1.64+
                     const candidates = [
                         // Streamlit 1.64+ specific
                         '[data-testid="stExpandSidebarButton"]',
@@ -2608,7 +2557,7 @@ def render_sticky_header():
                         }}
                     }}
 
-                    // Last-resort keyboard shortcut fallback
+                    // Fallback: keyboard shortcut
                     try {{
                         const evt = new KeyboardEvent('keydown', {{
                             key: '[', code: 'BracketLeft',
@@ -2622,26 +2571,6 @@ def render_sticky_header():
                     }}
                 }});
             }}
-
-            // ── Force native toggle into visible state (no display override) ──
-            const nativeSelectors = [
-                '[data-testid="stExpandSidebarButton"]',
-                '[data-testid="stCollapseSidebarButton"]',
-                '[data-testid="stSidebarHeader"] button',
-                '[data-testid="stSidebarCollapseButton"]',
-                '[data-testid="stSidebarCollapseButton"] button',
-                '[data-testid="collapsedControl"]',
-                '[data-testid="collapsedControl"] button',
-                'button[kind="header"]',
-                'button[kind="headerNoPadding"]'
-            ];
-            nativeSelectors.forEach(function(sel) {{
-                d.querySelectorAll(sel).forEach(function(el) {{
-                    el.style.setProperty('visibility', 'visible', 'important');
-                    el.style.setProperty('opacity', '1', 'important');
-                    el.style.setProperty('pointer-events', 'auto', 'important');
-                }});
-            }});
         }} catch (e) {{
             console.error('[NeuroLens] Header sync failed:', e);
         }}
@@ -2777,7 +2706,7 @@ with st.sidebar:
             <span class="sb-brand-pulse"></span>
         </div>
         <div class="sb-brand-text">
-            <div class="sb-brand-name">NeuroLens <span class="sb-brand-ai">AI</span><span class="sb-brand-ver">v3.8.2</span></div>
+            <div class="sb-brand-name">NeuroLens <span class="sb-brand-ai">AI</span><span class="sb-brand-ver">v3.8.3</span></div>
             <div class="sb-brand-sub">Neurodiagnostic Intelligence</div>
         </div>
     </div>"""), unsafe_allow_html=True)
