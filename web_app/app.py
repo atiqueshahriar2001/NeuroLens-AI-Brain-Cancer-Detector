@@ -1,18 +1,18 @@
 # =============================================================================
 # NeuroLens AI — Neurodiagnostic Intelligence Platform
-# Production SaaS Edition v3.6.2 — Vibrant Blue Edition + Premium UI v6.2
+# Production SaaS Edition v3.6.3 — Vibrant Blue Edition + Premium UI v6.3
 # =============================================================================
 
 import warnings
 import time
 import io
 import copy
+import json
 import hashlib
 import platform
 from importlib import metadata
 from datetime import datetime
 from pathlib import Path
-from urllib.parse import quote
 
 import numpy as np
 import pandas as pd
@@ -554,11 +554,10 @@ st.markdown(
 
 
 # ─────────────────────────────────────────────────────────────────────────────
-# RESPONSIVE UI / DESIGN SYSTEM — VIBRANT BLUE EDITION (UPGRADED)
+# RESPONSIVE UI / DESIGN SYSTEM — VIBRANT BLUE EDITION
 # ─────────────────────────────────────────────────────────────────────────────
 UI_CSS = r"""
 :root {
-  /* ═══ NEW: Vibrant Blue Background System ═══ */
   --bg:#0a1e3f;
   --bg-2:#0d2551;
   --bg-3:#123067;
@@ -606,7 +605,6 @@ html, body, [data-testid="stAppViewContainer"], [data-testid="stApp"] {
   font-family:'Inter',system-ui,sans-serif;
 }
 
-/* ═══ NEW: Rich Blue Radial Gradient Background ═══ */
 [data-testid="stAppViewContainer"] > .main {
   background:
     radial-gradient(ellipse 80% 55% at 50% 0%, rgba(34,211,238,.14), transparent 60%),
@@ -836,7 +834,6 @@ html, body, [data-testid="stAppViewContainer"], [data-testid="stApp"] {
   font:700 .68rem var(--font-mono);
   overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
 }
-/* FIX: Added missing mini variant classes */
 .sb-mini-white  { border-color:rgba(148,163,184,.25); }
 .sb-mini-cyan   { border-color:rgba(34,211,238,.35); }
 .sb-mini-violet { border-color:rgba(139,92,246,.35); }
@@ -920,10 +917,13 @@ html, body, [data-testid="stAppViewContainer"], [data-testid="stApp"] {
 [data-testid="stMetricValue"] { color:#e2e8f0 !important; }
 
 /* ═══════════════════════════════════════════════════════════════════════
-   STICKY HEADER — PREMIUM BLUE UPGRADE
+   STICKY HEADER — PREMIUM BLUE (JS-injected into body)
    ═══════════════════════════════════════════════════════════════════════ */
+#nl-sticky-header-root { all: initial; }
+#nl-sticky-header-root * { box-sizing: border-box; }
+
 .sticky-header {
-  position:fixed; z-index:9999;
+  position:fixed; z-index:999999;
   top:.7rem; left:calc(var(--sb-w) + .75rem); right:.75rem;
   min-height:var(--hd-h);
   display:flex; align-items:center; gap:.9rem;
@@ -940,6 +940,7 @@ html, body, [data-testid="stAppViewContainer"], [data-testid="stApp"] {
     0 0 0 1px rgba(34,211,238,.10),
     inset 0 1px 0 rgba(255,255,255,.06);
   overflow:hidden;
+  font-family:'Inter',system-ui,sans-serif;
 }
 .sticky-header::before {
   content:'';
@@ -1008,7 +1009,7 @@ html, body, [data-testid="stAppViewContainer"], [data-testid="stApp"] {
   -webkit-background-clip:text;
   -webkit-text-fill-color:transparent;
   background-clip:text;
-  font:800 .92rem var(--font-display);
+  font:800 .92rem 'Sora','Inter',sans-serif;
   white-space:nowrap;
   letter-spacing:-.015em;
 }
@@ -1016,7 +1017,7 @@ html, body, [data-testid="stAppViewContainer"], [data-testid="stApp"] {
   display:block;
   margin-top:.06rem;
   color:#7ba3d6;
-  font:700 .54rem var(--font-mono);
+  font:700 .54rem 'JetBrains Mono',monospace;
   letter-spacing:.14em;
   text-transform:uppercase;
 }
@@ -1029,11 +1030,10 @@ html, body, [data-testid="stAppViewContainer"], [data-testid="stApp"] {
 .hd-ticker-inner {
   display:flex; align-items:center; gap:.75rem; overflow:hidden;
   white-space:nowrap; color:#a8bcd8;
-  font:.62rem var(--font-mono);
+  font:.62rem 'JetBrains Mono',monospace;
 }
 .hd-tick { flex:0 0 auto; }
 .hd-tick b { color:#e2e8f0; }
-/* FIX: Added missing idle style */
 .hd-tick-idle { color:#7ba3d6; font-style:italic; }
 .hd-live-badge {
   color:#34d399; font-weight:800; font-size:.56rem;
@@ -1498,7 +1498,7 @@ html, body, [data-testid="stAppViewContainer"], [data-testid="stApp"] {
 }
 
 /* ═══════════════════════════════════════════════════════════════════════
-   FOOTER — PREMIUM BLUE UPGRADE
+   FOOTER — PREMIUM BLUE
    ═══════════════════════════════════════════════════════════════════════ */
 .app-footer {
   display:grid;
@@ -1626,7 +1626,6 @@ html, body, [data-testid="stAppViewContainer"], [data-testid="stApp"] {
   border-color:var(--line-strong);
   box-shadow:0 0 18px rgba(34,211,238,.14);
 }
-/* FIX: Added missing f-stat-wide modifier */
 .f-stat-wide { padding:.85rem .9rem; }
 .f-stat-val {
   display:flex; align-items:center; gap:.5rem;
@@ -1637,7 +1636,6 @@ html, body, [data-testid="stAppViewContainer"], [data-testid="stApp"] {
   font:800 1.25rem/1 var(--font-display);
   letter-spacing:-.02em;
 }
-/* FIX: Ensure .f-dot inside f-stat-val is NOT gradient-filled */
 .f-stat-val .f-dot,
 .f-stat-val .f-dot-off {
   -webkit-text-fill-color:currentColor;
@@ -1695,7 +1693,6 @@ html, body, [data-testid="stAppViewContainer"], [data-testid="stApp"] {
   transform: translateY(-50%) scale(1.06) !important;
 }
 
-/* ── HOME ── */
 [data-testid="stSidebar"] .st-key-nav_home button::before {
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23a8bcd8' stroke-width='1.75' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z'/%3E%3Cpolyline points='9 22 9 12 15 12 15 22'/%3E%3C/svg%3E") !important;
 }
@@ -1703,7 +1700,6 @@ html, body, [data-testid="stAppViewContainer"], [data-testid="stApp"] {
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23f1f5f9' stroke-width='1.9' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z'/%3E%3Cpolyline points='9 22 9 12 15 12 15 22'/%3E%3C/svg%3E") !important;
 }
 
-/* ── MRI ANALYSIS ── */
 [data-testid="stSidebar"] .st-key-nav_mri_analysis button::before {
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23a8bcd8' stroke-width='1.75' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 18h8'/%3E%3Cpath d='M3 22h18'/%3E%3Cpath d='M14 22a7 7 0 1 0 0-14h-1'/%3E%3Cpath d='M9 14h2'/%3E%3Cpath d='M9 12a2 2 0 0 1-2-2V6h6v4a2 2 0 0 1-2 2Z'/%3E%3Cpath d='M12 6V3a1 1 0 0 0-1-1H9a1 1 0 0 0-1 1v3'/%3E%3C/svg%3E") !important;
 }
@@ -1711,7 +1707,6 @@ html, body, [data-testid="stAppViewContainer"], [data-testid="stApp"] {
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23f1f5f9' stroke-width='1.9' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 18h8'/%3E%3Cpath d='M3 22h18'/%3E%3Cpath d='M14 22a7 7 0 1 0 0-14h-1'/%3E%3Cpath d='M9 14h2'/%3E%3Cpath d='M9 12a2 2 0 0 1-2-2V6h6v4a2 2 0 0 1-2 2Z'/%3E%3Cpath d='M12 6V3a1 1 0 0 0-1-1H9a1 1 0 0 0-1 1v3'/%3E%3C/svg%3E") !important;
 }
 
-/* ── DASHBOARD ── */
 [data-testid="stSidebar"] .st-key-nav_dashboard button::before {
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23a8bcd8' stroke-width='1.75' stroke-linecap='round' stroke-linejoin='round'%3E%3Cline x1='18' y1='20' x2='18' y2='10'/%3E%3Cline x1='12' y1='20' x2='12' y2='4'/%3E%3Cline x1='6' y1='20' x2='6' y2='14'/%3E%3Cline x1='2' y1='20' x2='22' y2='20'/%3E%3C/svg%3E") !important;
 }
@@ -1719,7 +1714,6 @@ html, body, [data-testid="stAppViewContainer"], [data-testid="stApp"] {
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23f1f5f9' stroke-width='1.9' stroke-linecap='round' stroke-linejoin='round'%3E%3Cline x1='18' y1='20' x2='18' y2='10'/%3E%3Cline x1='12' y1='20' x2='12' y2='4'/%3E%3Cline x1='6' y1='20' x2='6' y2='14'/%3E%3Cline x1='2' y1='20' x2='22' y2='20'/%3E%3C/svg%3E") !important;
 }
 
-/* ── HISTORY ── */
 [data-testid="stSidebar"] .st-key-nav_history button::before {
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23a8bcd8' stroke-width='1.75' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8'/%3E%3Cpath d='M3 3v5h5'/%3E%3Cpath d='M12 7v5l4 2'/%3E%3C/svg%3E") !important;
 }
@@ -1727,7 +1721,6 @@ html, body, [data-testid="stAppViewContainer"], [data-testid="stApp"] {
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23f1f5f9' stroke-width='1.9' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8'/%3E%3Cpath d='M3 3v5h5'/%3E%3Cpath d='M12 7v5l4 2'/%3E%3C/svg%3E") !important;
 }
 
-/* ── GRAD-CAM ── */
 [data-testid="stSidebar"] .st-key-nav_gradcam button::before {
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23a8bcd8' stroke-width='1.75' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='12' cy='12' r='3'/%3E%3Cpath d='M12 2v3'/%3E%3Cpath d='M12 19v3'/%3E%3Cpath d='m4.22 4.22 2.12 2.12'/%3E%3Cpath d='m17.66 17.66 2.12 2.12'/%3E%3Cpath d='M2 12h3'/%3E%3Cpath d='M19 12h3'/%3E%3Cpath d='m4.22 19.78 2.12-2.12'/%3E%3Cpath d='m17.66 6.34 2.12-2.12'/%3E%3C/svg%3E") !important;
 }
@@ -1735,7 +1728,6 @@ html, body, [data-testid="stAppViewContainer"], [data-testid="stApp"] {
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23f1f5f9' stroke-width='1.9' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='12' cy='12' r='3'/%3E%3Cpath d='M12 2v3'/%3E%3Cpath d='M12 19v3'/%3E%3Cpath d='m4.22 4.22 2.12 2.12'/%3E%3Cpath d='m17.66 17.66 2.12 2.12'/%3E%3Cpath d='M2 12h3'/%3E%3Cpath d='M19 12h3'/%3E%3Cpath d='m4.22 19.78 2.12-2.12'/%3E%3Cpath d='m17.66 6.34 2.12-2.12'/%3E%3C/svg%3E") !important;
 }
 
-/* ── XAI LAB ── */
 [data-testid="stSidebar"] .st-key-nav_xai_lab button::before {
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23a8bcd8' stroke-width='1.75' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M14.5 2v17.5c0 1.4-1.1 2.5-2.5 2.5h0c-1.4 0-2.5-1.1-2.5-2.5V2'/%3E%3Cpath d='M8.5 2h7'/%3E%3Cpath d='M14.5 16h-5'/%3E%3Cpath d='m8.5 13 5.5 3'/%3E%3C/svg%3E") !important;
 }
@@ -1743,7 +1735,6 @@ html, body, [data-testid="stAppViewContainer"], [data-testid="stApp"] {
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23f1f5f9' stroke-width='1.9' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M14.5 2v17.5c0 1.4-1.1 2.5-2.5 2.5h0c-1.4 0-2.5-1.1-2.5-2.5V2'/%3E%3Cpath d='M8.5 2h7'/%3E%3Cpath d='M14.5 16h-5'/%3E%3Cpath d='m8.5 13 5.5 3'/%3E%3C/svg%3E") !important;
 }
 
-/* ── SETTINGS ── */
 [data-testid="stSidebar"] .st-key-nav_settings button::before {
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23a8bcd8' stroke-width='1.75' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='12' cy='12' r='3'/%3E%3Cpath d='M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z'/%3E%3C/svg%3E") !important;
 }
@@ -1751,7 +1742,6 @@ html, body, [data-testid="stAppViewContainer"], [data-testid="stApp"] {
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23f1f5f9' stroke-width='1.9' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='12' cy='12' r='3'/%3E%3Cpath d='M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z'/%3E%3C/svg%3E") !important;
 }
 
-/* Active nav — glow icon in cyan */
 [data-testid="stSidebar"] [class*="st-key-nav_"] button[data-active="true"]::before {
   filter: drop-shadow(0 0 6px rgba(34,211,238,.65));
 }
@@ -2390,7 +2380,7 @@ def render_live_ticker():
 
 
 # ─────────────────────────────────────────────────────────────────────────────
-# STICKY HEADER — UPGRADED PREMIUM
+# STICKY HEADER — JS-injected into parent body (fixes position:fixed)
 # ─────────────────────────────────────────────────────────────────────────────
 
 def render_sticky_header():
@@ -2414,7 +2404,7 @@ def render_sticky_header():
 
     brain_svg = Icons.brain(20, "#22d3ee")
 
-    st.markdown(safe_html(f"""
+    header_html = safe_html(f"""
     <div class="sticky-header">
         <div class="hd-brand">
             <div class="hd-brand-icon">
@@ -2443,7 +2433,30 @@ def render_sticky_header():
         <div class="hd-page">
             <span class="hd-page-dot"></span>{_escape_html(nav)}
         </div>
-    </div>"""), unsafe_allow_html=True)
+    </div>""")
+
+    # JSON-encode header HTML so it can be safely embedded as a JS string
+    header_json = json.dumps(header_html)
+
+    # Inject via JS into window.parent.document.body so `position: fixed`
+    # works correctly (bypasses Streamlit wrapper's transform/contain context).
+    components.html(f"""
+    <script>
+    (function() {{
+        try {{
+            const doc = window.parent.document;
+            let old = doc.getElementById('nl-sticky-header-root');
+            if (old) old.remove();
+            const root = doc.createElement('div');
+            root.id = 'nl-sticky-header-root';
+            root.innerHTML = {header_json};
+            doc.body.appendChild(root);
+        }} catch (e) {{
+            console.error('[NeuroLens] Sticky header inject failed:', e);
+        }}
+    }})();
+    </script>
+    """, height=0, scrolling=False)
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -2577,7 +2590,7 @@ with st.sidebar:
             <span class="sb-brand-pulse"></span>
         </div>
         <div class="sb-brand-text">
-            <div class="sb-brand-name">NeuroLens <span class="sb-brand-ai">AI</span><span class="sb-brand-ver">v3.6.2</span></div>
+            <div class="sb-brand-name">NeuroLens <span class="sb-brand-ai">AI</span><span class="sb-brand-ver">v3.6.3</span></div>
             <div class="sb-brand-sub">Neurodiagnostic Intelligence</div>
         </div>
     </div>"""), unsafe_allow_html=True)
@@ -3983,7 +3996,7 @@ elif nav == "Settings":
 
 
 # ─────────────────────────────────────────────────────────────────────────────
-# FOOTER — PREMIUM BLUE UPGRADE
+# FOOTER — PREMIUM BLUE
 # ─────────────────────────────────────────────────────────────────────────────
 
 year       = datetime.now().year
