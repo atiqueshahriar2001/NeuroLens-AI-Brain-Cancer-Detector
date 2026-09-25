@@ -1,6 +1,6 @@
 # =============================================================================
 # NeuroLens AI — Neurodiagnostic Intelligence Platform
-# Production SaaS Edition v3.7.0 — Web-App Edition + Premium UI v6.7
+# Production SaaS Edition v3.7.1 — Web-App Edition + Sidebar Toggle Fix
 # =============================================================================
 
 import warnings
@@ -434,7 +434,6 @@ def safe_html(html: str) -> str:
 
 
 def _escape_html(text) -> str:
-    """Escape user/class-name text for safe HTML injection."""
     if text is None:
         return ""
     return (
@@ -555,7 +554,7 @@ st.markdown(
 
 
 # ─────────────────────────────────────────────────────────────────────────────
-# UI CSS
+# UI CSS  (FIXED: sidebar toggle now works — no forced width, aria-expanded aware)
 # ─────────────────────────────────────────────────────────────────────────────
 UI_CSS = r"""
 :root {
@@ -631,34 +630,50 @@ body.nl-page-transition [data-testid="stMainBlockContainer"] {
   animation: nl-page-enter .34s cubic-bezier(.2,.8,.2,1) both;
 }
 
-/* ── MOBILE: keep sidebar accessible (hamburger) ── */
-@media (max-width: 760px) {
-  [data-testid="stSidebar"] {
-    min-width: 280px !important;
-    max-width: 280px !important;
-    width: 280px !important;
-  }
-  .sticky-header {
-    left: 3.25rem !important;
-    right: .5rem !important;
-    top: .5rem !important;
-  }
-}
-
-/* SIDEBAR */
+/* ═══════════════════════════════════════════════════════════════════════
+   SIDEBAR — TOGGLE FRIENDLY
+   The width is only forced when the sidebar is EXPANDED. When Streamlit
+   collapses it (aria-expanded="false"), we let it shrink to 0 so the
+   native toggle button continues to work.
+   ═══════════════════════════════════════════════════════════════════════ */
 [data-testid="stSidebar"] {
   background:
     linear-gradient(180deg, rgba(13,37,81,.98) 0%, rgba(6,23,51,.98) 100%),
     radial-gradient(circle at 0% 0%, rgba(34,211,238,.10), transparent 25rem) !important;
   border-right:1px solid var(--line-strong) !important;
+  box-shadow:inset -1px 0 0 rgba(34,211,238,.08), 4px 0 24px rgba(0,0,0,.20);
+  transition: margin-left .28s cubic-bezier(.2,.8,.2,1),
+              transform .28s cubic-bezier(.2,.8,.2,1),
+              width .28s cubic-bezier(.2,.8,.2,1),
+              min-width .28s cubic-bezier(.2,.8,.2,1),
+              max-width .28s cubic-bezier(.2,.8,.2,1) !important;
+}
+
+/* Only force width when the sidebar is EXPANDED */
+[data-testid="stSidebar"][aria-expanded="true"] {
   min-width:var(--sb-w) !important;
   max-width:var(--sb-w) !important;
   width:var(--sb-w) !important;
-  box-shadow:inset -1px 0 0 rgba(34,211,238,.08), 4px 0 24px rgba(0,0,0,.20);
 }
+
+/* Let Streamlit's native collapse fully hide it */
+[data-testid="stSidebar"][aria-expanded="false"] {
+  min-width:0 !important;
+  max-width:0 !important;
+  width:0 !important;
+  margin-left:0 !important;
+  border-right:none !important;
+  box-shadow:none !important;
+}
+
 [data-testid="stSidebar"] > div:first-child {
   width:100% !important;
   padding:0 .85rem 1rem !important;
+}
+
+/* Sticky header shifts left when sidebar is collapsed (JS toggles body class) */
+body.nl-sb-collapsed .sticky-header {
+  left: .75rem !important;
 }
 
 [data-testid="stSidebar"] .stButton { width:100% !important; margin:.22rem 0 !important; }
@@ -981,6 +996,7 @@ body.nl-page-transition [data-testid="stMainBlockContainer"] {
     inset 0 1px 0 rgba(255,255,255,.06);
   overflow:hidden;
   font-family:'Inter',system-ui,sans-serif;
+  transition:left .28s cubic-bezier(.2,.8,.2,1) !important;
 }
 .sticky-header::before {
   content:'';
@@ -1880,13 +1896,24 @@ body.nl-page-transition [data-testid="stMainBlockContainer"] {
 
 @media (max-width: 1100px) {
   :root { --sb-w:240px; }
-  [data-testid="stSidebar"] { min-width:240px !important; max-width:240px !important; width:240px !important; }
   .sticky-header { left:calc(var(--sb-w) + .6rem); }
   .hd-ticker { display:none; }
   .app-footer { grid-template-columns:1fr 1fr; }
 }
 @media (max-width: 900px) {
   .app-footer { grid-template-columns:1fr 1fr; }
+}
+@media (max-width: 760px) {
+  /* Sidebar width handled via aria-expanded rules above — nothing to force here. */
+  .sticky-header {
+    left: 3.25rem !important;
+    right: .5rem !important;
+    top: .5rem !important;
+  }
+  .hd-brand-name { display:none; }
+  .hd-divider, .hd-status { display:none; }
+  .hd-page { margin-left:auto; }
+  .sb-engine-grid { grid-template-columns:1fr 1fr; }
 }
 @media (max-width: 600px) {
   .app-footer { grid-template-columns:1fr; padding:1.4rem; }
@@ -2125,7 +2152,6 @@ def _cam_to_heatmap(cam_raw):
 
 
 def _hook_output_to_tensor(output):
-    """register_full_backward_hook passes grad_output as tuple; extract first tensor."""
     if isinstance(output, tuple):
         return output[0].detach()
     return output.detach()
@@ -2244,7 +2270,6 @@ def explanation_agreement(image, model, model_name):
     tensor = test_transforms(image).unsqueeze(0).to(DEVICE)
 
     try:
-        # ── Grad-CAM pass ──
         acts_gc, grds_gc = [], []
         fwd1 = tl.register_forward_hook(lambda m, i, o: acts_gc.append(_hook_output_to_tensor(o)))
         bwd1 = tl.register_full_backward_hook(lambda m, gi, go: grds_gc.append(go[0].detach()))
@@ -2266,7 +2291,6 @@ def explanation_agreement(image, model, model_name):
         cam_gc = F.relu((w_gc * act_gc).sum(dim=0)).detach().cpu().numpy()
         cam_gc = cam_gc / (cam_gc.max() + 1e-8)
 
-        # ── Grad-CAM++ pass ──
         acts_pp, grds_pp = [], []
         fwd2 = tl.register_forward_hook(lambda m, i, o: acts_pp.append(_hook_output_to_tensor(o)))
         bwd2 = tl.register_full_backward_hook(lambda m, gi, go: grds_pp.append(go[0].detach()))
@@ -2396,7 +2420,7 @@ DEFAULTS = {
     "confirm_reset": False,
     "confirm_clear_hist": False,
     "settings_confirm_reset": False,
-    # ── Web-app routing state ──
+    # Web-app routing state
     "last_nav_snapshot": "Home",
     "_page_changed": False,
 }
@@ -2406,10 +2430,7 @@ for k, v in DEFAULTS.items():
 
 
 def navigate_to(page: str):
-    """
-    Central navigation helper. Updates session state AND URL query params
-    so that browser back/forward + deep linking all work correctly.
-    """
+    """Central navigation helper: session state + URL query params."""
     st.session_state.nav = page
     try:
         st.query_params["page"] = page
@@ -2505,8 +2526,6 @@ PAGE_LABELS = {
 
 # ─────────────────────────────────────────────────────────────────────────────
 # URL ⇄ SESSION SYNC
-# Reads ?page=... from the URL and reconciles with session state.
-# Enables deep linking + browser back/forward.
 # ─────────────────────────────────────────────────────────────────────────────
 
 try:
@@ -2560,7 +2579,7 @@ def render_live_ticker():
 
 
 # ─────────────────────────────────────────────────────────────────────────────
-# STICKY HEADER + WEB-APP SYNC
+# STICKY HEADER + SIDEBAR WATCHDOG
 # ─────────────────────────────────────────────────────────────────────────────
 
 def render_sticky_header():
@@ -2637,7 +2656,7 @@ def render_sticky_header():
             // ── 2. Scroll to top on page change ──
             {scroll_js}
 
-            // ── 3. Trigger page fade-in animation on page change ──
+            // ── 3. Page fade-in animation on page change ──
             {transition_js}
 
             // ── 4. Inject / refresh sticky header ──
@@ -2648,6 +2667,33 @@ def render_sticky_header():
             const bytes = Uint8Array.from(atob("{header_b64}"), c => c.charCodeAt(0));
             root.innerHTML = new TextDecoder().decode(bytes);
             d.body.appendChild(root);
+
+            // ── 5. Sidebar state watchdog ──
+            // Watches aria-expanded and width so body gets a class when
+            // the sidebar is collapsed — sticky header shifts left to
+            // fill the space instead of leaving a gap.
+            function syncSidebarState() {{
+                const sb = d.querySelector('[data-testid="stSidebar"]');
+                if (!sb) return;
+                let expanded = sb.getAttribute('aria-expanded') !== 'false';
+                if (sb.offsetWidth < 80) expanded = false;
+                d.body.classList.toggle('nl-sb-collapsed', !expanded);
+            }}
+
+            syncSidebarState();
+
+            const sbEl = d.querySelector('[data-testid="stSidebar"]');
+            if (sbEl && !sbEl.__nl_watched) {{
+                sbEl.__nl_watched = true;
+                new MutationObserver(syncSidebarState).observe(sbEl, {{
+                    attributes: true,
+                    attributeFilter: ['aria-expanded', 'style', 'class']
+                }});
+            }}
+
+            if (!w.__nl_sb_poller) {{
+                w.__nl_sb_poller = setInterval(syncSidebarState, 350);
+            }}
         }} catch (e) {{
             console.error('[NeuroLens] Header sync failed:', e);
         }}
@@ -2783,7 +2829,7 @@ with st.sidebar:
             <span class="sb-brand-pulse"></span>
         </div>
         <div class="sb-brand-text">
-            <div class="sb-brand-name">NeuroLens <span class="sb-brand-ai">AI</span><span class="sb-brand-ver">v3.7.0</span></div>
+            <div class="sb-brand-name">NeuroLens <span class="sb-brand-ai">AI</span><span class="sb-brand-ver">v3.7.1</span></div>
             <div class="sb-brand-sub">Neurodiagnostic Intelligence</div>
         </div>
     </div>"""), unsafe_allow_html=True)
@@ -2881,7 +2927,6 @@ with st.sidebar:
         unsafe_allow_html=True,
     )
 
-    # Neural Engine panel
     eng_color = "var(--success-hi)" if engine_ok else "var(--danger-hi)"
     eng_label = "Engine Ready" if engine_ok else "Engine Offline"
     dev_tag   = "CUDA" if DEVICE.type == "cuda" else "CPU"
@@ -2930,7 +2975,6 @@ with st.sidebar:
         </div>
     </div>"""), unsafe_allow_html=True)
 
-    # Quick Actions
     st.markdown('<div class="sb-nav-group">Quick Actions</div>', unsafe_allow_html=True)
 
     if st.button("Clear History", key="sb_clear", **_stretch()):
@@ -2984,7 +3028,6 @@ with st.sidebar:
 render_sticky_header()
 nav = st.session_state.nav
 
-# Sanity check: if somehow nav is invalid, fall back to Home.
 if nav not in PAGE_LABELS:
     nav = "Home"
     st.session_state.nav = "Home"
