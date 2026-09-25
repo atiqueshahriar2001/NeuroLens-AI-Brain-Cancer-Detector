@@ -1,6 +1,6 @@
 # =============================================================================
 # NeuroLens AI — Neurodiagnostic Intelligence Platform
-# Production SaaS Edition v3.6.6 — Vibrant Blue Edition + Premium UI v6.6
+# Production SaaS Edition v3.7.0 — Web-App Edition + Premium UI v6.7
 # =============================================================================
 
 import warnings
@@ -36,7 +36,7 @@ warnings.filterwarnings("ignore")
 
 
 # ─────────────────────────────────────────────────────────────────────────────
-# SVG ICON LIBRARY  (unchanged — copy from your original file)
+# SVG ICON LIBRARY
 # ─────────────────────────────────────────────────────────────────────────────
 class Icons:
     """Inline SVG icons. All accept size and color args."""
@@ -473,9 +473,7 @@ st.set_page_config(
 
 
 # ─────────────────────────────────────────────────────────────────────────────
-# FIX #1: WIDTH COMPATIBILITY HELPERS
-#   Streamlit only began accepting `width="stretch"/"content"` on st.button
-#   in v1.42. Before that, `use_container_width` is the only safe kwarg.
+# WIDTH COMPATIBILITY HELPERS
 # ─────────────────────────────────────────────────────────────────────────────
 
 def _st_width_arg(container: bool) -> dict:
@@ -498,8 +496,6 @@ def _content() -> dict:
 
 
 def _stretch_pyplot() -> dict:
-    # FIX #4: reuse the same compat helper instead of hard-coding the
-    # deprecated `use_container_width` kwarg.
     return _st_width_arg(True)
 
 
@@ -559,8 +555,7 @@ st.markdown(
 
 
 # ─────────────────────────────────────────────────────────────────────────────
-# FIX #6: UI_CSS — removed the dead `button[data-active="true"]` selector,
-#          everything else is unchanged.
+# UI CSS
 # ─────────────────────────────────────────────────────────────────────────────
 UI_CSS = r"""
 :root {
@@ -625,6 +620,29 @@ html, body, [data-testid="stAppViewContainer"], [data-testid="stApp"] {
   max-width:1380px !important;
   margin:0 auto !important;
   padding:calc(var(--hd-h) + 1.5rem) 1.25rem 2.5rem !important;
+}
+
+/* ── PAGE TRANSITION (only on nav change, driven by JS) ── */
+@keyframes nl-page-enter {
+  from { opacity:0; transform:translateY(8px); }
+  to   { opacity:1; transform:translateY(0); }
+}
+body.nl-page-transition [data-testid="stMainBlockContainer"] {
+  animation: nl-page-enter .34s cubic-bezier(.2,.8,.2,1) both;
+}
+
+/* ── MOBILE: keep sidebar accessible (hamburger) ── */
+@media (max-width: 760px) {
+  [data-testid="stSidebar"] {
+    min-width: 280px !important;
+    max-width: 280px !important;
+    width: 280px !important;
+  }
+  .sticky-header {
+    left: 3.25rem !important;
+    right: .5rem !important;
+    top: .5rem !important;
+  }
 }
 
 /* SIDEBAR */
@@ -1870,17 +1888,6 @@ html, body, [data-testid="stAppViewContainer"], [data-testid="stApp"] {
 @media (max-width: 900px) {
   .app-footer { grid-template-columns:1fr 1fr; }
 }
-@media (max-width: 760px) {
-  :root { --sb-w:0px; --hd-h:56px; }
-  [data-testid="stSidebar"] { min-width:0 !important; max-width:0 !important; width:0 !important; }
-  [data-testid="stSidebar"] > div:first-child { padding:0 !important; }
-  [data-testid="stMainBlockContainer"] { padding:calc(var(--hd-h) + .75rem) .75rem 2rem !important; }
-  .sticky-header { top:.35rem; left:.35rem; right:.35rem; min-height:var(--hd-h); }
-  .hd-brand-name { display:none; }
-  .hd-divider, .hd-status { display:none; }
-  .hd-page { margin-left:auto; }
-  .sb-engine-grid { grid-template-columns:1fr 1fr; }
-}
 @media (max-width: 600px) {
   .app-footer { grid-template-columns:1fr; padding:1.4rem; }
   .hero h1 { font-size:2rem; }
@@ -1897,7 +1904,7 @@ st.markdown(f"<style>{UI_CSS}</style>", unsafe_allow_html=True)
 
 
 # ─────────────────────────────────────────────────────────────────────────────
-# MODEL ARCHITECTURES  (unchanged)
+# MODEL ARCHITECTURES
 # ─────────────────────────────────────────────────────────────────────────────
 
 class ConvBlock(nn.Module):
@@ -1975,7 +1982,7 @@ def build_efficientnet_b0(num_classes):
 
 
 # ─────────────────────────────────────────────────────────────────────────────
-# MODEL LOADING  (unchanged)
+# MODEL LOADING
 # ─────────────────────────────────────────────────────────────────────────────
 
 @st.cache_resource
@@ -2029,7 +2036,7 @@ def load_model(model_path):
 
 
 # ─────────────────────────────────────────────────────────────────────────────
-# INFERENCE  (unchanged)
+# INFERENCE
 # ─────────────────────────────────────────────────────────────────────────────
 
 def predict_image(image, model, class_names):
@@ -2229,7 +2236,6 @@ def generate_gradcam_pp(image, model, model_name):
         except Exception: pass
 
 
-# FIX #7: explanation_agreement — clean hook lifecycle
 def explanation_agreement(image, model, model_name):
     if model is None:
         return None
@@ -2298,7 +2304,7 @@ def explanation_agreement(image, model, model_name):
 
 
 # ─────────────────────────────────────────────────────────────────────────────
-# CHARTING  (unchanged)
+# CHARTING
 # ─────────────────────────────────────────────────────────────────────────────
 
 def _dark_fig(w=6, h=2.8):
@@ -2366,7 +2372,7 @@ def plot_uncertainty_history(history):
 
 
 # ─────────────────────────────────────────────────────────────────────────────
-# FIX #5: SESSION STATE — added the missing confirm-* keys
+# SESSION STATE + WEB-APP NAVIGATION
 # ─────────────────────────────────────────────────────────────────────────────
 
 DEFAULTS = {
@@ -2386,15 +2392,30 @@ DEFAULTS = {
     "live_throughput": 0.0,
     "live_last_confidence": 0.0,
     "live_latency_ms": 0.0,
-    # ↓ FIX #5 — newly added to prevent orphan confirmation state
     "confirm_clear": False,
     "confirm_reset": False,
     "confirm_clear_hist": False,
     "settings_confirm_reset": False,
+    # ── Web-app routing state ──
+    "last_nav_snapshot": "Home",
+    "_page_changed": False,
 }
 for k, v in DEFAULTS.items():
     if k not in st.session_state:
         st.session_state[k] = copy.deepcopy(v)
+
+
+def navigate_to(page: str):
+    """
+    Central navigation helper. Updates session state AND URL query params
+    so that browser back/forward + deep linking all work correctly.
+    """
+    st.session_state.nav = page
+    try:
+        st.query_params["page"] = page
+    except Exception:
+        pass
+    st.rerun()
 
 
 def clear_prediction_history():
@@ -2483,6 +2504,32 @@ PAGE_LABELS = {
 
 
 # ─────────────────────────────────────────────────────────────────────────────
+# URL ⇄ SESSION SYNC
+# Reads ?page=... from the URL and reconciles with session state.
+# Enables deep linking + browser back/forward.
+# ─────────────────────────────────────────────────────────────────────────────
+
+try:
+    _qp_page = st.query_params.get("page")
+except Exception:
+    _qp_page = None
+
+if _qp_page and _qp_page in PAGE_LABELS and _qp_page != st.session_state.nav:
+    st.session_state.nav = _qp_page
+
+st.session_state._page_changed = (
+    st.session_state.nav != st.session_state.last_nav_snapshot
+)
+st.session_state.last_nav_snapshot = st.session_state.nav
+
+try:
+    if _qp_page != st.session_state.nav:
+        st.query_params["page"] = st.session_state.nav
+except Exception:
+    pass
+
+
+# ─────────────────────────────────────────────────────────────────────────────
 # LIVE TICKER
 # ─────────────────────────────────────────────────────────────────────────────
 
@@ -2513,7 +2560,7 @@ def render_live_ticker():
 
 
 # ─────────────────────────────────────────────────────────────────────────────
-# FIX #3: STICKY HEADER — base64-encode header HTML to avoid `</script>` breaks
+# STICKY HEADER + WEB-APP SYNC
 # ─────────────────────────────────────────────────────────────────────────────
 
 def render_sticky_header():
@@ -2568,24 +2615,41 @@ def render_sticky_header():
         </div>
     </div>""")
 
-    # Base64-encode the HTML — this completely sidesteps `</script>`,
-    # unescaped quotes, newlines, and Unicode issues in JS string literals.
     header_b64 = base64.b64encode(header_html.encode("utf-8")).decode("ascii")
+
+    page_changed = bool(st.session_state.get("_page_changed", False))
+    scroll_js = "w.scrollTo({top:0, behavior:'auto'});" if page_changed else ""
+    transition_js = (
+        "d.body.classList.add('nl-page-transition');"
+        "setTimeout(()=>d.body.classList.remove('nl-page-transition'), 400);"
+    ) if page_changed else ""
 
     components.html(f"""
     <script>
     (function() {{
         try {{
-            const doc = window.parent.document;
-            let old = doc.getElementById('nl-sticky-header-root');
+            const w = window.parent;
+            const d = w.document;
+
+            // ── 1. Sync document title ──
+            d.title = {json.dumps(nav + " · NeuroLens AI")};
+
+            // ── 2. Scroll to top on page change ──
+            {scroll_js}
+
+            // ── 3. Trigger page fade-in animation on page change ──
+            {transition_js}
+
+            // ── 4. Inject / refresh sticky header ──
+            let old = d.getElementById('nl-sticky-header-root');
             if (old) old.remove();
-            const root = doc.createElement('div');
+            const root = d.createElement('div');
             root.id = 'nl-sticky-header-root';
             const bytes = Uint8Array.from(atob("{header_b64}"), c => c.charCodeAt(0));
             root.innerHTML = new TextDecoder().decode(bytes);
-            doc.body.appendChild(root);
+            d.body.appendChild(root);
         }} catch (e) {{
-            console.error('[NeuroLens] Sticky header inject failed:', e);
+            console.error('[NeuroLens] Header sync failed:', e);
         }}
     }})();
     </script>
@@ -2593,7 +2657,7 @@ def render_sticky_header():
 
 
 # ─────────────────────────────────────────────────────────────────────────────
-# LIVE PROBABILITY BARS  (unchanged)
+# LIVE PROBABILITY BARS
 # ─────────────────────────────────────────────────────────────────────────────
 
 def render_live_probability_animation(result, mc_result=None):
@@ -2719,7 +2783,7 @@ with st.sidebar:
             <span class="sb-brand-pulse"></span>
         </div>
         <div class="sb-brand-text">
-            <div class="sb-brand-name">NeuroLens <span class="sb-brand-ai">AI</span><span class="sb-brand-ver">v3.6.6</span></div>
+            <div class="sb-brand-name">NeuroLens <span class="sb-brand-ai">AI</span><span class="sb-brand-ver">v3.7.0</span></div>
             <div class="sb-brand-sub">Neurodiagnostic Intelligence</div>
         </div>
     </div>"""), unsafe_allow_html=True)
@@ -2788,8 +2852,7 @@ with st.sidebar:
             slug = key.lower().replace("-", "").replace(" ", "_")
 
             if st.button(label, key=f"nav_{slug}", **_stretch()):
-                st.session_state.nav = key
-                st.rerun()
+                navigate_to(key)
 
             if is_active:
                 active_css_parts.append(f"""
@@ -2902,7 +2965,7 @@ with st.sidebar:
                     plt.close(old)
             for k, v in DEFAULTS.items():
                 st.session_state[k] = copy.deepcopy(v)
-            st.rerun()
+            navigate_to("Home")
         if c2.button("Cancel", key="sb_reset_no", **_stretch()):
             st.session_state.confirm_reset = False
 
@@ -2920,6 +2983,11 @@ with st.sidebar:
 
 render_sticky_header()
 nav = st.session_state.nav
+
+# Sanity check: if somehow nav is invalid, fall back to Home.
+if nav not in PAGE_LABELS:
+    nav = "Home"
+    st.session_state.nav = "Home"
 
 
 # ══════════════════════════════════════════════════════════════════════════════
@@ -2944,8 +3012,7 @@ if nav == "Home":
     _l, _c, _r = st.columns([1.8, 1, 1.8])
     with _c:
         if st.button("Run MRI Analysis", type="primary", key="home_cta", **_stretch()):
-            st.session_state.nav = "MRI Analysis"
-            st.rerun()
+            navigate_to("MRI Analysis")
 
     st.markdown(
         "<div style='text-align:center;color:#7ba3d6;font-size:.76rem;margin-top:.5rem;line-height:1.5'>"
@@ -3193,7 +3260,6 @@ elif nav == "MRI Analysis":
                             stages.append("Report")
                             total_stages = len(stages)
 
-                            # FIX #2 — progress bar no longer goes backwards.
                             pre_loop = stages[:-4] if len(stages) > 4 else stages[:0]
                             for i, stage in enumerate(pre_loop):
                                 status.info(f"Processing: {stage}…")
@@ -4117,7 +4183,7 @@ elif nav == "Settings":
                     st.session_state[k] = copy.deepcopy(v)
                 st.session_state.settings_confirm_reset = False
                 st.success("Session cleared.")
-                st.rerun()
+                navigate_to("Home")
             if rc2.button("Cancel", key="settings_confirm_no", **_stretch()):
                 st.session_state.settings_confirm_reset = False
 
