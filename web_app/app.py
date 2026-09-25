@@ -756,7 +756,7 @@ html, body, [data-testid="stAppViewContainer"], [data-testid="stApp"] {
 }
 
 .sb-session {
-  display:flex; align-items:center; gap:.5rem;
+  display:flex; align-items:center; justify-content:center; gap:.5rem;
   min-height:34px;
   padding:.4rem .65rem;
   margin:.05rem .05rem .6rem;
@@ -766,7 +766,7 @@ html, body, [data-testid="stAppViewContainer"], [data-testid="stApp"] {
   color:#a8bcd8;
 }
 .sb-session-txt { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font:600 .68rem Inter,sans-serif; }
-.sb-session-time { margin-left:auto; color:#7ba3d6; font:600 .6rem var(--font-mono); }
+.sb-session-time { color:#7ba3d6; font:600 .6rem var(--font-mono); }
 .sb-session-dot { width:7px; height:7px; border-radius:50%; flex:0 0 auto; }
 
 .sb-engine {
