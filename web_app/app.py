@@ -1,6 +1,6 @@
 # =============================================================================
 # NeuroLens AI — Neurodiagnostic Intelligence Platform
-# Production SaaS Edition v3.6.3 — Vibrant Blue Edition + Premium UI v6.3
+# Production SaaS Edition v3.6.4 — Vibrant Blue Edition + Premium UI v6.4
 # =============================================================================
 
 import warnings
@@ -1742,6 +1742,43 @@ html, body, [data-testid="stAppViewContainer"], [data-testid="stApp"] {
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23f1f5f9' stroke-width='1.9' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='12' cy='12' r='3'/%3E%3Cpath d='M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z'/%3E%3C/svg%3E") !important;
 }
 
+/* ── CLEAR HISTORY (trash icon · amber tint) ── */
+[data-testid="stSidebar"] .st-key-sb_clear button::before {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23fbbf24' stroke-width='1.75' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='3 6 5 6 21 6'/%3E%3Cpath d='M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2'/%3E%3C/svg%3E") !important;
+}
+[data-testid="stSidebar"] .st-key-sb_clear button:hover::before {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23fcd34d' stroke-width='2.1' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='3 6 5 6 21 6'/%3E%3Cpath d='M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2'/%3E%3C/svg%3E") !important;
+  filter: drop-shadow(0 0 6px rgba(251,191,36,.75)) !important;
+}
+[data-testid="stSidebar"] .st-key-sb_clear button:hover {
+  background: linear-gradient(90deg, rgba(245,158,11,0.12), rgba(245,158,11,0.04)) !important;
+  border-color: rgba(245,158,11,0.45) !important;
+  color: #fbbf24 !important;
+  box-shadow: 0 0 20px rgba(245,158,11,0.15) !important;
+}
+[data-testid="stSidebar"] .st-key-sb_clear button:hover p {
+  color: #fbbf24 !important;
+}
+
+/* ── RESET SESSION (refresh icon · red tint) ── */
+[data-testid="stSidebar"] .st-key-sb_reset button::before {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23f87171' stroke-width='1.75' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8'/%3E%3Cpath d='M21 3v5h-5'/%3E%3Cpath d='M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16'/%3E%3Cpath d='M8 16H3v5'/%3E%3C/svg%3E") !important;
+}
+[data-testid="stSidebar"] .st-key-sb_reset button:hover::before {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23fca5a5' stroke-width='2.1' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8'/%3E%3Cpath d='M21 3v5h-5'/%3E%3Cpath d='M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16'/%3E%3Cpath d='M8 16H3v5'/%3E%3C/svg%3E") !important;
+  filter: drop-shadow(0 0 6px rgba(248,113,113,.75)) !important;
+  transform: translateY(-50%) rotate(45deg) !important;
+}
+[data-testid="stSidebar"] .st-key-sb_reset button:hover {
+  background: linear-gradient(90deg, rgba(239,68,68,0.12), rgba(239,68,68,0.04)) !important;
+  border-color: rgba(239,68,68,0.45) !important;
+  color: #f87171 !important;
+  box-shadow: 0 0 20px rgba(239,68,68,0.15) !important;
+}
+[data-testid="stSidebar"] .st-key-sb_reset button:hover p {
+  color: #f87171 !important;
+}
+
 [data-testid="stSidebar"] [class*="st-key-nav_"] button[data-active="true"]::before {
   filter: drop-shadow(0 0 6px rgba(34,211,238,.65));
 }
@@ -2590,7 +2627,7 @@ with st.sidebar:
             <span class="sb-brand-pulse"></span>
         </div>
         <div class="sb-brand-text">
-            <div class="sb-brand-name">NeuroLens <span class="sb-brand-ai">AI</span><span class="sb-brand-ver">v3.6.3</span></div>
+            <div class="sb-brand-name">NeuroLens <span class="sb-brand-ai">AI</span><span class="sb-brand-ver">v3.6.4</span></div>
             <div class="sb-brand-sub">Neurodiagnostic Intelligence</div>
         </div>
     </div>"""), unsafe_allow_html=True)
