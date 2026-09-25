@@ -632,35 +632,27 @@ body.nl-page-transition [data-testid="stMainBlockContainer"] {
 
 /* ═══════════════════════════════════════════════════════════════════════
    SIDEBAR — NATIVE TOGGLE SAFE
-   Never force width:0 on collapse (breaks Streamlit expand). Only set
-   preferred width while expanded; leave collapsed dimensions to Streamlit.
+   Do NOT set width / min-width / max-width on [data-testid="stSidebar"].
+   Streamlit owns collapse via transform + aria-expanded. Only style chrome.
    ═══════════════════════════════════════════════════════════════════════ */
 [data-testid="stSidebar"] {
   background:
     linear-gradient(180deg, rgba(13,37,81,.98) 0%, rgba(6,23,51,.98) 100%),
     radial-gradient(circle at 0% 0%, rgba(34,211,238,.10), transparent 25rem) !important;
-  border-right:1px solid var(--line-strong) !important;
-  box-shadow:inset -1px 0 0 rgba(34,211,238,.08), 4px 0 24px rgba(0,0,0,.20);
+  border-right: 1px solid var(--line-strong) !important;
+  box-shadow: inset -1px 0 0 rgba(34,211,238,.08), 4px 0 24px rgba(0,0,0,.20);
 }
 
-/* Preferred width only while expanded */
-[data-testid="stSidebar"][aria-expanded="true"] {
-  min-width: var(--sb-w) !important;
-  max-width: var(--sb-w) !important;
-}
-
-/* Collapsed: clear chrome only — do NOT force width/transform */
 [data-testid="stSidebar"][aria-expanded="false"] {
   border-right: none !important;
   box-shadow: none !important;
 }
 
 [data-testid="stSidebar"] > div:first-child {
-  width: 100% !important;
   padding: 0 .85rem 1rem !important;
 }
 
-/* Native collapse/expand control always above sticky header */
+/* Collapse/expand control always clickable above sticky header */
 [data-testid="stSidebarCollapsedControl"],
 [data-testid="collapsedControl"],
 button[kind="headerNoPadding"],
@@ -669,7 +661,7 @@ button[data-testid="stBaseButton-headerNoPadding"] {
   position: relative !important;
 }
 
-/* Sticky header shifts left when collapsed, leaves room for toggle */
+/* When JS marks sidebar collapsed, shift sticky header left (leave room for toggle) */
 body.nl-sb-collapsed .sticky-header {
   left: 3.25rem !important;
 }
@@ -971,23 +963,21 @@ body.nl-sb-collapsed .sticky-header {
 [data-testid="stMetricLabel"] { color:#7ba3d6 !important; }
 [data-testid="stMetricValue"] { color:#e2e8f0 !important; }
 
-/* STICKY HEADER
-   Root must NOT use `all: initial` alone in a way that hides children.
-   Header is injected into parent document body via components.html JS.
+/* STICKY HEADER — rendered via st.markdown in main flow (reliable).
+   position:fixed works against the viewport. Root is a normal block.
 */
 #nl-sticky-header-root {
   display: block !important;
   visibility: visible !important;
   opacity: 1 !important;
-  pointer-events: none !important;
-  position: fixed !important;
-  top: 0 !important;
-  left: 0 !important;
-  right: 0 !important;
+  position: relative !important;
   width: 100% !important;
   height: 0 !important;
-  z-index: 99990 !important;
+  margin: 0 !important;
+  padding: 0 !important;
   overflow: visible !important;
+  z-index: 99990 !important;
+  pointer-events: none !important;
 }
 #nl-sticky-header-root * { box-sizing: border-box; }
 #nl-sticky-header-root .sticky-header {
@@ -995,33 +985,33 @@ body.nl-sb-collapsed .sticky-header {
 }
 
 .sticky-header {
-  position:fixed !important;
-  z-index:99990 !important;
-  top:.7rem !important;
-  left:calc(var(--sb-w) + .75rem) !important;
-  right:.75rem !important;
-  min-height:var(--hd-h);
+  position: fixed !important;
+  z-index: 99990 !important;
+  top: 0.7rem !important;
+  left: calc(var(--sb-w) + 0.75rem) !important;
+  right: 0.75rem !important;
+  min-height: var(--hd-h);
   height: auto !important;
-  display:flex !important;
+  display: flex !important;
   visibility: visible !important;
   opacity: 1 !important;
-  align-items:center;
-  gap:.9rem;
-  padding:.55rem 1.05rem;
-  border:1px solid rgba(59,130,246,.42);
-  border-radius:14px;
+  align-items: center;
+  gap: 0.9rem;
+  padding: 0.55rem 1.05rem;
+  border: 1px solid rgba(59,130,246,.42);
+  border-radius: 14px;
   background:
     linear-gradient(90deg,rgba(18,58,111,.94),rgba(10,30,63,.94)),
     rgba(10,30,63,.90);
-  backdrop-filter:blur(22px) saturate(150%);
-  -webkit-backdrop-filter:blur(22px) saturate(150%);
+  backdrop-filter: blur(22px) saturate(150%);
+  -webkit-backdrop-filter: blur(22px) saturate(150%);
   box-shadow:
     0 12px 44px rgba(0,0,0,.35),
     0 0 0 1px rgba(34,211,238,.10),
     inset 0 1px 0 rgba(255,255,255,.06);
-  overflow:hidden;
-  font-family:'Inter',system-ui,sans-serif;
-  transition:left .28s cubic-bezier(.2,.8,.2,1) !important;
+  overflow: hidden;
+  font-family: 'Inter', system-ui, sans-serif;
+  transition: left .28s cubic-bezier(.2,.8,.2,1) !important;
   color: #f1f5f9 !important;
 }
 .sticky-header::before {
@@ -2629,126 +2619,95 @@ def render_sticky_header():
 
     brain_svg = Icons.brain(20, "#22d3ee")
 
+    # Render header via st.markdown in the MAIN document (reliable).
+    # position:fixed CSS keeps it pinned to the viewport.
     header_html = safe_html(f"""
-    <div class="sticky-header">
+    <div id="nl-sticky-header-root">
+      <div class="sticky-header">
         <div class="hd-brand">
-            <div class="hd-brand-icon">
-                {brain_svg}
-                <span class="hd-brand-dot"></span>
-            </div>
-            <div>
-                <div class="hd-brand-name">NeuroLens AI</div>
-                <span class="hd-brand-tag">Neurodiagnostic Intelligence</span>
-            </div>
+          <div class="hd-brand-icon">
+            {brain_svg}
+            <span class="hd-brand-dot"></span>
+          </div>
+          <div>
+            <div class="hd-brand-name">NeuroLens AI</div>
+            <span class="hd-brand-tag">Neurodiagnostic Intelligence</span>
+          </div>
         </div>
         <div class="hd-divider"></div>
         <div class="hd-ticker">
-            <div class="hd-ticker-inner">
-                <span class="hd-live-badge">LIVE</span>
-                {items_html}
-                <span class="hd-tick">Engine: <b>{_escape_html(eng)}</b></span>
-                <span class="hd-tick">Device: <b>{dev_tag}</b></span>
-                {mc_str}
-            </div>
+          <div class="hd-ticker-inner">
+            <span class="hd-live-badge">LIVE</span>
+            {items_html}
+            <span class="hd-tick">Engine: <b>{_escape_html(eng)}</b></span>
+            <span class="hd-tick">Device: <b>{dev_tag}</b></span>
+            {mc_str}
+          </div>
         </div>
         <div class="hd-divider"></div>
         <div class="hd-status {st_cls}">
-            <span class="hd-status-dot"></span>{st_txt}
+          <span class="hd-status-dot"></span>{st_txt}
         </div>
         <div class="hd-page">
-            <span class="hd-page-dot"></span>{_escape_html(nav)}
+          <span class="hd-page-dot"></span>{_escape_html(nav)}
         </div>
-    </div>""")
+      </div>
+    </div>
+    """)
+    st.markdown(header_html, unsafe_allow_html=True)
 
-    header_b64 = base64.b64encode(header_html.encode("utf-8")).decode("ascii")
-
+    # Lightweight JS: title, scroll on page change, sidebar-collapse class for header left offset.
+    # Does NOT inject the header into parent (that breaks under Streamlit iframe sandbox).
     page_changed = bool(st.session_state.get("_page_changed", False))
-    scroll_js = "w.scrollTo({top:0, behavior:'auto'});" if page_changed else ""
+    scroll_js = "window.scrollTo({top:0, behavior:'auto'});" if page_changed else ""
     transition_js = (
-        "d.body.classList.add('nl-page-transition');"
-        "setTimeout(()=>d.body.classList.remove('nl-page-transition'), 400);"
+        "document.body.classList.add('nl-page-transition');"
+        "setTimeout(function(){document.body.classList.remove('nl-page-transition');}, 400);"
     ) if page_changed else ""
 
     components.html(f"""
     <script>
     (function() {{
-        try {{
-            const w = window.parent;
-            const d = w.document;
+      try {{
+        var d = window.parent && window.parent.document ? window.parent.document : document;
+        var w = window.parent || window;
+        d.title = {json.dumps(nav + " · NeuroLens AI")};
+        {scroll_js}
+        {transition_js}
 
-            // ── 1. Sync document title ──
-            d.title = {json.dumps(nav + " · NeuroLens AI")};
-
-            // ── 2. Scroll to top on page change ──
-            {scroll_js}
-
-            // ── 3. Page fade-in animation on page change ──
-            {transition_js}
-
-            // ── 4. Inject / refresh sticky header ──
-            let old = d.getElementById('nl-sticky-header-root');
-            if (old) old.remove();
-            const root = d.createElement('div');
-            root.id = 'nl-sticky-header-root';
-            root.setAttribute('style',
-              'display:block!important;visibility:visible!important;opacity:1!important;' +
-              'pointer-events:none!important;position:fixed!important;top:0;left:0;right:0;' +
-              'width:100%!important;height:0!important;z-index:99990!important;overflow:visible!important;'
-            );
-            const bytes = Uint8Array.from(atob("{header_b64}"), c => c.charCodeAt(0));
-            root.innerHTML = new TextDecoder().decode(bytes);
-            const hdr = root.querySelector('.sticky-header');
-            if (hdr) {{
-              hdr.style.setProperty('display', 'flex', 'important');
-              hdr.style.setProperty('visibility', 'visible', 'important');
-              hdr.style.setProperty('opacity', '1', 'important');
-              hdr.style.setProperty('pointer-events', 'auto', 'important');
-              hdr.style.setProperty('position', 'fixed', 'important');
-              hdr.style.setProperty('z-index', '99990', 'important');
-              hdr.style.setProperty('top', '0.7rem', 'important');
-              hdr.style.setProperty('right', '0.75rem', 'important');
-            }}
-            d.body.appendChild(root);
-
-            // ── 5. Sidebar state watchdog ──
-            // Watches aria-expanded and width so body gets a class when
-            // the sidebar is collapsed — sticky header shifts left to
-            // fill the space instead of leaving a gap.
-            function syncSidebarState() {{
-                const sb = d.querySelector('[data-testid="stSidebar"]');
-                if (!sb) return;
-                let expanded = sb.getAttribute('aria-expanded') !== 'false';
-                if (sb.offsetWidth < 80) expanded = false;
-                d.body.classList.toggle('nl-sb-collapsed', !expanded);
-                const hdr = d.querySelector('#nl-sticky-header-root .sticky-header');
-                if (hdr) {{
-                  hdr.style.setProperty('left', expanded ? 'calc(var(--sb-w, 280px) + 0.75rem)' : '3.25rem', 'important');
-                  hdr.style.setProperty('display', 'flex', 'important');
-                  hdr.style.setProperty('visibility', 'visible', 'important');
-                  hdr.style.setProperty('opacity', '1', 'important');
-                }}
-            }}
-
-            syncSidebarState();
-
-            const sbEl = d.querySelector('[data-testid="stSidebar"]');
-            if (sbEl && !sbEl.__nl_watched) {{
-                sbEl.__nl_watched = true;
-                new MutationObserver(syncSidebarState).observe(sbEl, {{
-                    attributes: true,
-                    attributeFilter: ['aria-expanded', 'style', 'class']
-                }});
-            }}
-
-            if (!w.__nl_sb_poller) {{
-                w.__nl_sb_poller = setInterval(syncSidebarState, 350);
-            }}
-        }} catch (e) {{
-            console.error('[NeuroLens] Header sync failed:', e);
+        function syncSidebarState() {{
+          var sb = d.querySelector('[data-testid="stSidebar"]');
+          if (!sb) return;
+          var expanded = sb.getAttribute('aria-expanded') !== 'false';
+          if (sb.offsetWidth < 80) expanded = false;
+          d.body.classList.toggle('nl-sb-collapsed', !expanded);
+          var hdr = d.querySelector('#nl-sticky-header-root .sticky-header');
+          if (hdr) {{
+            hdr.style.setProperty('left', expanded ? 'calc(var(--sb-w, 280px) + 0.75rem)' : '3.25rem', 'important');
+            hdr.style.setProperty('display', 'flex', 'important');
+            hdr.style.setProperty('visibility', 'visible', 'important');
+            hdr.style.setProperty('opacity', '1', 'important');
+          }}
         }}
+        syncSidebarState();
+        var sbEl = d.querySelector('[data-testid="stSidebar"]');
+        if (sbEl && !sbEl.__nl_watched) {{
+          sbEl.__nl_watched = true;
+          new MutationObserver(syncSidebarState).observe(sbEl, {{
+            attributes: true,
+            attributeFilter: ['aria-expanded', 'style', 'class']
+          }});
+        }}
+        if (!w.__nl_sb_poller) {{
+          w.__nl_sb_poller = setInterval(syncSidebarState, 400);
+        }}
+      }} catch (e) {{
+        console.error('[NeuroLens] header sync:', e);
+      }}
     }})();
     </script>
     """, height=0, scrolling=False)
+
 
 
 # ─────────────────────────────────────────────────────────────────────────────
