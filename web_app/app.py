@@ -1885,7 +1885,7 @@ body.nl-sb-collapsed .sticky-header {
 
 @media (max-width: 1100px) {
   :root { --sb-w:240px; }
-  .sticky-header { left:calc(var(--sb-w) + .6rem); }
+  .sticky-header { left:calc(var(--nl-sb-offset, var(--sb-w)) + .6rem); }
   .hd-ticker { display:none; }
   .app-footer { grid-template-columns:1fr 1fr; }
 }
@@ -2658,51 +2658,45 @@ def render_sticky_header():
             d.body.appendChild(root);
 
             // ── 5. Sidebar state watchdog ──
-            // Watches multiple signals (aria-expanded, offsetWidth, Streamlit
-            // collapse class) so body.nl-sb-collapsed is always accurate
-            // regardless of Streamlit version.
+            // Uses polling + targeted MutationObserver on the sidebar element only.
+            // Re-attaches observer every poll if the sidebar DOM node was swapped
+            // by a Streamlit rerun (identified by node identity, not a sticky flag).
             function syncSidebarState() {{
                 const sb = d.querySelector('[data-testid="stSidebar"]');
                 if (!sb) return;
-                // Check aria-expanded attribute
-                const ariaExpanded = sb.getAttribute('aria-expanded');
-                // Check actual rendered width (most reliable cross-version signal)
-                const sbWidth = sb.getBoundingClientRect().width;
-                // Check Streamlit's own collapse class (varies by version)
+
+                const ariaExpanded  = sb.getAttribute('aria-expanded');
+                const sbWidth       = sb.getBoundingClientRect().width;
                 const hasCollapseClass = sb.classList.contains('st-emotion-cache-collapsed') ||
                                          sb.classList.contains('collapsed');
-                // Collapsed if: aria says false, OR width < 80px, OR has collapse class
                 const isCollapsed = ariaExpanded === 'false' || sbWidth < 80 || hasCollapseClass;
+
                 d.body.classList.toggle('nl-sb-collapsed', isCollapsed);
-                // Update CSS variable with real sidebar width so sticky header aligns exactly
+
+                // Keep CSS variable in sync with real sidebar width
                 if (!isCollapsed && sbWidth > 80) {{
                     d.documentElement.style.setProperty('--nl-sb-offset', sbWidth + 'px');
                 }}
+
+                // Re-attach MutationObserver if sidebar node was replaced by Streamlit
+                if (w.__nl_sb_observed_node !== sb) {{
+                    if (w.__nl_sb_mo) w.__nl_sb_mo.disconnect();
+                    w.__nl_sb_mo = new MutationObserver(syncSidebarState);
+                    w.__nl_sb_mo.observe(sb, {{
+                        attributes: true,
+                        attributeFilter: ['aria-expanded', 'style', 'class'],
+                        subtree: false
+                    }});
+                    w.__nl_sb_observed_node = sb;
+                }}
             }}
 
-            syncSidebarState();
+            // Run after two animation frames so the sidebar has finished painting
+            // its initial width — avoids the first-load position flicker.
+            requestAnimationFrame(() => requestAnimationFrame(syncSidebarState));
 
-            // MutationObserver on sidebar element
-            const sbEl = d.querySelector('[data-testid="stSidebar"]');
-            if (sbEl && !sbEl.__nl_watched) {{
-                sbEl.__nl_watched = true;
-                new MutationObserver(syncSidebarState).observe(sbEl, {{
-                    attributes: true,
-                    attributeFilter: ['aria-expanded', 'style', 'class'],
-                    subtree: false
-                }});
-            }}
-
-            // Also observe body for Streamlit re-renders that swap DOM nodes
-            if (!d.body.__nl_body_watched) {{
-                d.body.__nl_body_watched = true;
-                new MutationObserver(syncSidebarState).observe(d.body, {{
-                    childList: true,
-                    subtree: true
-                }});
-            }}
-
-            // Polling fallback — clears itself once stable
+            // Lightweight poll for subsequent reruns / user toggles.
+            // Only one interval lives across all Streamlit reruns.
             if (!w.__nl_sb_poller) {{
                 w.__nl_sb_poller = setInterval(syncSidebarState, 300);
             }}
@@ -2834,17 +2828,18 @@ with st.sidebar:
         uptime = "—"
 
     brain_large = Icons.brain(22, "#22d3ee")
-    st.markdown(safe_html(f"""
-    <div class="sb-brand">
-        <div class="sb-brand-icon">
-            {brain_large}
-            <span class="sb-brand-pulse"></span>
-        </div>
-        <div class="sb-brand-text">
-            <div class="sb-brand-name">NeuroLens <span class="sb-brand-ai">AI</span><span class="sb-brand-ver">v3.7.1</span></div>
-            <div class="sb-brand-sub">Neurodiagnostic Intelligence</div>
-        </div>
-    </div>"""), unsafe_allow_html=True)
+    _sb_brand_html = (
+        f'<div class="sb-brand">'
+        f'<div class="sb-brand-icon">{brain_large}'
+        f'<span class="sb-brand-pulse"></span></div>'
+        f'<div class="sb-brand-text">'
+        f'<div class="sb-brand-name">NeuroLens '
+        f'<span class="sb-brand-ai">AI</span>'
+        f' <span class="sb-brand-ver">v3.7.1</span></div>'
+        f'<div class="sb-brand-sub">Neurodiagnostic Intelligence</div>'
+        f'</div></div>'
+    )
+    st.markdown(_sb_brand_html, unsafe_allow_html=True)
 
     dot_color = "var(--success-hi)" if engine_ok else "var(--danger-hi)"
     st.markdown(safe_html(f"""
