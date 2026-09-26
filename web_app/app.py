@@ -1,6 +1,6 @@
 # =============================================================================
 # NeuroLens AI — Neurodiagnostic Intelligence Platform
-# Production SaaS Edition v3.9.1 
+# Production SaaS Edition v3.7.1 — Web-App Edition + Sidebar Toggle Fix
 # =============================================================================
 
 import warnings
@@ -39,6 +39,8 @@ warnings.filterwarnings("ignore")
 # SVG ICON LIBRARY
 # ─────────────────────────────────────────────────────────────────────────────
 class Icons:
+    """Inline SVG icons. All accept size and color args."""
+
     @staticmethod
     def _wrap(path_d: str, size=18, color="currentColor",
               viewbox="0 0 24 24", extra="") -> str:
@@ -302,6 +304,15 @@ class Icons:
         )
 
     @staticmethod
+    def percent(size=16, color="currentColor"):
+        return Icons._wrap(
+            '<line x1="19" y1="5" x2="5" y2="19"/>'
+            '<circle cx="6.5" cy="6.5" r="2.5"/>'
+            '<circle cx="17.5" cy="17.5" r="2.5"/>',
+            size, color
+        )
+
+    @staticmethod
     def grid(size=16, color="currentColor"):
         return Icons._wrap(
             '<rect x="3" y="3" width="7" height="7"/>'
@@ -413,15 +424,6 @@ class Icons:
             size, color
         )
 
-    @staticmethod
-    def menu(size=18, color="currentColor"):
-        return Icons._wrap(
-            '<line x1="4" y1="6" x2="20" y2="6"/>'
-            '<line x1="4" y1="12" x2="20" y2="12"/>'
-            '<line x1="4" y1="18" x2="20" y2="18"/>',
-            size, color
-        )
-
 
 # ─────────────────────────────────────────────────────────────────────────────
 # HTML HELPERS
@@ -453,7 +455,7 @@ def _icon_header(svg_svg: str, text: str, level: int = 3) -> str:
     return (
         f"<{tag} style='display:flex;align-items:center;gap:.5rem;"
         f"flex-wrap:wrap;margin:.6rem 0 .6rem'>{svg_svg}"
-        f"<span>{_escape_html(text)}</span></{tag}>"
+        f"<span>{text}</span></{tag}>"
     )
 
 
@@ -552,7 +554,7 @@ st.markdown(
 
 
 # ─────────────────────────────────────────────────────────────────────────────
-# UI CSS
+# UI CSS  (FIXED: sidebar toggle now works — no forced width, aria-expanded aware)
 # ─────────────────────────────────────────────────────────────────────────────
 UI_CSS = r"""
 :root {
@@ -594,7 +596,7 @@ UI_CSS = r"""
   --font-display:'Sora','Inter',system-ui,sans-serif;
   --font-mono:'JetBrains Mono',ui-monospace,SFMono-Regular,Menlo,monospace;
 
-  --sb-w: 336px;
+  --sb-w:280px;
   --hd-h:64px;
 }
 
@@ -619,6 +621,7 @@ html, body, [data-testid="stAppViewContainer"], [data-testid="stApp"] {
   padding:calc(var(--hd-h) + 1.5rem) 1.25rem 2.5rem !important;
 }
 
+/* ── PAGE TRANSITION (only on nav change, driven by JS) ── */
 @keyframes nl-page-enter {
   from { opacity:0; transform:translateY(8px); }
   to   { opacity:1; transform:translateY(0); }
@@ -627,47 +630,36 @@ body.nl-page-transition [data-testid="stMainBlockContainer"] {
   animation: nl-page-enter .34s cubic-bezier(.2,.8,.2,1) both;
 }
 
-/* Native toggle hidden via sr-only pattern */
-[data-testid="stSidebarCollapseButton"],
-[data-testid="stSidebarCollapseButton"] button,
-[data-testid="stSidebarCollapseButton"] > div,
-[data-testid="collapsedControl"],
-[data-testid="collapsedControl"] button,
-[data-testid="collapsedControl"] > div,
-[data-testid="stSidebarNavCollapseButton"],
-[data-testid="stSidebarNavCollapseButton"] button,
-[data-testid="stExpandSidebarButton"],
-[data-testid="stCollapseSidebarButton"],
-[data-testid="stSidebarHeader"] button,
-button[kind="header"],
-button[kind="headerNoPadding"],
-[data-testid="baseButton-header"],
-[data-testid="baseButton-headerNoPadding"] {
-  position: absolute !important;
-  width: 1px !important;
-  height: 1px !important;
-  padding: 0 !important;
-  margin: -1px !important;
-  overflow: hidden !important;
-  clip: rect(0, 0, 0, 0) !important;
-  white-space: nowrap !important;
-  border: 0 !important;
-  opacity: 0 !important;
-  pointer-events: none !important;
-}
-
-/* SIDEBAR */
+/* ═══════════════════════════════════════════════════════════════════════
+   SIDEBAR — TOGGLE FRIENDLY
+   We do NOT force any width/min-width/max-width on the sidebar element
+   itself. Streamlit handles collapse natively via its own DOM classes.
+   We only apply background/border styling, letting the toggle work freely.
+   ═══════════════════════════════════════════════════════════════════════ */
 [data-testid="stSidebar"] {
   background:
     linear-gradient(180deg, rgba(13,37,81,.98) 0%, rgba(6,23,51,.98) 100%),
     radial-gradient(circle at 0% 0%, rgba(34,211,238,.10), transparent 25rem) !important;
   border-right:1px solid var(--line-strong) !important;
   box-shadow:inset -1px 0 0 rgba(34,211,238,.08), 4px 0 24px rgba(0,0,0,.20);
+  transition: width .28s cubic-bezier(.2,.8,.2,1),
+              min-width .28s cubic-bezier(.2,.8,.2,1),
+              transform .28s cubic-bezier(.2,.8,.2,1) !important;
+}
+
+/* When Streamlit collapses the sidebar, remove our border/shadow */
+[data-testid="stSidebar"][aria-expanded="false"],
+body.nl-sb-collapsed [data-testid="stSidebar"] {
+  border-right:none !important;
+  box-shadow:none !important;
 }
 
 [data-testid="stSidebar"] > div:first-child {
-  padding: .75rem .85rem 1rem !important;
+  width:100% !important;
+  padding:0 .85rem 1rem !important;
 }
+
+/* Sticky header shifts left when sidebar is collapsed — handled below .sticky-header def */
 
 [data-testid="stSidebar"] .stButton { width:100% !important; margin:.22rem 0 !important; }
 [data-testid="stSidebar"] .stButton > button {
@@ -732,6 +724,19 @@ button[kind="headerNoPadding"],
     inset 0 1px 0 rgba(255,255,255,.08);
   flex:0 0 auto;
 }
+.sb-brand-icon::after {
+  content:'';
+  position:absolute;
+  inset:-1px;
+  border-radius:12px;
+  padding:1px;
+  background:linear-gradient(135deg,#22d3ee,#10b981);
+  -webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);
+  -webkit-mask-composite:xor;
+  mask-composite:exclude;
+  opacity:.75;
+  pointer-events:none;
+}
 .sb-brand-text { min-width:0; }
 .sb-brand-name {
   color:#f1f5f9;
@@ -789,6 +794,15 @@ button[kind="headerNoPadding"],
   margin-left:auto;
   margin-right:auto;
 }
+.sb-session::before {
+  content:'';
+  position:absolute; inset:0; border-radius:999px;
+  padding:1px;
+  background:linear-gradient(135deg,rgba(34,211,238,.45),rgba(16,185,129,.30),rgba(37,99,235,.45));
+  -webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);
+  -webkit-mask-composite:xor; mask-composite:exclude;
+  pointer-events:none; opacity:.7;
+}
 .sb-session-txt { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font:700 .62rem Inter,sans-serif; color:#cbd5e1; letter-spacing:.02em; }
 .sb-session-time {
   color:#22d3ee; font:700 .58rem var(--font-mono);
@@ -805,6 +819,14 @@ button[kind="headerNoPadding"],
   position:relative;
   background:linear-gradient(145deg,rgba(24,75,138,.92),rgba(6,23,51,.96));
   overflow:hidden;
+}
+.sb-engine::before {
+  content:'';
+  position:absolute; top:-40px; right:-40px;
+  width:120px; height:120px;
+  border-radius:50%;
+  background:radial-gradient(circle,rgba(34,211,238,.20),transparent 70%);
+  pointer-events:none;
 }
 .sb-engine-head,.sb-engine-status,.sb-engine-confbar { display:flex; align-items:center; gap:.45rem; }
 .sb-engine-head { margin-bottom:.6rem; position:relative; }
@@ -936,21 +958,13 @@ button[kind="headerNoPadding"],
 [data-testid="stMetricLabel"] { color:#7ba3d6 !important; }
 [data-testid="stMetricValue"] { color:#e2e8f0 !important; }
 
-iframe[height="1"][scrolling="no"] {
-  height: 0 !important;
-  border: 0 !important;
-  margin: 0 !important;
-  padding: 0 !important;
-  display: block !important;
-}
-
 /* STICKY HEADER */
 #nl-sticky-header-root { all: initial; }
 #nl-sticky-header-root * { box-sizing: border-box; }
 
 .sticky-header {
-  position:fixed; z-index:999990;
-  top:.7rem; left:calc(var(--sb-w) + .75rem); right:.75rem;
+  position:fixed; z-index:999999;
+  top:.7rem; left:calc(var(--nl-sb-offset, var(--sb-w)) + .75rem); right:.75rem;
   min-height:var(--hd-h);
   display:flex; align-items:center; gap:.9rem;
   padding:.55rem 1.05rem;
@@ -967,7 +981,30 @@ iframe[height="1"][scrolling="no"] {
     inset 0 1px 0 rgba(255,255,255,.06);
   overflow:hidden;
   font-family:'Inter',system-ui,sans-serif;
-  transition:left .25s cubic-bezier(.2,.8,.2,1) !important;
+  transition:left .28s cubic-bezier(.2,.8,.2,1) !important;
+}
+/* When sidebar collapses, sticky header shifts to near-left edge */
+body.nl-sb-collapsed .sticky-header {
+  left: 3.75rem !important;
+}
+.sticky-header::before {
+  content:'';
+  position:absolute;
+  inset:0;
+  border-radius:14px;
+  padding:1px;
+  background:linear-gradient(90deg,
+    rgba(59,130,246,.65),
+    rgba(34,211,238,.65),
+    rgba(16,185,129,.55),
+    rgba(59,130,246,.65));
+  -webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);
+  -webkit-mask-composite:xor;
+  mask-composite:exclude;
+  pointer-events:none;
+  opacity:.85;
+  background-size:200% 100%;
+  animation:hd-border-flow 8s linear infinite;
 }
 .sticky-header::after {
   content:'';
@@ -982,49 +1019,15 @@ iframe[height="1"][scrolling="no"] {
   animation:hd-shine 5s linear infinite;
   pointer-events:none;
 }
+@keyframes hd-border-flow {
+  0%   { background-position:0% 50%; }
+  100% { background-position:200% 50%; }
+}
 @keyframes hd-shine {
   0%   { background-position:200% 50%; opacity:.3; }
   50%  { background-position:0% 50%;   opacity:.95; }
   100% { background-position:-200% 50%; opacity:.3; }
 }
-
-/* Custom toggle */
-.hd-sb-toggle {
-  all: unset;
-  box-sizing: border-box !important;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 36px;
-  height: 36px;
-  flex: 0 0 auto;
-  cursor: pointer;
-  border-radius: 10px;
-  color: #22d3ee;
-  background: linear-gradient(135deg, rgba(37,99,235,.55), rgba(13,37,81,.75));
-  border: 1px solid rgba(34,211,238,.55);
-  box-shadow: 0 0 14px rgba(34,211,238,.20), inset 0 1px 0 rgba(255,255,255,.08);
-  transition: all .18s ease;
-  position: relative;
-  z-index: 2;
-}
-.hd-sb-toggle:hover {
-  background: linear-gradient(135deg, #0ea5e9, #22d3ee);
-  border-color: rgba(34,211,238,.85);
-  box-shadow: 0 0 22px rgba(34,211,238,.55), inset 0 1px 0 rgba(255,255,255,.20);
-  transform: translateY(-1px);
-}
-.hd-sb-toggle:active {
-  transform: translateY(0) scale(.96);
-}
-.hd-sb-toggle svg {
-  display: block;
-  width: 18px;
-  height: 18px;
-  stroke: currentColor;
-  fill: none;
-}
-.hd-sb-toggle:hover svg { stroke: #ffffff; }
 
 .hd-brand { display:flex; align-items:center; gap:.65rem; flex:0 0 auto; position:relative; z-index:1; }
 .hd-brand-icon {
@@ -1163,6 +1166,16 @@ iframe[height="1"][scrolling="no"] {
   border:1px solid var(--line);
   border-radius:12px; padding:1rem; height:100%;
   transition:border-color .18s,transform .18s,box-shadow .18s;
+  position:relative;
+  overflow:hidden;
+}
+.metric-card::before {
+  content:'';
+  position:absolute; top:-30px; right:-30px;
+  width:100px; height:100px;
+  border-radius:50%;
+  background:radial-gradient(circle,rgba(34,211,238,.14),transparent 70%);
+  pointer-events:none;
 }
 .metric-card:hover {
   border-color:rgba(34,211,238,.48);
@@ -1234,6 +1247,17 @@ iframe[height="1"][scrolling="no"] {
   background:linear-gradient(180deg,rgba(37,99,235,.10),rgba(16,185,129,.04),transparent);
   border:1px solid rgba(34,211,238,.28);
   margin-bottom:1rem;
+  position:relative;
+  overflow:hidden;
+}
+.upload-hero::before {
+  content:'';
+  position:absolute; top:-60px; left:50%;
+  transform:translateX(-50%);
+  width:240px; height:240px;
+  border-radius:50%;
+  background:radial-gradient(circle,rgba(34,211,238,.16),transparent 70%);
+  pointer-events:none;
 }
 .upload-icon-wrap {
   width:60px; height:60px; margin:0 auto .85rem; display:grid; place-items:center;
@@ -1241,10 +1265,11 @@ iframe[height="1"][scrolling="no"] {
   background:linear-gradient(135deg,rgba(37,99,235,.26),rgba(16,185,129,.18));
   border:1px solid rgba(34,211,238,.42);
   box-shadow:0 0 30px rgba(34,211,238,.28);
+  position:relative;
 }
-.upload-title { color:#e2e8f0; font:700 1.05rem var(--font-display); }
-.upload-sub   { color:#a8bcd8; font:400 .78rem Inter,sans-serif; margin:.3rem 0 .85rem; }
-.upload-formats { display:flex; gap:.4rem; justify-content:center; flex-wrap:wrap; }
+.upload-title { color:#e2e8f0; font:700 1.05rem var(--font-display); position:relative; }
+.upload-sub   { color:#a8bcd8; font:400 .78rem Inter,sans-serif; margin:.3rem 0 .85rem; position:relative; }
+.upload-formats { display:flex; gap:.4rem; justify-content:center; flex-wrap:wrap; position:relative; }
 .fmt-badge {
   padding:.2rem .55rem; border-radius:6px;
   background:linear-gradient(135deg,rgba(37,99,235,.16),rgba(16,185,129,.10));
@@ -1257,6 +1282,7 @@ iframe[height="1"][scrolling="no"] {
 .upload-note {
   margin-top:.95rem; display:inline-flex; align-items:center; gap:.4rem;
   color:#7ba3d6; font:500 .68rem Inter,sans-serif;
+  position:relative;
 }
 .upload-note-dot {
   width:6px; height:6px; border-radius:50%; background:#34d399;
@@ -1268,10 +1294,21 @@ iframe[height="1"][scrolling="no"] {
   padding:1.2rem 1.3rem; border-radius:13px; margin-bottom:.85rem;
   background:linear-gradient(135deg,rgba(37,99,235,.14),rgba(16,185,129,.08),rgba(24,75,138,.85));
   border:1px solid rgba(34,211,238,.38);
+  position:relative;
+  overflow:hidden;
+}
+.diagnostic-panel::before {
+  content:'';
+  position:absolute; top:-40px; right:-40px;
+  width:150px; height:150px;
+  border-radius:50%;
+  background:radial-gradient(circle,rgba(34,211,238,.20),transparent 70%);
+  pointer-events:none;
 }
 .diag-header {
   display:flex; justify-content:space-between; align-items:center;
   margin-bottom:.7rem; gap:.5rem; flex-wrap:wrap;
+  position:relative;
 }
 .diag-label {
   font:700 .62rem Inter,sans-serif;
@@ -1297,10 +1334,11 @@ iframe[height="1"][scrolling="no"] {
   -webkit-background-clip:text;
   -webkit-text-fill-color:transparent;
   background-clip:text;
+  position:relative;
 }
-.diag-confidence { margin-top:.25rem; color:#a8bcd8; font:500 .82rem Inter,sans-serif; }
+.diag-confidence { margin-top:.25rem; color:#a8bcd8; font:500 .82rem Inter,sans-serif; position:relative; }
 
-/* XAI / UNCERTAINTY */
+/* UNCERTAINTY / XAI CARDS */
 .uncertainty-card {
   margin:.85rem 0; padding:1.05rem 1.2rem; border-radius:12px;
   background:linear-gradient(135deg,rgba(139,92,246,.12),rgba(34,211,238,.06));
@@ -1520,6 +1558,21 @@ iframe[height="1"][scrolling="no"] {
   overflow:hidden;
   box-shadow:0 20px 50px rgba(0,0,0,.30);
 }
+.app-footer::before {
+  content:'';
+  position:absolute; inset:0;
+  border-radius:18px;
+  padding:1px;
+  background:linear-gradient(135deg,
+    rgba(37,99,235,.65),
+    rgba(34,211,238,.55),
+    rgba(16,185,129,.65));
+  -webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);
+  -webkit-mask-composite:xor;
+  mask-composite:exclude;
+  pointer-events:none;
+  opacity:.85;
+}
 .app-footer::after {
   content:'';
   position:absolute;
@@ -1537,6 +1590,19 @@ iframe[height="1"][scrolling="no"] {
   background:linear-gradient(135deg,rgba(37,99,235,.35),rgba(16,185,129,.24));
   border:1px solid rgba(34,211,238,.42);
   box-shadow:0 0 26px rgba(34,211,238,.28);
+  position:relative;
+}
+.footer-brand-icon::after {
+  content:'';
+  position:absolute; inset:-1px;
+  border-radius:14px;
+  padding:1px;
+  background:linear-gradient(135deg,#22d3ee,#34d399);
+  -webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);
+  -webkit-mask-composite:xor;
+  mask-composite:exclude;
+  opacity:.65;
+  pointer-events:none;
 }
 .footer-brand-name {
   background:linear-gradient(135deg,#f1f5f9 20%,#22d3ee 70%,#34d399 100%);
@@ -1674,36 +1740,42 @@ iframe[height="1"][scrolling="no"] {
 [data-testid="stSidebar"] .st-key-nav_home button:hover::before {
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23f1f5f9' stroke-width='1.9' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z'/%3E%3Cpolyline points='9 22 9 12 15 12 15 22'/%3E%3C/svg%3E") !important;
 }
+
 [data-testid="stSidebar"] .st-key-nav_mri_analysis button::before {
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23a8bcd8' stroke-width='1.75' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 18h8'/%3E%3Cpath d='M3 22h18'/%3E%3Cpath d='M14 22a7 7 0 1 0 0-14h-1'/%3E%3Cpath d='M9 14h2'/%3E%3Cpath d='M9 12a2 2 0 0 1-2-2V6h6v4a2 2 0 0 1-2 2Z'/%3E%3Cpath d='M12 6V3a1 1 0 0 0-1-1H9a1 1 0 0 0-1 1v3'/%3E%3C/svg%3E") !important;
 }
 [data-testid="stSidebar"] .st-key-nav_mri_analysis button:hover::before {
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23f1f5f9' stroke-width='1.9' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 18h8'/%3E%3Cpath d='M3 22h18'/%3E%3Cpath d='M14 22a7 7 0 1 0 0-14h-1'/%3E%3Cpath d='M9 14h2'/%3E%3Cpath d='M9 12a2 2 0 0 1-2-2V6h6v4a2 2 0 0 1-2 2Z'/%3E%3Cpath d='M12 6V3a1 1 0 0 0-1-1H9a1 1 0 0 0-1 1v3'/%3E%3C/svg%3E") !important;
 }
+
 [data-testid="stSidebar"] .st-key-nav_dashboard button::before {
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23a8bcd8' stroke-width='1.75' stroke-linecap='round' stroke-linejoin='round'%3E%3Cline x1='18' y1='20' x2='18' y2='10'/%3E%3Cline x1='12' y1='20' x2='12' y2='4'/%3E%3Cline x1='6' y1='20' x2='6' y2='14'/%3E%3Cline x1='2' y1='20' x2='22' y2='20'/%3E%3C/svg%3E") !important;
 }
 [data-testid="stSidebar"] .st-key-nav_dashboard button:hover::before {
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23f1f5f9' stroke-width='1.9' stroke-linecap='round' stroke-linejoin='round'%3E%3Cline x1='18' y1='20' x2='18' y2='10'/%3E%3Cline x1='12' y1='20' x2='12' y2='4'/%3E%3Cline x1='6' y1='20' x2='6' y2='14'/%3E%3Cline x1='2' y1='20' x2='22' y2='20'/%3E%3C/svg%3E") !important;
 }
+
 [data-testid="stSidebar"] .st-key-nav_history button::before {
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23a8bcd8' stroke-width='1.75' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8'/%3E%3Cpath d='M3 3v5h5'/%3E%3Cpath d='M12 7v5l4 2'/%3E%3C/svg%3E") !important;
 }
 [data-testid="stSidebar"] .st-key-nav_history button:hover::before {
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23f1f5f9' stroke-width='1.9' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8'/%3E%3Cpath d='M3 3v5h5'/%3E%3Cpath d='M12 7v5l4 2'/%3E%3C/svg%3E") !important;
 }
+
 [data-testid="stSidebar"] .st-key-nav_gradcam button::before {
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23a8bcd8' stroke-width='1.75' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='12' cy='12' r='3'/%3E%3Cpath d='M12 2v3'/%3E%3Cpath d='M12 19v3'/%3E%3Cpath d='m4.22 4.22 2.12 2.12'/%3E%3Cpath d='m17.66 17.66 2.12 2.12'/%3E%3Cpath d='M2 12h3'/%3E%3Cpath d='M19 12h3'/%3E%3Cpath d='m4.22 19.78 2.12-2.12'/%3E%3Cpath d='m17.66 6.34 2.12-2.12'/%3E%3C/svg%3E") !important;
 }
 [data-testid="stSidebar"] .st-key-nav_gradcam button:hover::before {
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23f1f5f9' stroke-width='1.9' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='12' cy='12' r='3'/%3E%3Cpath d='M12 2v3'/%3E%3Cpath d='M12 19v3'/%3E%3Cpath d='m4.22 4.22 2.12 2.12'/%3E%3Cpath d='m17.66 17.66 2.12 2.12'/%3E%3Cpath d='M2 12h3'/%3E%3Cpath d='M19 12h3'/%3E%3Cpath d='m4.22 19.78 2.12-2.12'/%3E%3Cpath d='m17.66 6.34 2.12-2.12'/%3E%3C/svg%3E") !important;
 }
+
 [data-testid="stSidebar"] .st-key-nav_xai_lab button::before {
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23a8bcd8' stroke-width='1.75' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M14.5 2v17.5c0 1.4-1.1 2.5-2.5 2.5h0c-1.4 0-2.5-1.1-2.5-2.5V2'/%3E%3Cpath d='M8.5 2h7'/%3E%3Cpath d='M14.5 16h-5'/%3E%3Cpath d='m8.5 13 5.5 3'/%3E%3C/svg%3E") !important;
 }
 [data-testid="stSidebar"] .st-key-nav_xai_lab button:hover::before {
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23f1f5f9' stroke-width='1.9' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M14.5 2v17.5c0 1.4-1.1 2.5-2.5 2.5h0c-1.4 0-2.5-1.1-2.5-2.5V2'/%3E%3Cpath d='M8.5 2h7'/%3E%3Cpath d='M14.5 16h-5'/%3E%3Cpath d='m8.5 13 5.5 3'/%3E%3C/svg%3E") !important;
 }
+
 [data-testid="stSidebar"] .st-key-nav_settings button::before {
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23a8bcd8' stroke-width='1.75' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='12' cy='12' r='3'/%3E%3Cpath d='M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z'/%3E%3C/svg%3E") !important;
 }
@@ -1711,16 +1783,44 @@ iframe[height="1"][scrolling="no"] {
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23f1f5f9' stroke-width='1.9' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='12' cy='12' r='3'/%3E%3Cpath d='M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z'/%3E%3C/svg%3E") !important;
 }
 
-/* CLEAR / RESET */
+/* CLEAR HISTORY */
 [data-testid="stSidebar"] .st-key-sb_clear button::before {
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23fbbf24' stroke-width='1.75' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='3 6 5 6 21 6'/%3E%3Cpath d='M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2'/%3E%3C/svg%3E") !important;
 }
+[data-testid="stSidebar"] .st-key-sb_clear button:hover::before {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23fcd34d' stroke-width='2.1' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='3 6 5 6 21 6'/%3E%3Cpath d='M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2'/%3E%3C/svg%3E") !important;
+  filter: drop-shadow(0 0 6px rgba(251,191,36,.75)) !important;
+}
+[data-testid="stSidebar"] .st-key-sb_clear button:hover {
+  background: linear-gradient(90deg, rgba(245,158,11,0.12), rgba(245,158,11,0.04)) !important;
+  border-color: rgba(245,158,11,0.45) !important;
+  color: #fbbf24 !important;
+  box-shadow: 0 0 20px rgba(245,158,11,0.15) !important;
+}
+[data-testid="stSidebar"] .st-key-sb_clear button:hover p {
+  color: #fbbf24 !important;
+}
+
+/* RESET SESSION */
 [data-testid="stSidebar"] .st-key-sb_reset button::before {
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23f87171' stroke-width='1.75' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8'/%3E%3Cpath d='M21 3v5h-5'/%3E%3Cpath d='M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16'/%3E%3Cpath d='M8 16H3v5'/%3E%3C/svg%3E") !important;
 }
-[data-testid="stSidebar"] .st-key-sb_clear button:hover p { color: #fbbf24 !important; }
-[data-testid="stSidebar"] .st-key-sb_reset button:hover p { color: #f87171 !important; }
+[data-testid="stSidebar"] .st-key-sb_reset button:hover::before {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23fca5a5' stroke-width='2.1' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8'/%3E%3Cpath d='M21 3v5h-5'/%3E%3Cpath d='M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16'/%3E%3Cpath d='M8 16H3v5'/%3E%3C/svg%3E") !important;
+  filter: drop-shadow(0 0 6px rgba(248,113,113,.75)) !important;
+  transform: translateY(-50%) rotate(45deg) !important;
+}
+[data-testid="stSidebar"] .st-key-sb_reset button:hover {
+  background: linear-gradient(90deg, rgba(239,68,68,0.12), rgba(239,68,68,0.04)) !important;
+  border-color: rgba(239,68,68,0.45) !important;
+  color: #f87171 !important;
+  box-shadow: 0 0 20px rgba(239,68,68,0.15) !important;
+}
+[data-testid="stSidebar"] .st-key-sb_reset button:hover p {
+  color: #f87171 !important;
+}
 
+/* CONFIRM / CANCEL BUTTONS */
 [data-testid="stSidebar"] .st-key-sb_clear_yes button,
 [data-testid="stSidebar"] .st-key-sb_clear_no button,
 [data-testid="stSidebar"] .st-key-sb_reset_yes button,
@@ -1730,6 +1830,7 @@ iframe[height="1"][scrolling="no"] {
   text-align: center !important;
   font-size: .74rem !important;
   font-weight: 700 !important;
+  letter-spacing: .04em !important;
   min-height: 36px !important;
   border-radius: 8px !important;
   transform: none !important;
@@ -1739,17 +1840,33 @@ iframe[height="1"][scrolling="no"] {
 [data-testid="stSidebar"] .st-key-sb_reset_yes button::before,
 [data-testid="stSidebar"] .st-key-sb_reset_no button::before {
   display: none !important;
+  content: none !important;
   background-image: none !important;
 }
+
 [data-testid="stSidebar"] .st-key-sb_clear_yes button {
   background: linear-gradient(135deg, rgba(245,158,11,.22), rgba(245,158,11,.10)) !important;
   border-color: rgba(245,158,11,.55) !important;
   color: #fbbf24 !important;
 }
+[data-testid="stSidebar"] .st-key-sb_clear_yes button:hover {
+  background: linear-gradient(135deg, rgba(245,158,11,.38), rgba(245,158,11,.18)) !important;
+  border-color: rgba(245,158,11,.80) !important;
+  color: #fcd34d !important;
+  box-shadow: 0 0 20px rgba(245,158,11,.35) !important;
+  transform: translateY(-1px) !important;
+}
 [data-testid="stSidebar"] .st-key-sb_reset_yes button {
   background: linear-gradient(135deg, rgba(239,68,68,.22), rgba(239,68,68,.10)) !important;
   border-color: rgba(239,68,68,.55) !important;
   color: #f87171 !important;
+}
+[data-testid="stSidebar"] .st-key-sb_reset_yes button:hover {
+  background: linear-gradient(135deg, rgba(239,68,68,.38), rgba(239,68,68,.18)) !important;
+  border-color: rgba(239,68,68,.80) !important;
+  color: #fca5a5 !important;
+  box-shadow: 0 0 20px rgba(239,68,68,.35) !important;
+  transform: translateY(-1px) !important;
 }
 [data-testid="stSidebar"] .st-key-sb_clear_no button,
 [data-testid="stSidebar"] .st-key-sb_reset_no button {
@@ -1757,8 +1874,18 @@ iframe[height="1"][scrolling="no"] {
   border-color: rgba(148,163,184,.30) !important;
   color: #a8bcd8 !important;
 }
+[data-testid="stSidebar"] .st-key-sb_clear_no button:hover,
+[data-testid="stSidebar"] .st-key-sb_reset_no button:hover {
+  background: linear-gradient(135deg, rgba(148,163,184,.20), rgba(148,163,184,.08)) !important;
+  border-color: rgba(148,163,184,.50) !important;
+  color: #cbd5e1 !important;
+  box-shadow: 0 0 14px rgba(148,163,184,.18) !important;
+  transform: translateY(-1px) !important;
+}
 
 @media (max-width: 1100px) {
+  :root { --sb-w:240px; }
+  .sticky-header { left:calc(var(--sb-w) + .6rem); }
   .hd-ticker { display:none; }
   .app-footer { grid-template-columns:1fr 1fr; }
 }
@@ -1766,17 +1893,27 @@ iframe[height="1"][scrolling="no"] {
   .app-footer { grid-template-columns:1fr 1fr; }
 }
 @media (max-width: 760px) {
+  /* Sidebar width handled via aria-expanded rules above — nothing to force here. */
+  .sticky-header {
+    left: 3.25rem !important;
+    right: .5rem !important;
+    top: .5rem !important;
+  }
   .hd-brand-name { display:none; }
   .hd-divider, .hd-status { display:none; }
   .hd-page { margin-left:auto; }
   .sb-engine-grid { grid-template-columns:1fr 1fr; }
-  .sticky-header { top: .5rem !important; right: .5rem !important; }
 }
 @media (max-width: 600px) {
   .app-footer { grid-template-columns:1fr; padding:1.4rem; }
   .hero h1 { font-size:2rem; }
   .diag-prediction { font-size:1.55rem; }
   .prob-grid { grid-template-columns:repeat(2,1fr); }
+}
+@media (max-width: 560px) {
+  .stButton > button, .stDownloadButton > button { min-height:44px !important; }
+  [data-testid="stMetric"] { padding:.65rem !important; }
+  .stTabs [data-baseweb="tab"] { padding:0 .55rem !important; font-size:.67rem !important; }
 }
 """
 st.markdown(f"<style>{UI_CSS}</style>", unsafe_allow_html=True)
@@ -1948,8 +2085,6 @@ def predict_image(image, model, class_names):
 def mc_dropout_predict(image, model, class_names, n_samples=MC_SAMPLES):
     if model is None:
         return None
-    if n_samples <= 0:
-        return None
 
     def _enable_dropout(m):
         if isinstance(m, (nn.Dropout, nn.Dropout2d)):
@@ -1965,9 +2100,6 @@ def mc_dropout_predict(image, model, class_names, n_samples=MC_SAMPLES):
                 mc_preds.append(F.softmax(model(tensor), dim=1)[0].detach().cpu().numpy())
     finally:
         model.eval()
-
-    if not mc_preds:
-        return None
 
     mc_preds   = np.stack(mc_preds)
     mean_probs = mc_preds.mean(axis=0)
@@ -1988,7 +2120,7 @@ def mc_dropout_predict(image, model, class_names, n_samples=MC_SAMPLES):
 
 
 # ─────────────────────────────────────────────────────────────────────────────
-# GRAD-CAM
+# GRAD-CAM + GRAD-CAM++
 # ─────────────────────────────────────────────────────────────────────────────
 
 def _get_target_layer(model, model_name):
@@ -2020,8 +2152,15 @@ def generate_gradcam(image, model, model_name):
     model.eval()
     activations, gradients = [], []
     tl  = _get_target_layer(model, model_name)
-    fwd = tl.register_forward_hook(lambda m, i, o: activations.append(_hook_output_to_tensor(o)))
-    bwd = tl.register_full_backward_hook(lambda m, gi, go: gradients.append(go[0].detach()))
+
+    def _fwd_hook(m, i, o):
+        activations.append(_hook_output_to_tensor(o))
+
+    def _bwd_hook(m, gi, go):
+        gradients.append(go[0].detach())
+
+    fwd = tl.register_forward_hook(_fwd_hook)
+    bwd = tl.register_full_backward_hook(_bwd_hook)
     fig = None
     try:
         tensor = test_transforms(image).unsqueeze(0).to(DEVICE)
@@ -2062,8 +2201,15 @@ def generate_gradcam_pp(image, model, model_name):
     model.eval()
     activations, gradients = [], []
     tl  = _get_target_layer(model, model_name)
-    fwd = tl.register_forward_hook(lambda m, i, o: activations.append(_hook_output_to_tensor(o)))
-    bwd = tl.register_full_backward_hook(lambda m, gi, go: gradients.append(go[0].detach()))
+
+    def _fwd_hook(m, i, o):
+        activations.append(_hook_output_to_tensor(o))
+
+    def _bwd_hook(m, gi, go):
+        gradients.append(go[0].detach())
+
+    fwd = tl.register_forward_hook(_fwd_hook)
+    bwd = tl.register_full_backward_hook(_bwd_hook)
     fig = None
     try:
         tensor = test_transforms(image).unsqueeze(0).to(DEVICE)
@@ -2122,7 +2268,8 @@ def explanation_agreement(image, model, model_name):
             idx = int(out.argmax(dim=1).item())
             out[0, idx].backward()
         finally:
-            fwd1.remove(); bwd1.remove()
+            fwd1.remove()
+            bwd1.remove()
 
         if not acts_gc or not grds_gc:
             return None
@@ -2141,7 +2288,8 @@ def explanation_agreement(image, model, model_name):
             out2 = model(tensor)
             out2[0, idx].backward()
         finally:
-            fwd2.remove(); bwd2.remove()
+            fwd2.remove()
+            bwd2.remove()
 
         if not acts_pp or not grds_pp:
             return None
@@ -2237,7 +2385,7 @@ def plot_uncertainty_history(history):
 
 
 # ─────────────────────────────────────────────────────────────────────────────
-# SESSION STATE
+# SESSION STATE + WEB-APP NAVIGATION
 # ─────────────────────────────────────────────────────────────────────────────
 
 DEFAULTS = {
@@ -2261,6 +2409,7 @@ DEFAULTS = {
     "confirm_reset": False,
     "confirm_clear_hist": False,
     "settings_confirm_reset": False,
+    # Web-app routing state
     "last_nav_snapshot": "Home",
     "_page_changed": False,
 }
@@ -2270,8 +2419,7 @@ for k, v in DEFAULTS.items():
 
 
 def navigate_to(page: str):
-    if page not in PAGE_LABELS:
-        return
+    """Central navigation helper: session state + URL query params."""
     st.session_state.nav = page
     try:
         st.query_params["page"] = page
@@ -2284,10 +2432,7 @@ def clear_prediction_history():
     for fk in ("gradcam_image", "gradcam_pp_image"):
         old = st.session_state.get(fk)
         if old:
-            try:
-                plt.close(old)
-            except Exception:
-                pass
+            plt.close(old)
     for k in [
         "prediction_history", "last_result", "last_image",
         "gradcam_image", "gradcam_pp_image", "mc_result", "agreement_score",
@@ -2338,22 +2483,22 @@ except Exception as exc:
 
 
 # ─────────────────────────────────────────────────────────────────────────────
-# NAV CONFIG
+# NAV ITEMS CONFIG
 # ─────────────────────────────────────────────────────────────────────────────
 
 NAV_GROUPS = [
     ("Main", [
-        ("Home",         "Home"),
-        ("MRI Analysis", "MRI Analysis"),
-        ("Dashboard",    "Dashboard"),
+        ("Home",         Icons.home(16, "#a8bcd8"),       "Home"),
+        ("MRI Analysis", Icons.microscope(16, "#a8bcd8"), "MRI Analysis"),
+        ("Dashboard",    Icons.chart(16, "#a8bcd8"),      "Dashboard"),
     ]),
     ("Analytics", [
-        ("History",  "History"),
-        ("Grad-CAM", "Grad-CAM"),
-        ("XAI Lab",  "XAI Lab"),
+        ("History",  Icons.history(16, "#a8bcd8"),  "History"),
+        ("Grad-CAM", Icons.heatmap(16, "#a8bcd8"),  "Grad-CAM"),
+        ("XAI Lab",  Icons.lab(16, "#a8bcd8"),      "XAI Lab"),
     ]),
     ("System", [
-        ("Settings", "Settings"),
+        ("Settings", Icons.settings(16, "#a8bcd8"), "Settings"),
     ]),
 ]
 
@@ -2423,7 +2568,7 @@ def render_live_ticker():
 
 
 # ─────────────────────────────────────────────────────────────────────────────
-# STICKY HEADER
+# STICKY HEADER + SIDEBAR WATCHDOG
 # ─────────────────────────────────────────────────────────────────────────────
 
 def render_sticky_header():
@@ -2449,15 +2594,6 @@ def render_sticky_header():
 
     header_html = safe_html(f"""
     <div class="sticky-header">
-        <button id="nl-sb-toggle" class="hd-sb-toggle" aria-label="Toggle sidebar" title="Show / hide sidebar">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none"
-                 stroke="currentColor" stroke-width="2"
-                 stroke-linecap="round" stroke-linejoin="round">
-                <line x1="3"  y1="6"  x2="21" y2="6"/>
-                <line x1="3"  y1="12" x2="21" y2="12"/>
-                <line x1="3"  y1="18" x2="21" y2="18"/>
-            </svg>
-        </button>
         <div class="hd-brand">
             <div class="hd-brand-icon">
                 {brain_svg}
@@ -2503,11 +2639,16 @@ def render_sticky_header():
             const w = window.parent;
             const d = w.document;
 
+            // ── 1. Sync document title ──
             d.title = {json.dumps(nav + " · NeuroLens AI")};
 
+            // ── 2. Scroll to top on page change ──
             {scroll_js}
+
+            // ── 3. Page fade-in animation on page change ──
             {transition_js}
 
+            // ── 4. Inject / refresh sticky header ──
             let old = d.getElementById('nl-sticky-header-root');
             if (old) old.remove();
             const root = d.createElement('div');
@@ -2516,82 +2657,61 @@ def render_sticky_header():
             root.innerHTML = new TextDecoder().decode(bytes);
             d.body.appendChild(root);
 
-            function syncSbWidth() {{
+            // ── 5. Sidebar state watchdog ──
+            // Watches multiple signals (aria-expanded, offsetWidth, Streamlit
+            // collapse class) so body.nl-sb-collapsed is always accurate
+            // regardless of Streamlit version.
+            function syncSidebarState() {{
                 const sb = d.querySelector('[data-testid="stSidebar"]');
                 if (!sb) return;
-                const wd = sb.offsetWidth;
-                d.documentElement.style.setProperty('--sb-w', wd + 'px');
-                d.body.classList.toggle('nl-sb-collapsed', wd < 100);
+                // Check aria-expanded attribute
+                const ariaExpanded = sb.getAttribute('aria-expanded');
+                // Check actual rendered width (most reliable cross-version signal)
+                const sbWidth = sb.getBoundingClientRect().width;
+                // Check Streamlit's own collapse class (varies by version)
+                const hasCollapseClass = sb.classList.contains('st-emotion-cache-collapsed') ||
+                                         sb.classList.contains('collapsed');
+                // Collapsed if: aria says false, OR width < 80px, OR has collapse class
+                const isCollapsed = ariaExpanded === 'false' || sbWidth < 80 || hasCollapseClass;
+                d.body.classList.toggle('nl-sb-collapsed', isCollapsed);
+                // Update CSS variable with real sidebar width so sticky header aligns exactly
+                if (!isCollapsed && sbWidth > 80) {{
+                    d.documentElement.style.setProperty('--nl-sb-offset', sbWidth + 'px');
+                }}
             }}
-            syncSbWidth();
 
+            syncSidebarState();
+
+            // MutationObserver on sidebar element
             const sbEl = d.querySelector('[data-testid="stSidebar"]');
             if (sbEl && !sbEl.__nl_watched) {{
                 sbEl.__nl_watched = true;
-                const mo = new MutationObserver(syncSbWidth);
-                mo.observe(sbEl, {{
+                new MutationObserver(syncSidebarState).observe(sbEl, {{
                     attributes: true,
-                    attributeFilter: ['style', 'class', 'aria-expanded']
+                    attributeFilter: ['aria-expanded', 'style', 'class'],
+                    subtree: false
                 }});
             }}
 
+            // Also observe body for Streamlit re-renders that swap DOM nodes
+            if (!d.body.__nl_body_watched) {{
+                d.body.__nl_body_watched = true;
+                new MutationObserver(syncSidebarState).observe(d.body, {{
+                    childList: true,
+                    subtree: true
+                }});
+            }}
+
+            // Polling fallback — clears itself once stable
             if (!w.__nl_sb_poller) {{
-                w.__nl_sb_poller = setInterval(syncSbWidth, 250);
-            }}
-
-            const toggleBtn = d.getElementById('nl-sb-toggle');
-            if (toggleBtn && !toggleBtn.__bound) {{
-                toggleBtn.__bound = true;
-                toggleBtn.addEventListener('click', function(ev) {{
-                    ev.preventDefault();
-                    ev.stopPropagation();
-
-                    const candidates = [
-                        '[data-testid="stExpandSidebarButton"]',
-                        '[data-testid="stCollapseSidebarButton"]',
-                        '[data-testid="stSidebarHeader"] button',
-                        'button[aria-label*="idebar"]',
-                        'button[data-testid="stSidebarCollapseButton"]',
-                        '[data-testid="stSidebarCollapseButton"] button',
-                        '[data-testid="stSidebarCollapseButton"]',
-                        'button[data-testid="collapsedControl"]',
-                        '[data-testid="collapsedControl"] button',
-                        '[data-testid="collapsedControl"]',
-                        '[data-testid="stSidebarNavCollapseButton"] button',
-                        'button[kind="header"]',
-                        'button[kind="headerNoPadding"]'
-                    ];
-                    for (let sel of candidates) {{
-                        const el = d.querySelector(sel);
-                        if (el) {{
-                            try {{
-                                el.click();
-                                return;
-                            }} catch (err) {{
-                                // continue
-                            }}
-                        }}
-                    }}
-
-                    try {{
-                        const evt = new KeyboardEvent('keydown', {{
-                            key: '[', code: 'BracketLeft',
-                            keyCode: 219, which: 219,
-                            bubbles: true, cancelable: true
-                        }});
-                        d.dispatchEvent(evt);
-                        d.body.dispatchEvent(evt);
-                    }} catch (err) {{
-                        console.warn('[NeuroLens] toggle fallback failed:', err);
-                    }}
-                }});
+                w.__nl_sb_poller = setInterval(syncSidebarState, 300);
             }}
         }} catch (e) {{
             console.error('[NeuroLens] Header sync failed:', e);
         }}
     }})();
     </script>
-    """, height=1, scrolling=False)
+    """, height=0, scrolling=False)
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -2721,7 +2841,7 @@ with st.sidebar:
             <span class="sb-brand-pulse"></span>
         </div>
         <div class="sb-brand-text">
-            <div class="sb-brand-name">NeuroLens <span class="sb-brand-ai">AI</span><span class="sb-brand-ver">v3.9.1</span></div>
+            <div class="sb-brand-name">NeuroLens <span class="sb-brand-ai">AI</span><span class="sb-brand-ver">v3.7.1</span></div>
             <div class="sb-brand-sub">Neurodiagnostic Intelligence</div>
         </div>
     </div>"""), unsafe_allow_html=True)
@@ -2753,6 +2873,7 @@ with st.sidebar:
             font-size: 0.58rem;
             font-weight: 700;
             line-height: 1.4;
+            letter-spacing: 0.02em;
         }}
         """)
 
@@ -2774,6 +2895,7 @@ with st.sidebar:
             font-family: 'JetBrains Mono', monospace;
             font-size: 0.58rem;
             font-weight: 700;
+            line-height: 1.4;
         }}
         """)
 
@@ -2783,7 +2905,7 @@ with st.sidebar:
     active_css_parts = []
     for group_name, items in NAV_GROUPS:
         st.markdown(f'<div class="sb-nav-group">{_escape_html(group_name)}</div>', unsafe_allow_html=True)
-        for label, key in items:
+        for label, icon_svg, key in items:
             is_active = active_nav == key
             slug = key.lower().replace("-", "").replace(" ", "_")
 
@@ -2896,10 +3018,7 @@ with st.sidebar:
             for fk in ("gradcam_image", "gradcam_pp_image"):
                 old = st.session_state.get(fk)
                 if old:
-                    try:
-                        plt.close(old)
-                    except Exception:
-                        pass
+                    plt.close(old)
             for k, v in DEFAULTS.items():
                 st.session_state[k] = copy.deepcopy(v)
             navigate_to("Home")
@@ -3136,10 +3255,7 @@ elif nav == "MRI Analysis":
                 for fk in ("gradcam_image", "gradcam_pp_image"):
                     old = st.session_state.get(fk)
                     if old:
-                        try:
-                            plt.close(old)
-                        except Exception:
-                            pass
+                        plt.close(old)
                 for k in [
                     "last_result", "last_image", "gradcam_image",
                     "gradcam_pp_image", "mc_result", "agreement_score",
@@ -3186,26 +3302,26 @@ elif nav == "MRI Analysis":
                         prog = st.empty()
                         try:
                             total_t0 = time.perf_counter()
-
-                            # Build ordered stage list
-                            stage_list = ["Preprocessing", "Neural Inference", "Probability Calc"]
-                            if run_mc:                 stage_list.append("MC Dropout")
+                            stages = [
+                                "Image Loaded", "Preprocessing", "Normalization",
+                                "Tensor Prep", "Neural Inference", "Probability Calc",
+                            ]
+                            if run_mc:
+                                stages.append("MC Dropout")
                             if run_xai:
-                                stage_list.append("Grad-CAM")
-                                stage_list.append("Grad-CAM++")
-                            if run_agree and run_xai:  stage_list.append("Agreement Score")
-                            stage_list.append("Report")
-                            total_stages = len(stage_list)
+                                stages += ["Grad-CAM", "Grad-CAM++"]
+                            if run_agree and run_xai:
+                                stages.append("Agreement Score")
+                            stages.append("Report")
+                            total_stages = len(stages)
 
-                            # FIX: use a mutable container instead of `nonlocal`
-                            _idx_box = [0]
+                            pre_loop = stages[:-4] if len(stages) > 4 else stages[:0]
+                            for i, stage in enumerate(pre_loop):
+                                status.info(f"Processing: {stage}…")
+                                prog.progress((i + 1) / total_stages)
 
-                            def _stage(label):
-                                status.info(f"Processing: {label}…")
-                                prog.progress(min((_idx_box[0] + 1) / total_stages, 1.0))
-                                _idx_box[0] += 1
+                            step_off = len(pre_loop)
 
-                            _stage("Preprocessing")
                             log_activity("MRI uploaded; preprocessing started", "info")
                             (predicted_class, confidence, probability_dict,
                              preprocessing_ms, inference_ms) = predict_image(
@@ -3215,12 +3331,12 @@ elif nav == "MRI Analysis":
                                 f"Inference complete: {predicted_class} ({confidence:.1f}%)",
                                 "success",
                             )
-                            _stage("Neural Inference")
-                            _stage("Probability Calc")
 
                             mc_result = None
                             if run_mc:
-                                _stage("MC Dropout")
+                                status.info("Processing: MC Dropout…")
+                                step_off += 1
+                                prog.progress(step_off / total_stages)
                                 try:
                                     mc_result = mc_dropout_predict(image, model, class_names, MC_SAMPLES)
                                     if mc_result:
@@ -3234,7 +3350,9 @@ elif nav == "MRI Analysis":
                             gradcam_fig = gradcam_ms = None
                             gradcam_pp_fig = gradcam_pp_ms = None
                             if run_xai:
-                                _stage("Grad-CAM")
+                                status.info("Processing: Grad-CAM…")
+                                step_off += 1
+                                prog.progress(step_off / total_stages)
                                 try:
                                     t_gc = time.perf_counter()
                                     gradcam_fig = generate_gradcam(image, model, model_name)
@@ -3243,7 +3361,9 @@ elif nav == "MRI Analysis":
                                 except Exception:
                                     log_activity("Grad-CAM failed", "warn")
 
-                                _stage("Grad-CAM++")
+                                status.info("Processing: Grad-CAM++…")
+                                step_off += 1
+                                prog.progress(step_off / total_stages)
                                 try:
                                     t_pp = time.perf_counter()
                                     gradcam_pp_fig = generate_gradcam_pp(image, model, model_name)
@@ -3254,7 +3374,9 @@ elif nav == "MRI Analysis":
 
                             agree_score = None
                             if run_agree and run_xai:
-                                _stage("Agreement Score")
+                                status.info("Processing: Agreement Score…")
+                                step_off += 1
+                                prog.progress(step_off / total_stages)
                                 try:
                                     agree_score = explanation_agreement(image, model, model_name)
                                     if agree_score is not None:
@@ -3262,10 +3384,9 @@ elif nav == "MRI Analysis":
                                 except Exception:
                                     log_activity("Agreement score failed", "warn")
 
-                            _stage("Report")
-                            prog.progress(1.0)
-
                             total_ms = (time.perf_counter() - total_t0) * 1000
+                            status.info("Building report…")
+                            prog.progress(1.0)
 
                             result = {
                                 "prediction": predicted_class,
@@ -3290,10 +3411,7 @@ elif nav == "MRI Analysis":
                                            ("gradcam_pp_image", gradcam_pp_fig)]:
                                 old = st.session_state.get(fk)
                                 if old:
-                                    try:
-                                        plt.close(old)
-                                    except Exception:
-                                        pass
+                                    plt.close(old)
                                 st.session_state[fk] = nf
 
                             st.session_state.last_result = result
@@ -3444,6 +3562,16 @@ elif nav == "MRI Analysis":
                     if st.session_state.gradcam_pp_image:
                         st.pyplot(st.session_state.gradcam_pp_image, **_stretch_pyplot())
                         st.caption("Second-order gradients · α=0.46")
+
+                st.markdown(safe_html("""
+                <div class="xai-card">
+                    <div class="xai-title">About These Visualizations</div>
+                    <div class="xai-text">
+                        Highlighted regions represent image areas that contributed to the model's classification.
+                        Grad-CAM uses weighted class activations; Grad-CAM++ uses second-order gradients for sharper saliency.
+                        These visualizations explain the <em>model's</em> decision, not ground-truth anatomy.
+                    </div>
+                </div>"""), unsafe_allow_html=True)
 
             gc_buf = pp_buf = None
             if st.session_state.gradcam_image:
@@ -3857,6 +3985,12 @@ elif nav == "Grad-CAM":
             if st.session_state.gradcam_pp_image:
                 st.pyplot(st.session_state.gradcam_pp_image, **_stretch_pyplot())
 
+        st.markdown(
+            "<div style='font-size:.74rem;color:#7ba3d6;margin:.55rem 0'>"
+            "Heatmap influence: Low (dark) ░░░▒▒▒████ High (bright)</div>",
+            unsafe_allow_html=True,
+        )
+
         agree = st.session_state.agreement_score
         if agree is not None:
             a_color = "#34d399" if agree >= 0.7 else "#f59e0b" if agree >= 0.5 else "#ef4444"
@@ -3865,13 +3999,23 @@ elif nav == "Grad-CAM":
             <div class="xai-card">
                 <div class="xai-title">{Icons.eye(12, "#22d3ee")} Explanation Agreement Score</div>
                 <div style="display:flex;justify-content:space-between;align-items:center;gap:1rem;flex-wrap:wrap">
-                    <div class="xai-text">Correlation between Grad-CAM and Grad-CAM++ attention regions.</div>
-                    <div style="text-align:right;min-width:85px">
+                    <div class="xai-text">Correlation between Grad-CAM and Grad-CAM++ attention regions.<br>High scores (&gt;0.70) indicate consistent heatmaps.</div>
+                    <div style="text-align:right;min-width:85px;margin-left:1rem">
                         <div style="font-family:var(--font-display);font-size:1.45rem;font-weight:800;color:{a_color};letter-spacing:-.02em">{agree:.3f}</div>
                         <div style="font-size:.66rem;color:{a_color};font-weight:700">{a_label}</div>
                     </div>
                 </div>
             </div>"""), unsafe_allow_html=True)
+
+        st.markdown(safe_html("""
+        <div class="xai-card">
+            <div class="xai-title">About These Visualizations</div>
+            <div class="xai-text">
+                <b>Grad-CAM</b> computes weighted class activation maps from the last convolutional layer's gradients.
+                <b>Grad-CAM++</b> uses second-order gradients for sharper saliency localization.
+                Both explain the model's decision, not ground-truth anatomy.
+            </div>
+        </div>"""), unsafe_allow_html=True)
 
         if st.session_state.last_result:
             res = st.session_state.last_result
@@ -4089,10 +4233,7 @@ elif nav == "Settings":
                 for fk in ("gradcam_image", "gradcam_pp_image"):
                     old = st.session_state.get(fk)
                     if old:
-                        try:
-                            plt.close(old)
-                        except Exception:
-                            pass
+                        plt.close(old)
                 for k, v in DEFAULTS.items():
                     st.session_state[k] = copy.deepcopy(v)
                 st.session_state.settings_confirm_reset = False
