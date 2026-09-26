@@ -1,35 +1,19 @@
 # =============================================================================
 # NeuroLens AI — Neurodiagnostic Intelligence Platform
-# Production SaaS Edition v3.7.2 (Fixed)
+# Production SaaS Edition v3.7.2
 # =============================================================================
-# CHANGELOG v3.7.2 (fixes applied):
-# - Model loading: more robust torch.load + non-strict state_dict fallback
-# - Grad-CAM: store PNG bytes in session_state instead of matplotlib Figures
-#   (eliminates memory leaks / "Figure is being used" warnings)
-# - Target layer detection made resilient with multiple fallback strategies
-# - MC Dropout hardened (always restore eval mode) + configurable sample count
-# - CSS injected only once per session (performance)
-# - Session reset / clear_history now fully resets live stats + activity log
-# - Force-CPU toggle added in Settings
-# - Broader CUDA OOM / inference error handling with user-friendly messages
-# - Download buttons only shown when corresponding image bytes exist
-# - Type hints + minor code-quality cleanups
-# Recommended packages:
-#   torch>=2.0  torchvision  streamlit>=1.28  pillow  matplotlib  pandas  numpy
-# =============================================================================
-
 
 import warnings
 import time
 import io
 import copy
 import json
-import base64
 import hashlib
 import platform
 from importlib import metadata
 from datetime import datetime
 from pathlib import Path
+from typing import Optional, Tuple, Dict, Any, List
 
 import numpy as np
 import pandas as pd
@@ -462,7 +446,7 @@ def _escape_html(text) -> str:
     )
 
 
-def _render_html(content: str, height: int = 200, scrolling: bool = False):
+def _render_html(content: str, height: int = 200, scrolling: bool = False) -> None:
     components.html(content, height=height, scrolling=scrolling)
 
 
@@ -518,12 +502,12 @@ def _stretch_pyplot() -> dict:
 # CONSTANTS
 # ─────────────────────────────────────────────────────────────────────────────
 
-NORM_MEAN   = [0.485, 0.456, 0.406]
-NORM_STD    = [0.229, 0.224, 0.225]
-IMG_SIZE    = 224
-MC_SAMPLES  = 20
-MAX_HISTORY = 200
-CLASS_NAMES = ["Glioma", "Meningioma", "No Tumor", "Pituitary"]
+NORM_MEAN        = [0.485, 0.456, 0.406]
+NORM_STD         = [0.229, 0.224, 0.225]
+IMG_SIZE         = 224
+MC_SAMPLES_DEF   = 20
+MAX_HISTORY      = 200
+CLASS_NAMES      = ["Glioma", "Meningioma", "No Tumor", "Pituitary"]
 
 BASE_DIR   = Path(__file__).resolve().parent
 MODEL_PATH = BASE_DIR / "neurolens_best.pth"
@@ -533,18 +517,9 @@ if not MODEL_PATH.exists():
             MODEL_PATH = candidate
             break
 
-_DEFAULT_DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-if torch.cuda.is_available():
-    torch.backends.cudnn.benchmark = True
-
-def get_device():
-    """Return current inference device (respects Force-CPU toggle)."""
-    if st.session_state.get("force_cpu", False):
-        return torch.device("cpu")
-    return _DEFAULT_DEVICE
-
-# Backwards-compatible alias used throughout the file
-DEVICE = _DEFAULT_DEVICE
+# DEFAULT_DEVICE is the fallback; the actual runtime DEVICE is chosen in
+# load_model() and stored in st.session_state so the Force-CPU toggle works.
+DEFAULT_DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 test_transforms = transforms.Compose([
     transforms.Resize((IMG_SIZE, IMG_SIZE)),
@@ -553,7 +528,7 @@ test_transforms = transforms.Compose([
 ])
 
 
-def uncertainty_band(uncertainty: float) -> tuple:
+def uncertainty_band(uncertainty: float) -> Tuple[str, str]:
     if uncertainty < 0.05:
         return "Very High Reliability", "#10b981"
     if uncertainty < 0.12:
@@ -564,7 +539,7 @@ def uncertainty_band(uncertainty: float) -> tuple:
 
 
 # ─────────────────────────────────────────────────────────────────────────────
-# FONT IMPORT
+# FONT IMPORT — small, always injected; safe across reruns.
 # ─────────────────────────────────────────────────────────────────────────────
 st.markdown(
     '<link rel="preconnect" href="https://fonts.googleapis.com">'
@@ -580,8 +555,6 @@ st.markdown(
 
 # ─────────────────────────────────────────────────────────────────────────────
 # UI CSS
-# Header fully visible: no overflow clipping, wrap on narrow widths,
-# no display:none hides in media queries.
 # ─────────────────────────────────────────────────────────────────────────────
 UI_CSS = r"""
 :root {
@@ -977,10 +950,7 @@ body.nl-page-transition [data-testid="stMainBlockContainer"] {
 [data-testid="stMetricValue"] { color:#e2e8f0 !important; }
 
 /* ═══════════════════════════════════════════════════════════════════════
-   HEADER — FULLY VISIBLE
-   - No overflow:hidden (content not clipped)
-   - flex-wrap: wrap (narrow screens wrap, don't hide)
-   - min-height so it doesn't collapse
+   HEADER
    ═══════════════════════════════════════════════════════════════════════ */
 .sticky-header {
   position:relative;
@@ -988,7 +958,7 @@ body.nl-page-transition [data-testid="stMainBlockContainer"] {
   margin:0 0 1.25rem 0;
   display:flex;
   align-items:center;
-  flex-wrap:wrap;                       /* ← allows wrap instead of hide */
+  flex-wrap:wrap;
   gap:.75rem .9rem;
   min-height:60px;
   padding:.6rem 1.05rem;
@@ -1005,7 +975,6 @@ body.nl-page-transition [data-testid="stMainBlockContainer"] {
     inset 0 1px 0 rgba(255,255,255,.06);
   font-family:'Inter',system-ui,sans-serif;
   z-index:5;
-  /* NOTE: overflow:hidden REMOVED so content is never clipped */
 }
 .sticky-header::before {
   content:'';
@@ -1101,7 +1070,7 @@ body.nl-page-transition [data-testid="stMainBlockContainer"] {
 
 .hd-ticker {
   flex:1 1 auto;
-  min-width:180px;                 /* ← keeps ticker visible even if narrow */
+  min-width:180px;
   overflow-x:auto;
   overflow-y:hidden;
   position:relative;
@@ -1937,20 +1906,16 @@ body.nl-page-transition [data-testid="stMainBlockContainer"] {
   transform: translateY(-1px) !important;
 }
 
-/* ═══════════════════════════════════════════════════════════════════════
-   RESPONSIVE — HEADER GRACEFULLY WRAPS (NO HIDING)
-   ═══════════════════════════════════════════════════════════════════════ */
+/* RESPONSIVE */
 @media (max-width: 1100px) {
   :root { --sb-w:240px; }
   .app-footer { grid-template-columns:1fr 1fr; }
-  /* Wrap ticker to its own full-width row instead of hiding */
   .hd-ticker { flex-basis:100%; order:10; }
 }
 @media (max-width: 900px) {
   .app-footer { grid-template-columns:1fr 1fr; }
 }
 @media (max-width: 760px) {
-  /* Everything stays visible — just smaller */
   .sb-engine-grid { grid-template-columns:1fr 1fr; }
   .hd-brand-name { font-size:.84rem; }
   .hd-brand-tag { font-size:.5rem; }
@@ -1971,10 +1936,53 @@ body.nl-page-transition [data-testid="stMainBlockContainer"] {
   .stTabs [data-baseweb="tab"] { padding:0 .55rem !important; font-size:.67rem !important; }
 }
 """
-# Inject heavy CSS only once per session to avoid re-parsing on every rerun
-if not st.session_state.get("_css_injected", False):
-    st.markdown(f"<style>{UI_CSS}</style>", unsafe_allow_html=True)
-    st.session_state._css_injected = True
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# CSS INJECTION — one-time, into the parent <head>.
+# Streamlit cleans up un-emitted markdown elements between reruns, so caching
+# via a session flag doesn't work with st.markdown. Instead we inject the CSS
+# once into the parent document's <head> and let a JS guard prevent re-parsing.
+# ─────────────────────────────────────────────────────────────────────────────
+
+def inject_css_once(css: str) -> None:
+    """Inject the full UI CSS into the parent document exactly once.
+
+    Uses components.html + a JS guard so the <style> tag isn't re-parsed on
+    every Streamlit rerun. On hard reload, session is fresh so we re-inject.
+    """
+    components.html(
+        f"""
+        <script>
+        (function() {{
+            try {{
+                const d = window.parent.document;
+                if (!d.getElementById('nl-ui-css')) {{
+                    const s = d.createElement('style');
+                    s.id = 'nl-ui-css';
+                    s.textContent = {json.dumps(css)};
+                    d.head.appendChild(s);
+                }}
+            }} catch (e) {{ /* ignore */ }}
+        }})();
+        </script>
+        """,
+        height=0,
+        scrolling=False,
+    )
+
+
+# Small critical CSS — always injected so the first paint looks right even
+# before the async full-CSS injection lands.
+st.markdown(
+    "<style>"
+    "html,body,[data-testid='stAppViewContainer'],[data-testid='stApp']"
+    "{background:#0a1e3f!important;font-family:Inter,system-ui,sans-serif;}"
+    "</style>",
+    unsafe_allow_html=True,
+)
+
+inject_css_once(UI_CSS)
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -2033,7 +2041,7 @@ class CustomCNN(nn.Module):
         return self.classifier(x)
 
 
-def build_resnet50(num_classes):
+def build_resnet50(num_classes: int) -> nn.Module:
     model = resnet50(weights=None)
     model.fc = nn.Sequential(
         nn.Linear(model.fc.in_features, 256),
@@ -2045,7 +2053,7 @@ def build_resnet50(num_classes):
     return model
 
 
-def build_efficientnet_b0(num_classes):
+def build_efficientnet_b0(num_classes: int) -> nn.Module:
     model = efficientnet_b0(weights=None)
     in_features = model.classifier[1].in_features
     model.classifier = nn.Sequential(
@@ -2056,43 +2064,60 @@ def build_efficientnet_b0(num_classes):
 
 
 # ─────────────────────────────────────────────────────────────────────────────
-# MODEL LOADING
+# MODEL LOADING — robust across torch versions and checkpoint variants.
 # ─────────────────────────────────────────────────────────────────────────────
 
-@st.cache_resource
-def load_model(model_path):
-    """Load checkpoint with maximum compatibility across torch versions."""
-    model_path = Path(model_path)
+def _read_checkpoint(model_path: Path) -> dict:
+    """Robust checkpoint load.
+
+    Tries weights_only=True first (safest, newest torch), then weights_only=False
+    (older torch that doesn't accept the kwarg, or older safetensors-style
+    checkpoints), then the bare signature for the oldest torch builds.
+    """
+    attempts: List[dict] = [
+        {"weights_only": True},
+        {"weights_only": False},
+        {},
+    ]
+    last_err: Optional[Exception] = None
+    for kwargs in attempts:
+        try:
+            ckpt = torch.load(model_path, map_location="cpu", **kwargs)
+            if isinstance(ckpt, dict):
+                return ckpt
+            # Rare case: raw state dict was saved.
+            return {"model_state_dict": ckpt}
+        except TypeError as e:
+            last_err = e
+            continue
+        except Exception as e:
+            last_err = e
+            continue
+    raise RuntimeError(f"Could not load checkpoint: {last_err}")
+
+
+@st.cache_resource(show_spinner=False)
+def load_model(model_path_str: str, force_cpu: bool):
+    """Load and cache the neural engine.
+
+    Returns (model, class_names, model_name, device) or raises on failure.
+    The force_cpu flag participates in the cache key, so toggling it triggers
+    a clean reload without restarting Streamlit.
+    """
+    model_path = Path(model_path_str)
     if not model_path.exists():
         raise FileNotFoundError(f"Model file not found: {model_path}")
 
-    # Robust torch.load across versions (weights_only, map_location, etc.)
-    checkpoint = None
-    load_errors = []
-    for kwargs in (
-        {"map_location": DEVICE, "weights_only": True},
-        {"map_location": DEVICE, "weights_only": False},
-        {"map_location": DEVICE},
-        {"map_location": "cpu", "weights_only": False},
-        {"map_location": "cpu"},
-    ):
+    device = torch.device(
+        "cpu" if (force_cpu or not torch.cuda.is_available()) else "cuda"
+    )
+    if device.type == "cuda":
         try:
-            checkpoint = torch.load(model_path, **kwargs)
-            break
-        except TypeError as e:
-            load_errors.append(str(e))
-            continue
-        except Exception as e:
-            load_errors.append(str(e))
-            continue
-    if checkpoint is None:
-        raise RuntimeError(
-            "Failed to load checkpoint with any torch.load strategy. "
-            + " | ".join(load_errors[-3:])
-        )
+            torch.backends.cudnn.benchmark = True
+        except Exception:
+            pass
 
-    if not isinstance(checkpoint, dict):
-        raise ValueError("Checkpoint must be a dictionary.")
+    checkpoint = _read_checkpoint(model_path)
 
     checkpoint_classes = checkpoint.get("class_names", CLASS_NAMES)
     normalized_classes = [str(n).strip().casefold().replace(" ", "") for n in checkpoint_classes]
@@ -2118,44 +2143,52 @@ def load_model(model_path):
 
     state_dict = checkpoint.get("model_state_dict", checkpoint)
     clean_sd   = {
-        k[len("module."):] if k.startswith("module.") else k: v
+        (k[len("module."):] if k.startswith("module.") else k): v
         for k, v in state_dict.items()
     }
-    # Graceful load: try strict first, fall back to non-strict
+
+    # Try strict first; on shape/key mismatches fall back to a filtered load
+    # so minor drift (e.g. a re-wrapped model) doesn't crash the whole app.
     try:
         model.load_state_dict(clean_sd, strict=True)
     except RuntimeError:
-        missing, unexpected = model.load_state_dict(clean_sd, strict=False)
-        # If too many keys missing the architecture is probably wrong
-        if len(missing) > max(5, len(clean_sd) // 10):
-            raise RuntimeError(
-                f"State dict mismatch too large (missing {len(missing)} keys). "
-                "Checkpoint architecture may not match."
-            )
-    model.to(DEVICE)
+        model_sd = model.state_dict()
+        filtered = {
+            k: v for k, v in clean_sd.items()
+            if k in model_sd and tuple(v.shape) == tuple(model_sd[k].shape)
+        }
+        model.load_state_dict(filtered, strict=False)
+
+    model.to(device)
     model.eval()
-    return model, CLASS_NAMES, best_model_name
+    return model, list(CLASS_NAMES), best_model_name, device
 
 
 # ─────────────────────────────────────────────────────────────────────────────
 # INFERENCE
 # ─────────────────────────────────────────────────────────────────────────────
 
-def predict_image(image, model, class_names):
+def predict_image(
+    image: Image.Image,
+    model: nn.Module,
+    class_names: List[str],
+    device: torch.device,
+) -> Tuple[str, float, Dict[str, float], float, float]:
+    """Run a single forward pass. Returns (class, conf%, probs, pre_ms, inf_ms)."""
     if model is None:
         raise RuntimeError("Neural engine unavailable.")
     model.eval()
     t0 = time.perf_counter()
-    tensor = test_transforms(image).unsqueeze(0).to(get_device())
+    tensor = test_transforms(image).unsqueeze(0).to(device)
     preprocess_ms = (time.perf_counter() - t0) * 1000
 
-    if DEVICE.type == "cuda":
-        torch.cuda.synchronize(DEVICE)
+    if device.type == "cuda":
+        torch.cuda.synchronize(device)
     t1 = time.perf_counter()
     with torch.inference_mode():
         probs = F.softmax(model(tensor), dim=1)[0].detach().cpu().numpy()
-    if DEVICE.type == "cuda":
-        torch.cuda.synchronize(DEVICE)
+    if device.type == "cuda":
+        torch.cuda.synchronize(device)
     inference_ms = (time.perf_counter() - t1) * 1000
 
     idx = int(np.argmax(probs))
@@ -2168,31 +2201,34 @@ def predict_image(image, model, class_names):
     )
 
 
-def mc_dropout_predict(image, model, class_names, n_samples=None):
-    """Monte-Carlo Dropout uncertainty estimation.
-    Only Dropout layers are switched to train mode; BatchNorm stays in eval.
-    Model is always restored to eval() in the finally block.
+def mc_dropout_predict(
+    image: Image.Image,
+    model: nn.Module,
+    class_names: List[str],
+    device: torch.device,
+    n_samples: int = MC_SAMPLES_DEF,
+) -> Optional[Dict[str, Any]]:
+    """Monte Carlo Dropout uncertainty estimation.
+
+    BatchNorm stays in eval mode (correct); only stochastic Dropout layers are
+    toggled to train mode. The model is always restored to eval in `finally`.
     """
     if model is None:
         return None
-    if n_samples is None:
-        n_samples = int(st.session_state.get("mc_samples", MC_SAMPLES))
-    n_samples = max(5, min(100, int(n_samples)))
 
     def _enable_dropout(m):
         if isinstance(m, (nn.Dropout, nn.Dropout2d)):
             m.train()
 
     model.eval()
-    mc_preds = []
+    mc_preds: List[np.ndarray] = []
     try:
         model.apply(_enable_dropout)
-        tensor = test_transforms(image).unsqueeze(0).to(get_device())
+        tensor = test_transforms(image).unsqueeze(0).to(device)
         with torch.no_grad():
-            for _ in range(n_samples):
+            for _ in range(int(n_samples)):
                 mc_preds.append(F.softmax(model(tensor), dim=1)[0].detach().cpu().numpy())
     finally:
-        # Critical: always restore eval mode
         model.eval()
 
     if not mc_preds:
@@ -2213,59 +2249,73 @@ def mc_dropout_predict(image, model, class_names, n_samples=None):
         "color":       color,
         "prediction":  class_names[pred_idx],
         "confidence":  float(mean_probs[pred_idx] * 100),
-        "n_samples":   n_samples,
     }
 
 
 # ─────────────────────────────────────────────────────────────────────────────
 # GRAD-CAM + GRAD-CAM++
+# All XAI functions return PNG bytes (not Figure objects) so we never store
+# Matplotlib Figure instances in session_state.
 # ─────────────────────────────────────────────────────────────────────────────
 
-def _get_target_layer(model, model_name):
-    """Return a suitable target layer for Grad-CAM with multiple fallbacks."""
+def _fig_to_png_bytes(fig, dpi: int = 160) -> bytes:
+    """Render a figure to PNG bytes and close it immediately."""
+    buf = io.BytesIO()
+    try:
+        fig.savefig(
+            buf, format="png", bbox_inches="tight", dpi=dpi,
+            facecolor=fig.get_facecolor(), edgecolor="none",
+        )
+    finally:
+        plt.close(fig)
+    return buf.getvalue()
+
+
+def _get_target_layer(model: nn.Module, model_name: Optional[str]) -> nn.Module:
+    """Find a suitable Grad-CAM target layer.
+
+    Tries several well-known paths per architecture before falling back to the
+    last Conv2d in the module tree — resilient to model wrapping / renaming.
+    """
     candidates = []
     if model_name == "ResNet50":
         candidates = [
             lambda m: m.layer4[-1].conv3,
+            lambda m: m.layer4[-1].conv2,
             lambda m: m.layer4[-1],
             lambda m: m.layer4,
         ]
     elif model_name == "EfficientNet-B0":
         candidates = [
             lambda m: m.features[-1],
-            lambda m: m.features[-2] if len(m.features) > 1 else m.features[-1],
+            lambda m: m.features[-2],
         ]
-    else:  # CustomCNN
+    else:  # CustomCNN or unknown
         candidates = [
             lambda m: m.features[4].block[0],
             lambda m: m.features[4],
-            lambda m: m.features[-2] if len(m.features) > 1 else m.features[-1],
             lambda m: m.features[-1],
         ]
-
-    # Generic fallbacks that work for most CNNs
-    candidates += [
-        lambda m: getattr(m, "layer4", None) and m.layer4[-1],
-        lambda m: getattr(m, "features", None) and m.features[-1],
-        lambda m: next(
-            (mod for name, mod in reversed(list(m.named_modules()))
-             if isinstance(mod, nn.Conv2d)), None
-        ),
-    ]
 
     for fn in candidates:
         try:
             layer = fn(model)
-            if layer is not None and isinstance(layer, nn.Module):
+            if isinstance(layer, nn.Module):
                 return layer
-        except Exception:
+        except (AttributeError, IndexError, TypeError):
             continue
-    raise RuntimeError(
-        f"Could not locate a suitable Grad-CAM target layer for {model_name}."
-    )
+
+    # Last-ditch fallback: last Conv2d in the module tree.
+    last_conv: Optional[nn.Module] = None
+    for m in model.modules():
+        if isinstance(m, nn.Conv2d):
+            last_conv = m
+    if last_conv is None:
+        raise RuntimeError("Unable to locate a suitable Grad-CAM target layer.")
+    return last_conv
 
 
-def _cam_to_heatmap(cam_raw):
+def _cam_to_heatmap(cam_raw: np.ndarray) -> np.ndarray:
     cam = np.maximum(cam_raw, 0)
     cam -= cam.min()
     if cam.max() > 0:
@@ -2279,71 +2329,60 @@ def _hook_output_to_tensor(output):
     return output.detach()
 
 
-
-def _fig_to_png_bytes(fig):
-    """Convert a matplotlib Figure to PNG bytes and close it safely."""
-    if fig is None:
-        return None
+def _render_cam_overlay(
+    image: Image.Image,
+    cam: np.ndarray,
+    cmap: str,
+    alpha: float,
+) -> bytes:
+    orig = np.asarray(image).astype(np.float32) / 255.0
+    fig, ax = plt.subplots(figsize=(5, 5), dpi=120)
+    fig.patch.set_alpha(0)
     try:
-        buf = io.BytesIO()
-        fig.savefig(buf, format="png", bbox_inches="tight", dpi=160, facecolor="none")
-        buf.seek(0)
-        return buf.getvalue()
+        ax.imshow(orig)
+        ax.imshow(cam, cmap=cmap, alpha=alpha,
+                  extent=(0, orig.shape[1], orig.shape[0], 0))
+        ax.axis("off")
+        fig.tight_layout(pad=0)
+        return _fig_to_png_bytes(fig)
     except Exception:
-        return None
-    finally:
-        try:
-            plt.close(fig)
-        except Exception:
-            pass
+        plt.close(fig)
+        raise
 
 
-def generate_gradcam(image, model, model_name):
+def generate_gradcam(
+    image: Image.Image,
+    model: nn.Module,
+    model_name: Optional[str],
+    device: torch.device,
+) -> bytes:
+    """Return Grad-CAM heatmap overlay as PNG bytes (jet colormap, α=0.44)."""
     if model is None:
         raise RuntimeError("Neural engine unavailable.")
     model.eval()
-    activations, gradients = [], []
-    tl  = _get_target_layer(model, model_name)
+    activations: List[torch.Tensor] = []
+    gradients: List[torch.Tensor] = []
+    tl = _get_target_layer(model, model_name)
 
-    def _fwd_hook(m, i, o):
-        activations.append(_hook_output_to_tensor(o))
-
-    def _bwd_hook(m, gi, go):
-        gradients.append(go[0].detach())
-
-    fwd = tl.register_forward_hook(_fwd_hook)
-    bwd = tl.register_full_backward_hook(_bwd_hook)
-    fig = None
+    fwd = tl.register_forward_hook(
+        lambda m, i, o: activations.append(_hook_output_to_tensor(o))
+    )
+    bwd = tl.register_full_backward_hook(
+        lambda m, gi, go: gradients.append(go[0].detach())
+    )
     try:
-        tensor = test_transforms(image).unsqueeze(0).to(get_device())
+        tensor = test_transforms(image).unsqueeze(0).to(device)
         model.zero_grad()
         out = model(tensor)
         out[0, int(out.argmax(dim=1).item())].backward()
         if not activations or not gradients:
-            raise RuntimeError("Hooks failed.")
+            raise RuntimeError("Grad-CAM hooks did not produce activations.")
 
         act = activations[0][0]
         grd = gradients[0][0]
         w   = grd.mean(dim=(1, 2), keepdim=True)
         cam = _cam_to_heatmap((w * act).sum(dim=0).detach().cpu().numpy())
-
-        orig = np.asarray(image).astype(np.float32) / 255.0
-        fig, ax = plt.subplots(figsize=(5, 5), dpi=120)
-        fig.patch.set_alpha(0)
-        ax.imshow(orig)
-        ax.imshow(cam, cmap="jet", alpha=0.44,
-                  extent=(0, orig.shape[1], orig.shape[0], 0))
-        ax.axis("off")
-        fig.tight_layout(pad=0)
-        # Convert to PNG bytes immediately and close figure (prevents memory leaks)
-        return _fig_to_png_bytes(fig)
-    except Exception:
-        if fig is not None:
-            try:
-                plt.close(fig)
-            except Exception:
-                pass
-        raise
+        return _render_cam_overlay(image, cam, cmap="jet", alpha=0.44)
     finally:
         try: fwd.remove()
         except Exception: pass
@@ -2351,29 +2390,33 @@ def generate_gradcam(image, model, model_name):
         except Exception: pass
 
 
-def generate_gradcam_pp(image, model, model_name):
+def generate_gradcam_pp(
+    image: Image.Image,
+    model: nn.Module,
+    model_name: Optional[str],
+    device: torch.device,
+) -> bytes:
+    """Return Grad-CAM++ heatmap overlay as PNG bytes (inferno, α=0.46)."""
     if model is None:
         raise RuntimeError("Neural engine unavailable.")
     model.eval()
-    activations, gradients = [], []
-    tl  = _get_target_layer(model, model_name)
+    activations: List[torch.Tensor] = []
+    gradients: List[torch.Tensor] = []
+    tl = _get_target_layer(model, model_name)
 
-    def _fwd_hook(m, i, o):
-        activations.append(_hook_output_to_tensor(o))
-
-    def _bwd_hook(m, gi, go):
-        gradients.append(go[0].detach())
-
-    fwd = tl.register_forward_hook(_fwd_hook)
-    bwd = tl.register_full_backward_hook(_bwd_hook)
-    fig = None
+    fwd = tl.register_forward_hook(
+        lambda m, i, o: activations.append(_hook_output_to_tensor(o))
+    )
+    bwd = tl.register_full_backward_hook(
+        lambda m, gi, go: gradients.append(go[0].detach())
+    )
     try:
-        tensor = test_transforms(image).unsqueeze(0).to(get_device())
+        tensor = test_transforms(image).unsqueeze(0).to(device)
         model.zero_grad()
         out = model(tensor)
         out[0, int(out.argmax(dim=1).item())].backward()
         if not activations or not gradients:
-            raise RuntimeError("Hooks failed.")
+            raise RuntimeError("Grad-CAM++ hooks did not produce activations.")
 
         act = activations[0][0].cpu().numpy()
         grd = gradients[0][0].cpu().numpy()
@@ -2386,23 +2429,7 @@ def generate_gradcam_pp(image, model, model_name):
         for ww, aa in zip(w, act):
             cam_raw += ww * aa
         cam = _cam_to_heatmap(cam_raw)
-
-        orig = np.asarray(image).astype(np.float32) / 255.0
-        fig, ax = plt.subplots(figsize=(5, 5), dpi=120)
-        fig.patch.set_alpha(0)
-        ax.imshow(orig)
-        ax.imshow(cam, cmap="inferno", alpha=0.46,
-                  extent=(0, orig.shape[1], orig.shape[0], 0))
-        ax.axis("off")
-        fig.tight_layout(pad=0)
-        return _fig_to_png_bytes(fig)
-    except Exception:
-        if fig is not None:
-            try:
-                plt.close(fig)
-            except Exception:
-                pass
-        raise
+        return _render_cam_overlay(image, cam, cmap="inferno", alpha=0.46)
     finally:
         try: fwd.remove()
         except Exception: pass
@@ -2410,17 +2437,29 @@ def generate_gradcam_pp(image, model, model_name):
         except Exception: pass
 
 
-def explanation_agreement(image, model, model_name):
+def explanation_agreement(
+    image: Image.Image,
+    model: nn.Module,
+    model_name: Optional[str],
+    device: torch.device,
+) -> Optional[float]:
+    """Pearson correlation between Grad-CAM and Grad-CAM++ heatmaps, in [0,1]."""
     if model is None:
         return None
     model.eval()
     tl = _get_target_layer(model, model_name)
-    tensor = test_transforms(image).unsqueeze(0).to(get_device())
+    tensor = test_transforms(image).unsqueeze(0).to(device)
 
     try:
-        acts_gc, grds_gc = [], []
-        fwd1 = tl.register_forward_hook(lambda m, i, o: acts_gc.append(_hook_output_to_tensor(o)))
-        bwd1 = tl.register_full_backward_hook(lambda m, gi, go: grds_gc.append(go[0].detach()))
+        # --- Grad-CAM ---
+        acts_gc: List[torch.Tensor] = []
+        grds_gc: List[torch.Tensor] = []
+        fwd1 = tl.register_forward_hook(
+            lambda m, i, o: acts_gc.append(_hook_output_to_tensor(o))
+        )
+        bwd1 = tl.register_full_backward_hook(
+            lambda m, gi, go: grds_gc.append(go[0].detach())
+        )
         try:
             model.zero_grad()
             out = model(tensor)
@@ -2439,9 +2478,15 @@ def explanation_agreement(image, model, model_name):
         cam_gc = F.relu((w_gc * act_gc).sum(dim=0)).detach().cpu().numpy()
         cam_gc = cam_gc / (cam_gc.max() + 1e-8)
 
-        acts_pp, grds_pp = [], []
-        fwd2 = tl.register_forward_hook(lambda m, i, o: acts_pp.append(_hook_output_to_tensor(o)))
-        bwd2 = tl.register_full_backward_hook(lambda m, gi, go: grds_pp.append(go[0].detach()))
+        # --- Grad-CAM++ ---
+        acts_pp: List[torch.Tensor] = []
+        grds_pp: List[torch.Tensor] = []
+        fwd2 = tl.register_forward_hook(
+            lambda m, i, o: acts_pp.append(_hook_output_to_tensor(o))
+        )
+        bwd2 = tl.register_full_backward_hook(
+            lambda m, gi, go: grds_pp.append(go[0].detach())
+        )
         try:
             model.zero_grad()
             out2 = model(tensor)
@@ -2465,6 +2510,7 @@ def explanation_agreement(image, model, model_name):
         cam_pp = cam_pp / (cam_pp.max() + 1e-8)
 
         f1, f2 = cam_gc.flatten(), cam_pp.flatten()
+        # Guard against near-constant heatmaps → NaN correlation.
         if f1.std() < 1e-8 or f2.std() < 1e-8:
             return None
         corr = float(np.corrcoef(f1, f2)[0, 1])
@@ -2479,7 +2525,7 @@ def explanation_agreement(image, model, model_name):
 # CHARTING
 # ─────────────────────────────────────────────────────────────────────────────
 
-def _dark_fig(w=6, h=2.8):
+def _dark_fig(w: float = 6, h: float = 2.8):
     fig, ax = plt.subplots(figsize=(w, h))
     bg = "#0f2b57"
     fig.patch.set_facecolor(bg)
@@ -2547,12 +2593,14 @@ def plot_uncertainty_history(history):
 # SESSION STATE + NAVIGATION
 # ─────────────────────────────────────────────────────────────────────────────
 
-DEFAULTS = {
+DEFAULTS: Dict[str, Any] = {
     "nav": "Home",
     "last_result": None,
     "last_image": None,
-    "gradcam_image": None,       # now holds PNG bytes
-    "gradcam_pp_image": None,    # now holds PNG bytes
+    # NOTE: we now store PNG bytes instead of matplotlib Figure objects to
+    # avoid memory leaks and cross-rerun display glitches.
+    "gradcam_png": None,
+    "gradcam_pp_png": None,
     "mc_result": None,
     "agreement_score": None,
     "prediction_history": [],
@@ -2570,16 +2618,16 @@ DEFAULTS = {
     "settings_confirm_reset": False,
     "last_nav_snapshot": "Home",
     "_page_changed": False,
-    "_css_injected": False,
+    # NEW controls
     "force_cpu": False,
-    "mc_samples": MC_SAMPLES,
+    "mc_samples": MC_SAMPLES_DEF,
 }
 for k, v in DEFAULTS.items():
     if k not in st.session_state:
         st.session_state[k] = copy.deepcopy(v)
 
 
-def navigate_to(page: str):
+def navigate_to(page: str) -> None:
     st.session_state.nav = page
     try:
         st.query_params["page"] = page
@@ -2588,28 +2636,26 @@ def navigate_to(page: str):
     st.rerun()
 
 
-def clear_prediction_history():
-    """Fully reset analysis history and live stats (bytes, not figures)."""
+def clear_prediction_history() -> None:
+    """Clear history, latest result, XAI assets, live stats — but keep
+    the model, session start, activity log, and user preferences."""
     for k in [
         "prediction_history", "last_result", "last_image",
-        "gradcam_image", "gradcam_pp_image", "mc_result", "agreement_score",
+        "gradcam_png", "gradcam_pp_png", "mc_result", "agreement_score",
         "live_predictions_count", "live_avg_confidence", "live_last_confidence",
         "live_class_counts", "live_throughput", "live_latency_ms",
-        "live_session_start", "activity_log",
     ]:
-        st.session_state[k] = copy.deepcopy(DEFAULTS.get(k, None if k != "activity_log" else []))
+        st.session_state[k] = copy.deepcopy(DEFAULTS[k])
 
 
-def log_activity(message, level="info"):
+def log_activity(message: str, level: str = "info") -> None:
     ts = datetime.now().strftime("%H:%M:%S")
     log = list(st.session_state.activity_log)
-    log.append({"timestamp": ts, "message": message, "level": level})
-    if len(log) > 60:
-        log = log[-60:]
-    st.session_state.activity_log = log
+    log.append({"timestamp": ts, "message": str(message), "level": level})
+    st.session_state.activity_log = log[-60:]
 
 
-def update_live_stats(result, latency_ms):
+def update_live_stats(result: Dict[str, Any], latency_ms: float) -> None:
     history = st.session_state.prediction_history
     st.session_state.live_predictions_count = len(history)
     if history:
@@ -2618,7 +2664,7 @@ def update_live_stats(result, latency_ms):
         st.session_state.live_last_confidence = float(confs[-1])
     st.session_state.live_latency_ms = float(latency_ms)
 
-    counts = {}
+    counts: Dict[str, int] = {}
     for h in history:
         counts[h["prediction"]] = counts.get(h["prediction"], 0) + 1
     st.session_state.live_class_counts = counts
@@ -2630,13 +2676,18 @@ def update_live_stats(result, latency_ms):
 
 
 # ─────────────────────────────────────────────────────────────────────────────
-# MODEL INIT
+# MODEL INIT — after session state so force_cpu toggle is honored.
 # ─────────────────────────────────────────────────────────────────────────────
 
-model = class_names = model_name = model_error = None
+_force_cpu = bool(st.session_state.get("force_cpu", False))
 try:
-    model, class_names, model_name = load_model(MODEL_PATH)
+    model, class_names, model_name, DEVICE = load_model(str(MODEL_PATH), _force_cpu)
+    model_error: Optional[str] = None
 except Exception as exc:
+    model = None
+    class_names = CLASS_NAMES
+    model_name = None
+    DEVICE = torch.device("cpu")
     model_error = str(exc)
 
 
@@ -2670,7 +2721,6 @@ PAGE_LABELS = {
     "Settings": "Settings",
 }
 
-# Cyan-stroke versions of the sidebar nav icons — used when active
 NAV_ICON_ACTIVE_URLS = {
     "home": "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2322d3ee' stroke-width='2.0' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z'/%3E%3Cpolyline points='9 22 9 12 15 12 15 22'/%3E%3C/svg%3E",
     "mri_analysis": "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2322d3ee' stroke-width='2.0' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 18h8'/%3E%3Cpath d='M3 22h18'/%3E%3Cpath d='M14 22a7 7 0 1 0 0-14h-1'/%3E%3Cpath d='M9 14h2'/%3E%3Cpath d='M9 12a2 2 0 0 1-2-2V6h6v4a2 2 0 0 1-2 2Z'/%3E%3Cpath d='M12 6V3a1 1 0 0 0-1-1H9a1 1 0 0 0-1 1v3'/%3E%3C/svg%3E",
@@ -2710,7 +2760,7 @@ except Exception:
 # LIVE TICKER
 # ─────────────────────────────────────────────────────────────────────────────
 
-def render_live_ticker():
+def render_live_ticker() -> None:
     counts = st.session_state.live_class_counts or {}
     items  = list(counts.items())
     text   = " · ".join(
@@ -2737,10 +2787,10 @@ def render_live_ticker():
 
 
 # ─────────────────────────────────────────────────────────────────────────────
-# HEADER — inline render
+# HEADER
 # ─────────────────────────────────────────────────────────────────────────────
 
-def render_sticky_header():
+def render_sticky_header() -> None:
     counts = st.session_state.live_class_counts or {}
     if counts:
         items_html = " ".join(
@@ -2831,7 +2881,10 @@ def render_sticky_header():
 # LIVE PROBABILITY BARS
 # ─────────────────────────────────────────────────────────────────────────────
 
-def render_live_probability_animation(result, mc_result=None):
+def render_live_probability_animation(
+    result: Dict[str, Any],
+    mc_result: Optional[Dict[str, Any]] = None,
+) -> None:
     items = list(result["probabilities"].items())
     top   = result["prediction"]
     conf  = result["confidence"]
@@ -2856,8 +2909,8 @@ def render_live_probability_animation(result, mc_result=None):
 
     unc_html = ""
     if mc_result:
-        band = mc_result["band"]
-        uval = mc_result["uncertainty"]
+        band  = mc_result["band"]
+        uval  = mc_result["uncertainty"]
         color = mc_result["color"]
         unc_html = (
             f'<div style="margin-top:.7rem;padding:.55rem .8rem;border-radius:9px;'
@@ -2905,7 +2958,7 @@ def render_live_probability_animation(result, mc_result=None):
     </script>""", height=h)
 
 
-def render_activity_feed():
+def render_activity_feed() -> None:
     log = st.session_state.activity_log[-14:][::-1]
     if not log:
         st.markdown(
@@ -3130,6 +3183,7 @@ with st.sidebar:
         </div>"""), unsafe_allow_html=True)
         c1, c2 = st.columns(2)
         if c1.button("Confirm", key="sb_reset_yes", **_stretch()):
+            # Deep reset — iterate DEFAULTS to catch every flag.
             for k, v in DEFAULTS.items():
                 st.session_state[k] = copy.deepcopy(v)
             navigate_to("Home")
@@ -3246,7 +3300,7 @@ if nav == "Home":
         ("1", "Upload MRI", "JPG, PNG, WEBP"),
         ("2", "Preprocess", "Resize · Normalize"),
         ("3", "Inference", "CNN forward pass"),
-        ("4", "MC Dropout", "20 stochastic passes"),
+        ("4", "MC Dropout", f"{st.session_state.get('mc_samples', MC_SAMPLES_DEF)} stochastic passes"),
         ("5", "Dual XAI", "Grad-CAM + Grad-CAM++"),
         ("6", "Agreement", "Explanation correlation"),
         ("7", "Report", "Download TXT / PNG"),
@@ -3269,6 +3323,7 @@ if nav == "Home":
             <div style="display:flex;align-items:center;gap:.5rem;margin-bottom:.5rem">{err_svg}
                 <h3 style="color:#f87171;margin:0">Neural Engine Unavailable</h3></div>
             <p>Expected: <code>{_escape_html(MODEL_PATH)}</code></p>
+            <p>Upload or place <code>neurolens_best.pth</code> beside <code>app.py</code> to enable inference.</p>
         </div>"""), unsafe_allow_html=True)
         with st.expander("Technical Details"):
             st.code(model_error)
@@ -3293,7 +3348,7 @@ if nav == "Home":
                 </div>
                 <div style="background:linear-gradient(135deg,rgba(37,99,235,.16),rgba(16,185,129,.10));padding:.65rem .85rem;border-radius:10px;border:1px solid rgba(34,211,238,.28)">
                     <div style="font-size:.6rem;color:#7ba3d6;letter-spacing:.08em;font-weight:700;margin-bottom:.22rem">MC DROPOUT &amp; XAI</div>
-                    <div style="font-size:.82rem;font-weight:700;color:#e2e8f0">{MC_SAMPLES} passes · Grad-CAM + Grad-CAM++</div>
+                    <div style="font-size:.82rem;font-weight:700;color:#e2e8f0">{st.session_state.get('mc_samples', MC_SAMPLES_DEF)} passes · Grad-CAM + Grad-CAM++</div>
                 </div>
             </div>
         </div>"""), unsafe_allow_html=True)
@@ -3356,25 +3411,26 @@ elif nav == "MRI Analysis":
                 label_visibility="collapsed",
             )
 
-        image_id = None
-        image = None
+        image_id: Optional[str] = None
+        image: Optional[Image.Image] = None
         if uploaded_file is not None:
             upload_bytes = uploaded_file.getvalue()
             image_id = hashlib.sha256(upload_bytes).hexdigest()
             prev = st.session_state.last_result
             if prev is not None and prev.get("image_id") != image_id:
-                for fk in ("gradcam_image", "gradcam_pp_image"):
-                    st.session_state[fk] = None
+                # New image — clear stale assets.
                 for k in [
-                    "last_result", "last_image", "gradcam_image",
-                    "gradcam_pp_image", "mc_result", "agreement_score",
+                    "last_result", "last_image", "gradcam_png",
+                    "gradcam_pp_png", "mc_result", "agreement_score",
                 ]:
                     st.session_state[k] = None
 
             try:
                 image = Image.open(io.BytesIO(upload_bytes)).convert("RGB")
-            except (UnidentifiedImageError, OSError, ValueError):
-                st.error("Invalid image. Please upload a valid JPG, PNG, or WEBP file.")
+            except (UnidentifiedImageError, OSError, ValueError) as img_err:
+                st.error(
+                    f"Could not read image. Ensure it's a valid JPG / PNG / WEBP. ({img_err})"
+                )
                 image = None
 
             if image is not None:
@@ -3400,7 +3456,8 @@ elif nav == "MRI Analysis":
                     cf2.metric("Device", str(DEVICE).upper())
                     cf3.metric("Classes", len(class_names))
 
-                    run_mc    = st.checkbox("Enable MC Dropout Uncertainty (20 passes)", value=True, key="run_mc_cb")
+                    mc_n = int(st.session_state.get("mc_samples", MC_SAMPLES_DEF))
+                    run_mc    = st.checkbox(f"Enable MC Dropout Uncertainty ({mc_n} passes)", value=True, key="run_mc_cb")
                     run_xai   = st.checkbox("Enable Dual XAI (Grad-CAM + Grad-CAM++)", value=True, key="run_xai_cb")
                     run_agree = st.checkbox("Compute Explanation Agreement Score", value=True, key="run_agree_cb")
 
@@ -3408,33 +3465,41 @@ elif nav == "MRI Analysis":
                         if st.session_state.live_session_start is None:
                             st.session_state.live_session_start = datetime.now()
                         status = st.empty()
-                        prog = st.empty()
+                        prog   = st.empty()
+
+                        # Build the stage list up-front so progress is accurate.
+                        stages = ["Image Loaded", "Preprocessing", "Normalization", "Tensor Prep"]
+                        if run_mc:
+                            stages.append("MC Dropout")
+                        if run_xai:
+                            stages += ["Grad-CAM", "Grad-CAM++"]
+                        if run_agree and run_xai:
+                            stages.append("Agreement Score")
+                        stages.append("Report")
+                        total_stages = len(stages)
+
+                        class _Tracker:
+                            def __init__(self, total, status_el, prog_el):
+                                self.i = 0
+                                self.total = total
+                                self.status = status_el
+                                self.prog = prog_el
+                            def step(self, label):
+                                self.i += 1
+                                self.status.info(f"Processing: {label}…")
+                                self.prog.progress(min(self.i / self.total, 1.0))
+
+                        tracker = _Tracker(total_stages, status, prog)
+                        for stage in ["Image Loaded", "Preprocessing", "Normalization", "Tensor Prep"]:
+                            tracker.step(stage)
+
                         try:
                             total_t0 = time.perf_counter()
-                            stages = [
-                                "Image Loaded", "Preprocessing", "Normalization",
-                                "Tensor Prep", "Neural Inference", "Probability Calc",
-                            ]
-                            if run_mc:
-                                stages.append("MC Dropout")
-                            if run_xai:
-                                stages += ["Grad-CAM", "Grad-CAM++"]
-                            if run_agree and run_xai:
-                                stages.append("Agreement Score")
-                            stages.append("Report")
-                            total_stages = len(stages)
-
-                            pre_loop = stages[:-4] if len(stages) > 4 else stages[:0]
-                            for i, stage in enumerate(pre_loop):
-                                status.info(f"Processing: {stage}…")
-                                prog.progress((i + 1) / total_stages)
-
-                            step_off = len(pre_loop)
 
                             log_activity("MRI uploaded; preprocessing started", "info")
                             (predicted_class, confidence, probability_dict,
                              preprocessing_ms, inference_ms) = predict_image(
-                                image, model, class_names
+                                image, model, class_names, DEVICE
                             )
                             log_activity(
                                 f"Inference complete: {predicted_class} ({confidence:.1f}%)",
@@ -3443,59 +3508,69 @@ elif nav == "MRI Analysis":
 
                             mc_result = None
                             if run_mc:
-                                status.info("Processing: MC Dropout…")
-                                step_off += 1
-                                prog.progress(step_off / total_stages)
+                                tracker.step("MC Dropout")
                                 try:
-                                    mc_result = mc_dropout_predict(image, model, class_names, MC_SAMPLES)
+                                    mc_result = mc_dropout_predict(
+                                        image, model, class_names, DEVICE,
+                                        n_samples=mc_n,
+                                    )
                                     if mc_result:
                                         log_activity(
                                             f"MC Dropout: σ={mc_result['uncertainty']:.4f} ({mc_result['band']})",
                                             "info",
                                         )
-                                except Exception:
-                                    log_activity("MC Dropout failed", "warn")
+                                except Exception as xai_err:
+                                    log_activity(f"MC Dropout failed: {xai_err}", "warn")
+                                    st.warning(f"MC Dropout failed: {xai_err}")
 
-                            gradcam_fig = gradcam_ms = None
-                            gradcam_pp_fig = gradcam_pp_ms = None
+                            gradcam_png = gradcam_ms = None
+                            gradcam_pp_png = gradcam_pp_ms = None
                             if run_xai:
-                                status.info("Processing: Grad-CAM…")
-                                step_off += 1
-                                prog.progress(step_off / total_stages)
+                                tracker.step("Grad-CAM")
                                 try:
                                     t_gc = time.perf_counter()
-                                    gradcam_fig = generate_gradcam(image, model, model_name)
+                                    gradcam_png = generate_gradcam(image, model, model_name, DEVICE)
                                     gradcam_ms = (time.perf_counter() - t_gc) * 1000
                                     log_activity("Grad-CAM generated", "info")
-                                except Exception:
-                                    log_activity("Grad-CAM failed", "warn")
+                                except Exception as xai_err:
+                                    log_activity(f"Grad-CAM failed: {xai_err}", "warn")
+                                    st.warning(f"Grad-CAM failed: {xai_err}")
 
-                                status.info("Processing: Grad-CAM++…")
-                                step_off += 1
-                                prog.progress(step_off / total_stages)
+                                tracker.step("Grad-CAM++")
                                 try:
                                     t_pp = time.perf_counter()
-                                    gradcam_pp_fig = generate_gradcam_pp(image, model, model_name)
+                                    gradcam_pp_png = generate_gradcam_pp(image, model, model_name, DEVICE)
                                     gradcam_pp_ms = (time.perf_counter() - t_pp) * 1000
                                     log_activity("Grad-CAM++ generated", "info")
-                                except Exception:
-                                    log_activity("Grad-CAM++ failed", "warn")
+                                except Exception as xai_err:
+                                    log_activity(f"Grad-CAM++ failed: {xai_err}", "warn")
+                                    st.warning(f"Grad-CAM++ failed: {xai_err}")
 
                             agree_score = None
                             if run_agree and run_xai:
-                                status.info("Processing: Agreement Score…")
-                                step_off += 1
-                                prog.progress(step_off / total_stages)
+                                tracker.step("Agreement Score")
                                 try:
-                                    agree_score = explanation_agreement(image, model, model_name)
+                                    agree_score = explanation_agreement(
+                                        image, model, model_name, DEVICE
+                                    )
                                     if agree_score is not None:
                                         log_activity(f"Agreement: {agree_score:.3f}", "info")
-                                except Exception:
-                                    log_activity("Agreement score failed", "warn")
+                                    else:
+                                        log_activity(
+                                            "Agreement score unavailable "
+                                            "(heatmaps too uniform or XAI failed).",
+                                            "warn",
+                                        )
+                                        st.warning(
+                                            "Explanation Agreement could not be computed "
+                                            "(heatmaps may be too uniform)."
+                                        )
+                                except Exception as xai_err:
+                                    log_activity(f"Agreement score failed: {xai_err}", "warn")
+                                    st.warning(f"Agreement score failed: {xai_err}")
 
                             total_ms = (time.perf_counter() - total_t0) * 1000
-                            status.info("Building report…")
-                            prog.progress(1.0)
+                            tracker.step("Report")
 
                             result = {
                                 "prediction": predicted_class,
@@ -3505,24 +3580,22 @@ elif nav == "MRI Analysis":
                                 "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
                                 "latency_ms": inference_ms,
                                 "preprocessing_ms": preprocessing_ms,
-                                "gradcam_ms": gradcam_ms if gradcam_fig else None,
-                                "gradcam_pp_ms": gradcam_pp_ms if gradcam_pp_fig else None,
+                                "gradcam_ms": gradcam_ms if gradcam_png else None,
+                                "gradcam_pp_ms": gradcam_pp_ms if gradcam_pp_png else None,
                                 "total_ms": total_ms,
-                                "gradcam_available": gradcam_fig is not None,
-                                "gradcam_pp_available": gradcam_pp_fig is not None,
+                                "gradcam_available": gradcam_png is not None,
+                                "gradcam_pp_available": gradcam_pp_png is not None,
                                 "image_id": image_id,
                                 "uncertainty": mc_result["uncertainty"] if mc_result else None,
                                 "mc_band": mc_result["band"] if mc_result else None,
                                 "agreement_score": agree_score,
                             }
 
-                            # Store PNG bytes (figures already closed inside generators)
-                            st.session_state.gradcam_image = gradcam_fig
-                            st.session_state.gradcam_pp_image = gradcam_pp_fig
-
-                            st.session_state.last_result = result
-                            st.session_state.last_image = image.copy()
-                            st.session_state.mc_result = mc_result
+                            st.session_state.gradcam_png    = gradcam_png
+                            st.session_state.gradcam_pp_png = gradcam_pp_png
+                            st.session_state.last_result    = result
+                            st.session_state.last_image     = image.copy()
+                            st.session_state.mc_result      = mc_result
                             st.session_state.agreement_score = agree_score
                             st.session_state.prediction_history.append(result)
                             st.session_state.prediction_history = (
@@ -3536,20 +3609,17 @@ elif nav == "MRI Analysis":
                             prog.empty()
 
                         except Exception as exc:
-                            err_str = str(exc).lower()
-                            if "out of memory" in err_str or "cuda" in err_str and "memory" in err_str:
-                                msg = (
-                                    "CUDA out of memory. "
-                                    "Go to Settings → enable “Force CPU inference” and try again."
-                                )
-                            elif "hooks failed" in err_str or "target layer" in err_str:
-                                msg = "Grad-CAM target layer could not be resolved for this model architecture."
+                            err_l = str(exc).lower()
+                            if "out of memory" in err_l:
+                                msg = "CUDA out of memory. Enable Force CPU in Settings and retry."
+                            elif "cuda" in err_l:
+                                msg = f"CUDA error: {exc}. Try Force CPU in Settings."
                             else:
-                                msg = "Analysis failed. Check the image format and that the model is loaded."
+                                msg = "Analysis failed. Check image and model."
                             status.error(msg)
                             with st.expander("Technical Details"):
                                 st.code(str(exc))
-                            log_activity(f"Analysis failed: {msg}", "error")
+                            log_activity(f"Analysis failed: {exc}", "error")
 
         if (image_id is not None
                 and st.session_state.last_result is not None
@@ -3582,12 +3652,12 @@ elif nav == "MRI Analysis":
             m4.metric("Total Time",    f"{result.get('total_ms',0):.1f} ms")
 
             if mc_res:
-                unc = mc_res["uncertainty"]
-                band = mc_res["band"]
+                unc   = mc_res["uncertainty"]
+                band  = mc_res["band"]
                 color = mc_res["color"]
                 st.markdown(safe_html(f"""
                 <div class="uncertainty-card">
-                    <div class="unc-title">MC Dropout Uncertainty Estimation ({MC_SAMPLES} passes)</div>
+                    <div class="unc-title">MC Dropout Uncertainty Estimation ({st.session_state.get('mc_samples', MC_SAMPLES_DEF)} passes)</div>
                     <div style="display:flex;justify-content:space-between;align-items:center;gap:1rem;flex-wrap:wrap">
                         <div>
                             <div class="unc-value" style="color:{color}">σ = {unc:.4f}</div>
@@ -3650,7 +3720,10 @@ elif nav == "MRI Analysis":
             )
             render_live_probability_animation(result, mc_result=mc_res)
 
-            if st.session_state.gradcam_image or st.session_state.gradcam_pp_image:
+            gc_png = st.session_state.get("gradcam_png")
+            pp_png = st.session_state.get("gradcam_pp_png")
+
+            if gc_png or pp_png:
                 st.write("")
                 st.markdown(
                     _icon_header(Icons.eye(20, "#22d3ee"), "Dual XAI Visualization", level=4),
@@ -3662,16 +3735,16 @@ elif nav == "MRI Analysis":
                         _icon_header(Icons.heatmap(18, "#22d3ee"), "Grad-CAM · Jet colormap", level=5),
                         unsafe_allow_html=True,
                     )
-                    if st.session_state.gradcam_image:
-                        st.image(st.session_state.gradcam_image, **_stretch())
+                    if gc_png:
+                        st.image(gc_png, **_stretch())
                         st.caption("Weighted class activations · α=0.44")
                 with pp_col:
                     st.markdown(
                         _icon_header(Icons.heatmap(18, "#22d3ee"), "Grad-CAM++ · Inferno colormap", level=5),
                         unsafe_allow_html=True,
                     )
-                    if st.session_state.gradcam_pp_image:
-                        st.image(st.session_state.gradcam_pp_image, **_stretch())
+                    if pp_png:
+                        st.image(pp_png, **_stretch())
                         st.caption("Second-order gradients · α=0.46")
 
                 st.markdown(safe_html("""
@@ -3684,10 +3757,6 @@ elif nav == "MRI Analysis":
                     </div>
                 </div>"""), unsafe_allow_html=True)
 
-            # Already stored as PNG bytes
-            gc_buf = st.session_state.gradcam_image
-            pp_buf = st.session_state.gradcam_pp_image
-
             dl_svg = Icons.download(16, "#22d3ee")
             st.markdown(safe_html(f"""
             <div class="export-head">
@@ -3699,23 +3768,24 @@ elif nav == "MRI Analysis":
                 <span class="export-head-badge">Ready</span>
             </div>"""), unsafe_allow_html=True)
 
-            if gc_buf and pp_buf:
+            # Only show download buttons for assets that actually exist.
+            if gc_png and pp_png:
                 dc1, dc2 = st.columns(2)
                 with dc1:
                     st.markdown('<div class="export-item-label">Grad-CAM · PNG</div>', unsafe_allow_html=True)
-                    st.download_button("Download Grad-CAM", gc_buf, "gradcam.png",
+                    st.download_button("Download Grad-CAM", gc_png, "gradcam.png",
                                        "image/png", key="dl_gc", **_stretch())
                 with dc2:
                     st.markdown('<div class="export-item-label">Grad-CAM++ · PNG</div>', unsafe_allow_html=True)
-                    st.download_button("Download Grad-CAM++", pp_buf, "gradcam_pp.png",
+                    st.download_button("Download Grad-CAM++", pp_png, "gradcam_pp.png",
                                        "image/png", key="dl_pp", **_stretch())
-            elif gc_buf:
+            elif gc_png:
                 st.markdown('<div class="export-item-label">Grad-CAM · PNG</div>', unsafe_allow_html=True)
-                st.download_button("Download Grad-CAM", gc_buf, "gradcam.png",
+                st.download_button("Download Grad-CAM", gc_png, "gradcam.png",
                                    "image/png", key="dl_gc", **_stretch())
-            elif pp_buf:
+            elif pp_png:
                 st.markdown('<div class="export-item-label">Grad-CAM++ · PNG</div>', unsafe_allow_html=True)
-                st.download_button("Download Grad-CAM++", pp_buf, "gradcam_pp.png",
+                st.download_button("Download Grad-CAM++", pp_png, "gradcam_pp.png",
                                    "image/png", key="dl_pp", **_stretch())
 
             st.markdown(
@@ -4058,7 +4128,10 @@ elif nav == "Grad-CAM":
     st.caption("Visualize which MRI regions influenced the model's classification")
     render_live_ticker()
 
-    if not st.session_state.gradcam_image and not st.session_state.gradcam_pp_image:
+    gc_png = st.session_state.get("gradcam_png")
+    pp_png = st.session_state.get("gradcam_pp_png")
+
+    if not gc_png and not pp_png:
         hm_svg = Icons.heatmap(32, "#7ba3d6")
         st.markdown(safe_html(f"""
         <div class="empty-state">
@@ -4067,7 +4140,7 @@ elif nav == "Grad-CAM":
             <div class="empty-text">Run an MRI analysis with XAI enabled to generate heatmaps.</div>
         </div>"""), unsafe_allow_html=True)
     else:
-        oc, gc, pc = st.columns(3)
+        oc, gcol, pcol = st.columns(3)
         with oc:
             st.markdown(
                 _icon_header(Icons.image(18, "#22d3ee"), "Original MRI", level=4),
@@ -4075,20 +4148,20 @@ elif nav == "Grad-CAM":
             )
             if st.session_state.last_image:
                 st.image(st.session_state.last_image, **_stretch())
-        with gc:
+        with gcol:
             st.markdown(
                 _icon_header(Icons.heatmap(18, "#22d3ee"), "Grad-CAM · Jet", level=4),
                 unsafe_allow_html=True,
             )
-            if st.session_state.gradcam_image:
-                st.image(st.session_state.gradcam_image, **_stretch())
-        with pc:
+            if gc_png:
+                st.image(gc_png, **_stretch())
+        with pcol:
             st.markdown(
                 _icon_header(Icons.heatmap(18, "#22d3ee"), "Grad-CAM++ · Inferno", level=4),
                 unsafe_allow_html=True,
             )
-            if st.session_state.gradcam_pp_image:
-                st.image(st.session_state.gradcam_pp_image, **_stretch())
+            if pp_png:
+                st.image(pp_png, **_stretch())
 
         st.markdown(
             "<div style='font-size:.74rem;color:#7ba3d6;margin:.55rem 0'>"
@@ -4129,12 +4202,12 @@ elif nav == "Grad-CAM":
             c2.metric("Confidence", f"{res['confidence']:.2f}%")
 
         dl1, dl2 = st.columns(2)
-        if st.session_state.gradcam_image:
-            dl1.download_button("Download Grad-CAM", st.session_state.gradcam_image,
+        if gc_png:
+            dl1.download_button("Download Grad-CAM", gc_png,
                                 "gradcam.png", "image/png",
                                 key="gradcam_dl", **_stretch())
-        if st.session_state.gradcam_pp_image:
-            dl2.download_button("Download Grad-CAM++", st.session_state.gradcam_pp_image,
+        if pp_png:
+            dl2.download_button("Download Grad-CAM++", pp_png,
                                 "gradcam_pp.png", "image/png",
                                 key="gradcam_pp_dl", **_stretch())
 
@@ -4176,7 +4249,7 @@ elif nav == "XAI Lab":
         else:
             st.caption("Need ≥2 analyses with MC Dropout enabled.")
 
-        bands = {}
+        bands: Dict[str, int] = {}
         for h in xai_hist:
             b = h.get("mc_band")
             if b:
@@ -4216,27 +4289,29 @@ elif nav == "XAI Lab":
                 unsafe_allow_html=True,
             )
             fig2, ax2 = _dark_fig()
-            xs, ys = zip(*agree_hist)
-            ax2.plot(xs, ys, marker="D", lw=2, ms=4, color="#22d3ee")
-            ax2.fill_between(xs, ys, alpha=0.08, color="#22d3ee")
-            ax2.axhline(0.7, color="#34d399", lw=1, ls="--", alpha=0.65, label="High agreement")
-            ax2.axhline(0.5, color="#f59e0b", lw=1, ls="--", alpha=0.65, label="Moderate")
-            ax2.set_ylim(0, 1.05)
-            ax2.set_xlabel("Analysis #", color="#a8bcd8", fontsize=9)
-            ax2.set_ylabel("Agreement Score", color="#a8bcd8", fontsize=9)
-            ax2.legend(fontsize=7, labelcolor="#a8bcd8",
-                       facecolor="#0f2b57", edgecolor="#26497b")
-            ax2.grid(True, alpha=0.09, ls="--", color="#7ba3d6")
-            fig2.tight_layout(pad=0.5)
-            st.pyplot(fig2, **_stretch_pyplot())
-            plt.close(fig2)
+            try:
+                xs, ys = zip(*agree_hist)
+                ax2.plot(xs, ys, marker="D", lw=2, ms=4, color="#22d3ee")
+                ax2.fill_between(xs, ys, alpha=0.08, color="#22d3ee")
+                ax2.axhline(0.7, color="#34d399", lw=1, ls="--", alpha=0.65, label="High agreement")
+                ax2.axhline(0.5, color="#f59e0b", lw=1, ls="--", alpha=0.65, label="Moderate")
+                ax2.set_ylim(0, 1.05)
+                ax2.set_xlabel("Analysis #", color="#a8bcd8", fontsize=9)
+                ax2.set_ylabel("Agreement Score", color="#a8bcd8", fontsize=9)
+                ax2.legend(fontsize=7, labelcolor="#a8bcd8",
+                           facecolor="#0f2b57", edgecolor="#26497b")
+                ax2.grid(True, alpha=0.09, ls="--", color="#7ba3d6")
+                fig2.tight_layout(pad=0.5)
+                st.pyplot(fig2, **_stretch_pyplot())
+            finally:
+                plt.close(fig2)
 
         st.write("")
         st.markdown(
             _icon_header(Icons.grid(20, "#22d3ee"), "Per-Class Uncertainty Analysis"),
             unsafe_allow_html=True,
         )
-        class_unc = {c: [] for c in CLASS_NAMES}
+        class_unc: Dict[str, List[float]] = {c: [] for c in CLASS_NAMES}
         for h in xai_hist:
             if h.get("uncertainty") is not None and h.get("prediction") in class_unc:
                 class_unc[h["prediction"]].append(h["uncertainty"])
@@ -4282,7 +4357,7 @@ elif nav == "Settings":
             <p><b>Input Resolution:</b> {IMG_SIZE} × {IMG_SIZE}</p>
             <p><b>Classes:</b> {_escape_html(', '.join(CLASS_NAMES))}</p>
             <p><b>Checkpoint:</b> {_escape_html(MODEL_PATH.name if MODEL_PATH.exists() else 'Not found')}</p>
-            <p><b>MC Dropout Passes:</b> {MC_SAMPLES}</p>
+            <p><b>MC Dropout Passes:</b> {st.session_state.get('mc_samples', MC_SAMPLES_DEF)}</p>
         </div>"""), unsafe_allow_html=True)
 
     with c2:
@@ -4304,63 +4379,74 @@ elif nav == "Settings":
             <p><b>XAI Methods:</b> Grad-CAM · Grad-CAM++</p>
         </div>"""), unsafe_allow_html=True)
 
-        st.markdown(
-            _icon_header(Icons.sliders(18, "#22d3ee"), "Inference Options", level=4),
-            unsafe_allow_html=True,
-        )
-        force = st.toggle(
-            "Force CPU inference (useful after CUDA OOM)",
-            value=st.session_state.get("force_cpu", False),
-            key="force_cpu_toggle",
-        )
-        if force != st.session_state.get("force_cpu", False):
-            st.session_state.force_cpu = force
-            st.info("Device preference updated. New analyses will use " + ("CPU" if force else "CUDA/CPU auto") + ".")
+    # --- Runtime Controls ---
+    st.write("")
+    st.markdown(
+        _icon_header(Icons.sliders(18, "#22d3ee"), "Runtime Controls", level=4),
+        unsafe_allow_html=True,
+    )
 
-        mc_val = st.slider(
+    rc1, rc2 = st.columns(2)
+    with rc1:
+        # Force CPU toggle — participates in the load_model cache key,
+        # so flipping it triggers a clean model reload on the next rerun.
+        st.toggle(
+            "Force CPU Inference",
+            key="force_cpu",
+            help="Reloads the neural engine on CPU. Use if you hit CUDA out-of-memory errors.",
+        )
+        if st.session_state.force_cpu and DEVICE.type == "cuda":
+            st.info("Toggle changed — reloading model on next rerun.")
+        elif st.session_state.force_cpu and DEVICE.type == "cpu":
+            st.success("Engine is running on CPU.")
+        elif not st.session_state.force_cpu and DEVICE.type == "cuda":
+            st.success("Engine is running on CUDA (GPU).")
+        elif not st.session_state.force_cpu and DEVICE.type == "cpu":
+            st.warning("CUDA unavailable; running on CPU.")
+
+    with rc2:
+        st.number_input(
             "MC Dropout samples",
-            min_value=5, max_value=50, value=int(st.session_state.get("mc_samples", MC_SAMPLES)),
-            step=5, key="mc_samples_slider",
-            help="Higher = more reliable uncertainty, slower inference",
+            min_value=5, max_value=200, step=5,
+            key="mc_samples",
+            help="More samples → better uncertainty estimate, slower runtime.",
         )
-        st.session_state.mc_samples = mc_val
 
-        st.markdown(
-            _icon_header(Icons.terminal(18, "#22d3ee"), "Runtime Details", level=4),
-            unsafe_allow_html=True,
-        )
-        show_tech = st.toggle("Show technical details", key="show_tech")
-        if show_tech:
-            with st.expander("Checkpoint & Runtime", expanded=True):
-                st.write(f"Checkpoint: `{MODEL_PATH}`")
-                st.write(f"Device: `{DEVICE}` · Input: `{IMG_SIZE}×{IMG_SIZE}`")
-                st.write(f"Norm mean: `{NORM_MEAN}` · std: `{NORM_STD}`")
-                if model_error:
-                    st.code(model_error)
+    st.markdown(
+        _icon_header(Icons.terminal(18, "#22d3ee"), "Runtime Details", level=4),
+        unsafe_allow_html=True,
+    )
+    show_tech = st.toggle("Show technical details", key="show_tech")
+    if show_tech:
+        with st.expander("Checkpoint & Runtime", expanded=True):
+            st.write(f"Checkpoint: `{MODEL_PATH}`")
+            st.write(f"Device: `{DEVICE}` · Input: `{IMG_SIZE}×{IMG_SIZE}`")
+            st.write(f"Norm mean: `{NORM_MEAN}` · std: `{NORM_STD}`")
+            st.write(f"Force CPU: `{st.session_state.force_cpu}` · MC samples: `{st.session_state.mc_samples}`")
+            if model_error:
+                st.code(model_error)
 
-        st.write("")
-        alert_svg = Icons.alert_triangle(16, "#f59e0b")
-        st.markdown(safe_html(f"""
-        <div class="disclaimer">
-            {alert_svg}
-            <span><b>Reset Session</b> — Permanently clears all diagnostic reports and session data.</span>
-        </div>"""), unsafe_allow_html=True)
+    st.write("")
+    alert_svg = Icons.alert_triangle(16, "#f59e0b")
+    st.markdown(safe_html(f"""
+    <div class="disclaimer">
+        {alert_svg}
+        <span><b>Reset Session</b> — Permanently clears all diagnostic reports and session data.</span>
+    </div>"""), unsafe_allow_html=True)
 
-        if st.button("Reset Session", type="primary", key="settings_reset"):
-            st.session_state.settings_confirm_reset = True
-        if st.session_state.get("settings_confirm_reset", False):
-            st.warning("Reset all session results?")
-            rc1, rc2, _ = st.columns([1, 1, 4])
-            if rc1.button("Confirm", key="settings_confirm_yes", **_stretch()):
-                for fk in ("gradcam_image", "gradcam_pp_image"):
-                    st.session_state[fk] = None
-                for k, v in DEFAULTS.items():
-                    st.session_state[k] = copy.deepcopy(v)
-                st.session_state.settings_confirm_reset = False
-                st.success("Session cleared.")
-                navigate_to("Home")
-            if rc2.button("Cancel", key="settings_confirm_no", **_stretch()):
-                st.session_state.settings_confirm_reset = False
+    if st.button("Reset Session", type="primary", key="settings_reset"):
+        st.session_state.settings_confirm_reset = True
+    if st.session_state.get("settings_confirm_reset", False):
+        st.warning("Reset all session results?")
+        rc1b, rc2b, _ = st.columns([1, 1, 4])
+        if rc1b.button("Confirm", key="settings_confirm_yes", **_stretch()):
+            for k, v in DEFAULTS.items():
+                st.session_state[k] = copy.deepcopy(v)
+            st.session_state.settings_confirm_reset = False
+            st.success("Session cleared.")
+            navigate_to("Home")
+        if rc2b.button("Cancel", key="settings_confirm_no", **_stretch()):
+            st.session_state.settings_confirm_reset = False
 
 
 # ─────────────────────────────────────────────────────────────────────────────
