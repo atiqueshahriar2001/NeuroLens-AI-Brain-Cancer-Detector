@@ -554,7 +554,7 @@ st.markdown(
 
 
 # ─────────────────────────────────────────────────────────────────────────────
-# UI CSS  (FIXED: sidebar toggle now works — no forced width, aria-expanded aware)
+# UI CSS  (Header rendered inline via st.markdown — no DOM injection)
 # ─────────────────────────────────────────────────────────────────────────────
 UI_CSS = r"""
 :root {
@@ -631,9 +631,6 @@ body.nl-page-transition [data-testid="stMainBlockContainer"] {
 
 /* ═══════════════════════════════════════════════════════════════════════
    SIDEBAR — TOGGLE FRIENDLY
-   We do NOT force any width/min-width/max-width on the sidebar element
-   itself. Streamlit handles collapse natively via its own DOM classes.
-   We only apply background/border styling, letting the toggle work freely.
    ═══════════════════════════════════════════════════════════════════════ */
 [data-testid="stSidebar"] {
   background:
@@ -646,7 +643,6 @@ body.nl-page-transition [data-testid="stMainBlockContainer"] {
               transform .28s cubic-bezier(.2,.8,.2,1) !important;
 }
 
-/* When Streamlit collapses the sidebar, remove our border/shadow */
 [data-testid="stSidebar"][aria-expanded="false"],
 body.nl-sb-collapsed [data-testid="stSidebar"] {
   border-right:none !important;
@@ -657,8 +653,6 @@ body.nl-sb-collapsed [data-testid="stSidebar"] {
   width:100% !important;
   padding:0 .85rem 1rem !important;
 }
-
-/* Sticky header shifts left when sidebar is collapsed — handled below .sticky-header def */
 
 [data-testid="stSidebar"] .stButton { width:100% !important; margin:.22rem 0 !important; }
 [data-testid="stSidebar"] .stButton > button {
@@ -957,14 +951,11 @@ body.nl-sb-collapsed [data-testid="stSidebar"] {
 [data-testid="stMetricLabel"] { color:#7ba3d6 !important; }
 [data-testid="stMetricValue"] { color:#e2e8f0 !important; }
 
-/* DYNAMIC HEADER — flows with page content, not fixed */
-#nl-sticky-header-root { all: initial; }
-#nl-sticky-header-root * { box-sizing: border-box; }
-
+/* ── DYNAMIC HEADER — rendered inline via st.markdown, NOT sticky ── */
 .sticky-header {
   position:relative;
   width:100%;
-  margin-bottom:1.25rem;
+  margin:0 0 1.25rem 0;
   display:flex; align-items:center; gap:.9rem;
   padding:.55rem 1.05rem;
   border:1px solid rgba(59,130,246,.42);
@@ -980,6 +971,7 @@ body.nl-sb-collapsed [data-testid="stSidebar"] {
     inset 0 1px 0 rgba(255,255,255,.06);
   overflow:hidden;
   font-family:'Inter',system-ui,sans-serif;
+  z-index: 5;
 }
 .sticky-header::before {
   content:'';
@@ -2396,7 +2388,6 @@ DEFAULTS = {
     "confirm_reset": False,
     "confirm_clear_hist": False,
     "settings_confirm_reset": False,
-    # Web-app routing state
     "last_nav_snapshot": "Home",
     "_page_changed": False,
 }
@@ -2555,7 +2546,7 @@ def render_live_ticker():
 
 
 # ─────────────────────────────────────────────────────────────────────────────
-# STICKY HEADER + SIDEBAR WATCHDOG
+# HEADER — rendered inline via st.markdown (visible, NOT sticky)
 # ─────────────────────────────────────────────────────────────────────────────
 
 def render_sticky_header():
@@ -2571,11 +2562,11 @@ def render_sticky_header():
     mc  = st.session_state.mc_result
     nav = PAGE_LABELS.get(st.session_state.nav, st.session_state.nav)
     eng = model_name or "—"
-    eng_ok = model_error is None and MODEL_PATH.exists()
-    st_cls = "hd-status-ok" if eng_ok else "hd-status-err"
-    st_txt = "Online" if eng_ok else "Offline"
+    eng_ok  = model_error is None and MODEL_PATH.exists()
+    st_cls  = "hd-status-ok" if eng_ok else "hd-status-err"
+    st_txt  = "Online" if eng_ok else "Offline"
     dev_tag = "GPU" if DEVICE.type == "cuda" else "CPU"
-    mc_str = f"<span class='hd-tick'>σ=<b>{mc['uncertainty']:.3f}</b></span>" if mc else ""
+    mc_str  = f"<span class='hd-tick'>σ=<b>{mc['uncertainty']:.3f}</b></span>" if mc else ""
 
     brain_svg = Icons.brain(20, "#22d3ee")
 
@@ -2610,13 +2601,15 @@ def render_sticky_header():
         </div>
     </div>""")
 
-    header_b64 = base64.b64encode(header_html.encode("utf-8")).decode("ascii")
+    # ✅ Direct render — guaranteed visible in the page flow (NOT sticky)
+    st.markdown(header_html, unsafe_allow_html=True)
 
+    # Page-change side effects only (title + scroll + fade) — no DOM injection
     page_changed = bool(st.session_state.get("_page_changed", False))
-    scroll_js = "w.scrollTo({top:0, behavior:'auto'});" if page_changed else ""
+    scroll_js = 'w.scrollTo({top:0, behavior:"auto"});' if page_changed else ""
     transition_js = (
-        "d.body.classList.add('nl-page-transition');"
-        "setTimeout(()=>d.body.classList.remove('nl-page-transition'), 400);"
+        'd.body.classList.add("nl-page-transition");'
+        'setTimeout(()=>d.body.classList.remove("nl-page-transition"), 400);'
     ) if page_changed else ""
 
     components.html(f"""
@@ -2625,29 +2618,10 @@ def render_sticky_header():
         try {{
             const w = window.parent;
             const d = w.document;
-
-            // ── 1. Sync document title ──
             d.title = {json.dumps(nav + " · NeuroLens AI")};
-
-            // ── 2. Scroll to top on page change ──
             {scroll_js}
-
-            // ── 3. Page fade-in animation on page change ──
             {transition_js}
-
-            // ── 4. Inject / refresh sticky header ──
-            let old = d.getElementById('nl-sticky-header-root');
-            if (old) old.remove();
-            const root = d.createElement('div');
-            root.id = 'nl-sticky-header-root';
-            const bytes = Uint8Array.from(atob("{header_b64}"), c => c.charCodeAt(0));
-            root.innerHTML = new TextDecoder().decode(bytes);
-            d.body.appendChild(root);
-
-            // ── 5. Header is dynamic (not fixed), no sidebar watchdog needed ──
-        }} catch (e) {{
-            console.error('[NeuroLens] Header sync failed:', e);
-        }}
+        }} catch (e) {{ console.error('[NeuroLens]', e); }}
     }})();
     </script>
     """, height=0, scrolling=False)
