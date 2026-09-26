@@ -1,6 +1,6 @@
 # =============================================================================
 # NeuroLens AI — Neurodiagnostic Intelligence Platform
-# Production SaaS Edition v3.7.1 
+# Production SaaS Edition v3.7.1
 # =============================================================================
 
 import warnings
@@ -554,7 +554,7 @@ st.markdown(
 
 
 # ─────────────────────────────────────────────────────────────────────────────
-# UI CSS  (Header rendered inline via st.markdown — no DOM injection)
+# UI CSS  (header rendered inline; scroll bug fixed; ticker scroll enabled)
 # ─────────────────────────────────────────────────────────────────────────────
 UI_CSS = r"""
 :root {
@@ -620,7 +620,6 @@ html, body, [data-testid="stAppViewContainer"], [data-testid="stApp"] {
   padding:1.5rem 1.25rem 2.5rem !important;
 }
 
-/* ── PAGE TRANSITION (only on nav change, driven by JS) ── */
 @keyframes nl-page-enter {
   from { opacity:0; transform:translateY(8px); }
   to   { opacity:1; transform:translateY(0); }
@@ -630,7 +629,7 @@ body.nl-page-transition [data-testid="stMainBlockContainer"] {
 }
 
 /* ═══════════════════════════════════════════════════════════════════════
-   SIDEBAR — TOGGLE FRIENDLY
+   SIDEBAR
    ═══════════════════════════════════════════════════════════════════════ */
 [data-testid="stSidebar"] {
   background:
@@ -643,8 +642,7 @@ body.nl-page-transition [data-testid="stMainBlockContainer"] {
               transform .28s cubic-bezier(.2,.8,.2,1) !important;
 }
 
-[data-testid="stSidebar"][aria-expanded="false"],
-body.nl-sb-collapsed [data-testid="stSidebar"] {
+[data-testid="stSidebar"][aria-expanded="false"] {
   border-right:none !important;
   box-shadow:none !important;
 }
@@ -951,7 +949,7 @@ body.nl-sb-collapsed [data-testid="stSidebar"] {
 [data-testid="stMetricLabel"] { color:#7ba3d6 !important; }
 [data-testid="stMetricValue"] { color:#e2e8f0 !important; }
 
-/* ── DYNAMIC HEADER — rendered inline via st.markdown, NOT sticky ── */
+/* ── DYNAMIC HEADER ── */
 .sticky-header {
   position:relative;
   width:100%;
@@ -1057,11 +1055,31 @@ body.nl-sb-collapsed [data-testid="stSidebar"] {
   background:linear-gradient(180deg,transparent,rgba(34,211,238,.45),transparent);
   flex:0 0 auto;
 }
-.hd-ticker { min-width:0; flex:1 1 auto; overflow:hidden; position:relative; z-index:1; }
+
+/* ── Ticker: scrollable when content overflows ── */
+.hd-ticker {
+  min-width:0;
+  flex:1 1 auto;
+  overflow-x:auto;
+  overflow-y:hidden;
+  position:relative;
+  z-index:1;
+  scrollbar-width:thin;
+  scrollbar-color: rgba(34,211,238,.35) transparent;
+}
+.hd-ticker::-webkit-scrollbar { height:3px; }
+.hd-ticker::-webkit-scrollbar-track { background:transparent; }
+.hd-ticker::-webkit-scrollbar-thumb {
+  background:rgba(34,211,238,.35);
+  border-radius:2px;
+}
+.hd-ticker::-webkit-scrollbar-thumb:hover { background:rgba(34,211,238,.55); }
+
 .hd-ticker-inner {
-  display:flex; align-items:center; gap:.75rem; overflow:hidden;
+  display:inline-flex; align-items:center; gap:.75rem;
   white-space:nowrap; color:#a8bcd8;
   font:.62rem 'JetBrains Mono',monospace;
+  padding-right:.5rem;
 }
 .hd-tick { flex:0 0 auto; }
 .hd-tick b { color:#e2e8f0; }
@@ -1699,7 +1717,7 @@ body.nl-sb-collapsed [data-testid="stSidebar"] {
   background:linear-gradient(180deg,transparent,rgba(34,211,238,.03));
 }
 
-/* SIDEBAR NAV ICON INJECTION */
+/* SIDEBAR NAV ICON BASE */
 [data-testid="stSidebar"] .stButton > button::before {
   content: '' !important;
   position: absolute !important;
@@ -1712,7 +1730,7 @@ body.nl-sb-collapsed [data-testid="stSidebar"] {
   background-position: center !important;
   background-size: 18px 18px !important;
   opacity: .85 !important;
-  transition: opacity .18s ease, transform .18s ease, filter .18s ease !important;
+  transition: opacity .18s ease, transform .18s ease, filter .18s ease, background-image .18s ease !important;
   pointer-events: none !important;
 }
 [data-testid="stSidebar"] .stButton > button:hover::before {
@@ -1720,6 +1738,7 @@ body.nl-sb-collapsed [data-testid="stSidebar"] {
   transform: translateY(-50%) scale(1.06) !important;
 }
 
+/* Nav icons — base grey */
 [data-testid="stSidebar"] .st-key-nav_home button::before {
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23a8bcd8' stroke-width='1.75' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z'/%3E%3Cpolyline points='9 22 9 12 15 12 15 22'/%3E%3C/svg%3E") !important;
 }
@@ -1806,7 +1825,7 @@ body.nl-sb-collapsed [data-testid="stSidebar"] {
   color: #f87171 !important;
 }
 
-/* CONFIRM / CANCEL BUTTONS */
+/* Confirm/cancel buttons — strip icon */
 [data-testid="stSidebar"] .st-key-sb_clear_yes button,
 [data-testid="stSidebar"] .st-key-sb_clear_no button,
 [data-testid="stSidebar"] .st-key-sb_reset_yes button,
@@ -2364,7 +2383,7 @@ def plot_uncertainty_history(history):
 
 
 # ─────────────────────────────────────────────────────────────────────────────
-# SESSION STATE + WEB-APP NAVIGATION
+# SESSION STATE + NAVIGATION
 # ─────────────────────────────────────────────────────────────────────────────
 
 DEFAULTS = {
@@ -2397,7 +2416,6 @@ for k, v in DEFAULTS.items():
 
 
 def navigate_to(page: str):
-    """Central navigation helper: session state + URL query params."""
     st.session_state.nav = page
     try:
         st.query_params["page"] = page
@@ -2461,7 +2479,7 @@ except Exception as exc:
 
 
 # ─────────────────────────────────────────────────────────────────────────────
-# NAV ITEMS CONFIG
+# NAV CONFIG
 # ─────────────────────────────────────────────────────────────────────────────
 
 NAV_GROUPS = [
@@ -2488,6 +2506,17 @@ PAGE_LABELS = {
     "Grad-CAM": "Grad-CAM",
     "XAI Lab": "XAI Lab",
     "Settings": "Settings",
+}
+
+# Cyan-stroke versions of the sidebar nav icons — used when active
+NAV_ICON_ACTIVE_URLS = {
+    "home": "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2322d3ee' stroke-width='2.0' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z'/%3E%3Cpolyline points='9 22 9 12 15 12 15 22'/%3E%3C/svg%3E",
+    "mri_analysis": "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2322d3ee' stroke-width='2.0' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 18h8'/%3E%3Cpath d='M3 22h18'/%3E%3Cpath d='M14 22a7 7 0 1 0 0-14h-1'/%3E%3Cpath d='M9 14h2'/%3E%3Cpath d='M9 12a2 2 0 0 1-2-2V6h6v4a2 2 0 0 1-2 2Z'/%3E%3Cpath d='M12 6V3a1 1 0 0 0-1-1H9a1 1 0 0 0-1 1v3'/%3E%3C/svg%3E",
+    "dashboard": "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2322d3ee' stroke-width='2.0' stroke-linecap='round' stroke-linejoin='round'%3E%3Cline x1='18' y1='20' x2='18' y2='10'/%3E%3Cline x1='12' y1='20' x2='12' y2='4'/%3E%3Cline x1='6' y1='20' x2='6' y2='14'/%3E%3Cline x1='2' y1='20' x2='22' y2='20'/%3E%3C/svg%3E",
+    "history": "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2322d3ee' stroke-width='2.0' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8'/%3E%3Cpath d='M3 3v5h5'/%3E%3Cpath d='M12 7v5l4 2'/%3E%3C/svg%3E",
+    "gradcam": "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2322d3ee' stroke-width='2.0' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='12' cy='12' r='3'/%3E%3Cpath d='M12 2v3'/%3E%3Cpath d='M12 19v3'/%3E%3Cpath d='m4.22 4.22 2.12 2.12'/%3E%3Cpath d='m17.66 17.66 2.12 2.12'/%3E%3Cpath d='M2 12h3'/%3E%3Cpath d='M19 12h3'/%3E%3Cpath d='m4.22 19.78 2.12-2.12'/%3E%3Cpath d='m17.66 6.34 2.12-2.12'/%3E%3C/svg%3E",
+    "xai_lab": "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2322d3ee' stroke-width='2.0' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M14.5 2v17.5c0 1.4-1.1 2.5-2.5 2.5h0c-1.4 0-2.5-1.1-2.5-2.5V2'/%3E%3Cpath d='M8.5 2h7'/%3E%3Cpath d='M14.5 16h-5'/%3E%3Cpath d='m8.5 13 5.5 3'/%3E%3C/svg%3E",
+    "settings": "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2322d3ee' stroke-width='2.0' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='12' cy='12' r='3'/%3E%3Cpath d='M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z'/%3E%3C/svg%3E",
 }
 
 
@@ -2546,7 +2575,7 @@ def render_live_ticker():
 
 
 # ─────────────────────────────────────────────────────────────────────────────
-# HEADER — rendered inline via st.markdown (visible, NOT sticky)
+# HEADER — inline render + FIXED scroll target
 # ─────────────────────────────────────────────────────────────────────────────
 
 def render_sticky_header():
@@ -2601,16 +2630,26 @@ def render_sticky_header():
         </div>
     </div>""")
 
-    # ✅ Direct render — guaranteed visible in the page flow (NOT sticky)
     st.markdown(header_html, unsafe_allow_html=True)
 
-    # Page-change side effects only (title + scroll + fade) — no DOM injection
+    # ── Page-change side-effects (title, scroll, fade) — FIXED scroll target ──
     page_changed = bool(st.session_state.get("_page_changed", False))
-    scroll_js = 'w.scrollTo({top:0, behavior:"auto"});' if page_changed else ""
-    transition_js = (
-        'd.body.classList.add("nl-page-transition");'
-        'setTimeout(()=>d.body.classList.remove("nl-page-transition"), 400);'
-    ) if page_changed else ""
+
+    if page_changed:
+        scroll_js = (
+            'const sc = d.querySelector(\'[data-testid="stAppViewContainer"]\')'
+            ' || d.querySelector("section.main")'
+            ' || d.scrollingElement'
+            ' || d.documentElement;'
+            'if (sc) sc.scrollTo({top:0, behavior:"auto"});'
+        )
+        transition_js = (
+            'd.body.classList.add("nl-page-transition");'
+            'setTimeout(()=>d.body.classList.remove("nl-page-transition"), 400);'
+        )
+    else:
+        scroll_js = ""
+        transition_js = ""
 
     components.html(f"""
     <script>
@@ -2826,6 +2865,7 @@ with st.sidebar:
                 navigate_to(key)
 
             if is_active:
+                cyan_url = NAV_ICON_ACTIVE_URLS.get(slug, "")
                 active_css_parts.append(f"""
                 [data-testid="stSidebar"] .st-key-nav_{slug} button {{
                     background: linear-gradient(90deg, rgba(37,99,235,0.24), rgba(34,211,238,0.12), rgba(16,185,129,0.06)) !important;
@@ -2839,8 +2879,9 @@ with st.sidebar:
                     font-weight: 700 !important;
                 }}
                 [data-testid="stSidebar"] .st-key-nav_{slug} button::before {{
+                    background-image: url("{cyan_url}") !important;
                     opacity: 1 !important;
-                    filter: drop-shadow(0 0 6px rgba(34,211,238,.7)) !important;
+                    filter: drop-shadow(0 0 8px rgba(34,211,238,.9)) !important;
                 }}
                 """)
 
