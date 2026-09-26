@@ -554,7 +554,9 @@ st.markdown(
 
 
 # ─────────────────────────────────────────────────────────────────────────────
-# UI CSS  (header rendered inline; scroll bug fixed; ticker scroll enabled)
+# UI CSS
+# Header fully visible: no overflow clipping, wrap on narrow widths,
+# no display:none hides in media queries.
 # ─────────────────────────────────────────────────────────────────────────────
 UI_CSS = r"""
 :root {
@@ -949,13 +951,22 @@ body.nl-page-transition [data-testid="stMainBlockContainer"] {
 [data-testid="stMetricLabel"] { color:#7ba3d6 !important; }
 [data-testid="stMetricValue"] { color:#e2e8f0 !important; }
 
-/* ── DYNAMIC HEADER ── */
+/* ═══════════════════════════════════════════════════════════════════════
+   HEADER — FULLY VISIBLE
+   - No overflow:hidden (content not clipped)
+   - flex-wrap: wrap (narrow screens wrap, don't hide)
+   - min-height so it doesn't collapse
+   ═══════════════════════════════════════════════════════════════════════ */
 .sticky-header {
   position:relative;
   width:100%;
   margin:0 0 1.25rem 0;
-  display:flex; align-items:center; gap:.9rem;
-  padding:.55rem 1.05rem;
+  display:flex;
+  align-items:center;
+  flex-wrap:wrap;                       /* ← allows wrap instead of hide */
+  gap:.75rem .9rem;
+  min-height:60px;
+  padding:.6rem 1.05rem;
   border:1px solid rgba(59,130,246,.42);
   border-radius:14px;
   background:
@@ -967,9 +978,9 @@ body.nl-page-transition [data-testid="stMainBlockContainer"] {
     0 4px 24px rgba(0,0,0,.25),
     0 0 0 1px rgba(34,211,238,.10),
     inset 0 1px 0 rgba(255,255,255,.06);
-  overflow:hidden;
   font-family:'Inter',system-ui,sans-serif;
-  z-index: 5;
+  z-index:5;
+  /* NOTE: overflow:hidden REMOVED so content is never clipped */
 }
 .sticky-header::before {
   content:'';
@@ -1013,7 +1024,12 @@ body.nl-page-transition [data-testid="stMainBlockContainer"] {
   100% { background-position:-200% 50%; opacity:.3; }
 }
 
-.hd-brand { display:flex; align-items:center; gap:.65rem; flex:0 0 auto; position:relative; z-index:1; }
+.hd-brand {
+  display:flex; align-items:center; gap:.65rem;
+  flex:0 0 auto;
+  min-width:0;
+  position:relative; z-index:1;
+}
 .hd-brand-icon {
   position:relative;
   width:38px; height:38px;
@@ -1026,6 +1042,7 @@ body.nl-page-transition [data-testid="stMainBlockContainer"] {
   box-shadow:
     0 0 20px rgba(34,211,238,.25),
     inset 0 1px 0 rgba(255,255,255,.10);
+  flex:0 0 auto;
 }
 .hd-brand-dot {
   position:absolute; width:7px; height:7px; right:-2px; top:-2px;
@@ -1049,6 +1066,7 @@ body.nl-page-transition [data-testid="stMainBlockContainer"] {
   font:700 .54rem 'JetBrains Mono',monospace;
   letter-spacing:.14em;
   text-transform:uppercase;
+  white-space:nowrap;
 }
 .hd-divider {
   width:1px; height:30px;
@@ -1056,10 +1074,9 @@ body.nl-page-transition [data-testid="stMainBlockContainer"] {
   flex:0 0 auto;
 }
 
-/* ── Ticker: scrollable when content overflows ── */
 .hd-ticker {
-  min-width:0;
   flex:1 1 auto;
+  min-width:180px;                 /* ← keeps ticker visible even if narrow */
   overflow-x:auto;
   overflow-y:hidden;
   position:relative;
@@ -1076,10 +1093,13 @@ body.nl-page-transition [data-testid="stMainBlockContainer"] {
 .hd-ticker::-webkit-scrollbar-thumb:hover { background:rgba(34,211,238,.55); }
 
 .hd-ticker-inner {
-  display:inline-flex; align-items:center; gap:.75rem;
-  white-space:nowrap; color:#a8bcd8;
+  display:inline-flex;
+  align-items:center;
+  gap:.75rem;
+  white-space:nowrap;
+  color:#a8bcd8;
   font:.62rem 'JetBrains Mono',monospace;
-  padding-right:.5rem;
+  padding:2px .5rem 2px 0;
 }
 .hd-tick { flex:0 0 auto; }
 .hd-tick b { color:#e2e8f0; }
@@ -1093,6 +1113,7 @@ body.nl-page-transition [data-testid="stMainBlockContainer"] {
   background:rgba(16,185,129,.10);
   box-shadow:0 0 12px rgba(52,211,153,.28);
   display:inline-flex; align-items:center; gap:.3rem;
+  flex:0 0 auto;
 }
 .hd-live-badge::before {
   content:''; width:5px; height:5px; border-radius:50%;
@@ -1101,10 +1122,12 @@ body.nl-page-transition [data-testid="stMainBlockContainer"] {
   animation:pulse-dot 1.6s ease-in-out infinite;
 }
 .hd-status {
-  flex:0 0 auto; display:flex; align-items:center; gap:.4rem;
+  flex:0 0 auto;
+  display:flex; align-items:center; gap:.4rem;
   font:700 .62rem 'Inter',sans-serif;
   padding:.35rem .75rem;
   border-radius:99px;
+  white-space:nowrap;
 }
 .hd-status-ok {
   color:#34d399;
@@ -1133,6 +1156,7 @@ body.nl-page-transition [data-testid="stMainBlockContainer"] {
   background:linear-gradient(135deg,rgba(37,99,235,.24),rgba(34,211,238,.16));
   border:1px solid rgba(34,211,238,.38);
   box-shadow:0 0 18px rgba(34,211,238,.18);
+  white-space:nowrap;
 }
 .hd-page-dot {
   display:inline-block; width:5px; height:5px; margin-right:6px;
@@ -1888,25 +1912,33 @@ body.nl-page-transition [data-testid="stMainBlockContainer"] {
   transform: translateY(-1px) !important;
 }
 
+/* ═══════════════════════════════════════════════════════════════════════
+   RESPONSIVE — HEADER GRACEFULLY WRAPS (NO HIDING)
+   ═══════════════════════════════════════════════════════════════════════ */
 @media (max-width: 1100px) {
   :root { --sb-w:240px; }
-  .hd-ticker { display:none; }
   .app-footer { grid-template-columns:1fr 1fr; }
+  /* Wrap ticker to its own full-width row instead of hiding */
+  .hd-ticker { flex-basis:100%; order:10; }
 }
 @media (max-width: 900px) {
   .app-footer { grid-template-columns:1fr 1fr; }
 }
 @media (max-width: 760px) {
-  .hd-brand-name { display:none; }
-  .hd-divider, .hd-status { display:none; }
-  .hd-page { margin-left:auto; }
+  /* Everything stays visible — just smaller */
   .sb-engine-grid { grid-template-columns:1fr 1fr; }
+  .hd-brand-name { font-size:.84rem; }
+  .hd-brand-tag { font-size:.5rem; }
+  .hd-page { font-size:.62rem; padding:.3rem .65rem; }
+  .hd-status { font-size:.58rem; padding:.3rem .6rem; }
+  .hd-divider { height:24px; }
 }
 @media (max-width: 600px) {
   .app-footer { grid-template-columns:1fr; padding:1.4rem; }
   .hero h1 { font-size:2rem; }
   .diag-prediction { font-size:1.55rem; }
   .prob-grid { grid-template-columns:repeat(2,1fr); }
+  .sticky-header { padding:.55rem .75rem; gap:.55rem .7rem; }
 }
 @media (max-width: 560px) {
   .stButton > button, .stDownloadButton > button { min-height:44px !important; }
@@ -2575,7 +2607,7 @@ def render_live_ticker():
 
 
 # ─────────────────────────────────────────────────────────────────────────────
-# HEADER — inline render + FIXED scroll target
+# HEADER — inline render
 # ─────────────────────────────────────────────────────────────────────────────
 
 def render_sticky_header():
@@ -2632,7 +2664,6 @@ def render_sticky_header():
 
     st.markdown(header_html, unsafe_allow_html=True)
 
-    # ── Page-change side-effects (title, scroll, fade) — FIXED scroll target ──
     page_changed = bool(st.session_state.get("_page_changed", False))
 
     if page_changed:
