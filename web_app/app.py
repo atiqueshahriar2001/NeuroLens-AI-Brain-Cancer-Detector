@@ -509,11 +509,8 @@ MC_SAMPLES_DEF   = 20
 MAX_HISTORY      = 200
 CLASS_NAMES      = ["Glioma", "Meningioma", "No Tumor", "Pituitary"]
 
-# ─────────────────────────────────────────────────────────────────────────────
-# SAFETY LIMITS (NEW)
-# ─────────────────────────────────────────────────────────────────────────────
-MAX_UPLOAD_BYTES = 200 * 1024 * 1024          # 200 MB
-MAX_IMAGE_PIXELS = 50_000_000                 # ~50 MP
+MAX_UPLOAD_BYTES = 200 * 1024 * 1024
+MAX_IMAGE_PIXELS = 50_000_000
 try:
     Image.MAX_IMAGE_PIXELS = MAX_IMAGE_PIXELS
 except Exception:
@@ -2457,137 +2454,179 @@ button:focus-visible {
 
 /* ═══════════  32 · FOOTER  ═══════════ */
 .app-footer {
-  display:grid;
-  grid-template-columns:1.6fr 1.1fr 0.95fr;
-  gap:2.15rem;
-  margin-top:3.25rem;
-  padding:2.3rem;
-  border-radius:20px;
   position:relative;
-  background:
-    linear-gradient(180deg, rgba(20,50,114,.90), rgba(3,10,24,.98)),
-    radial-gradient(circle at 0% 0%, rgba(34,211,238,.14), transparent 30rem);
-  border:1px solid var(--line-3);
+  margin-top:3.5rem;
+  padding:2.8rem 2.4rem 2rem;
+  border-radius:22px;
   overflow:hidden;
-  box-shadow:0 28px 72px rgba(0,0,0,.42);
+  background:
+    radial-gradient(ellipse 80% 55% at 50% 0%, rgba(34,211,238,.16), transparent 70%),
+    radial-gradient(circle at 0% 100%, rgba(52,211,153,.10), transparent 30rem),
+    radial-gradient(circle at 100% 100%, rgba(167,139,250,.10), transparent 30rem),
+    linear-gradient(180deg, rgba(20,50,114,.92), rgba(3,10,24,.98));
+  border:1px solid var(--line-3);
+  box-shadow:
+    0 30px 80px rgba(0,0,0,.48),
+    inset 0 1px 0 rgba(255,255,255,.05);
 }
 .app-footer::before {
   content:'';
   position:absolute; inset:0;
-  border-radius:20px;
+  border-radius:22px;
   padding:1px;
   background:linear-gradient(135deg,
-    rgba(37,99,235,.72),
-    rgba(34,211,238,.62),
-    rgba(52,211,153,.72));
-  background-size:200% 200%;
+    rgba(37,99,235,.75),
+    rgba(34,211,238,.68),
+    rgba(52,211,153,.72),
+    rgba(167,139,250,.60),
+    rgba(37,99,235,.75));
+  background-size:250% 250%;
   -webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);
   -webkit-mask-composite:xor;
   mask-composite:exclude;
   pointer-events:none;
   opacity:.92;
-  animation:hd-border-flow 12s linear infinite;
+  animation:hd-border-flow 14s linear infinite;
 }
 .app-footer::after {
   content:'';
   position:absolute;
-  top:-160px; right:-160px;
-  width:360px; height:360px;
+  top:-180px; left:50%;
+  transform:translateX(-50%);
+  width:640px; height:340px;
   border-radius:50%;
-  background:radial-gradient(circle, rgba(34,211,238,.24), transparent 70%);
+  background:radial-gradient(circle, rgba(34,211,238,.18), transparent 70%);
   pointer-events:none;
+}
+
+/* ── Footer top: centered brand lockup ── */
+.footer-lockup {
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  text-align:center;
+  gap:1rem;
+  position:relative;
+  z-index:1;
+  padding-bottom:1.8rem;
+  border-bottom:1px solid rgba(96,165,250,.16);
+  margin-bottom:1.8rem;
+}
+.footer-lockup::after {
+  content:'';
+  position:absolute;
+  bottom:-1px; left:50%;
+  transform:translateX(-50%);
+  width:180px; height:1px;
+  background:linear-gradient(90deg,
+    transparent,
+    rgba(34,211,238,.85),
+    rgba(52,211,153,.65),
+    transparent);
 }
 .footer-brand-lockup {
   display:flex;
   align-items:center;
-  gap:.9rem;
-  margin-bottom:1.1rem;
-  position:relative;
-  z-index:1;
+  gap:1rem;
 }
 .footer-brand-icon {
-  width:60px; height:60px;
+  width:64px; height:64px;
   display:grid; place-items:center;
-  border-radius:16px;
-  background:linear-gradient(135deg, rgba(37,99,235,.42), rgba(16,185,129,.28));
-  border:1px solid rgba(34,211,238,.50);
-  box-shadow:0 0 34px rgba(34,211,238,.36);
+  border-radius:18px;
+  background:linear-gradient(135deg, rgba(37,99,235,.48), rgba(16,185,129,.32));
+  border:1px solid rgba(34,211,238,.55);
+  box-shadow:
+    0 0 40px rgba(34,211,238,.42),
+    inset 0 1px 0 rgba(255,255,255,.16);
   position:relative;
+  transition:transform .35s var(--ease-spring);
 }
+.footer-brand-icon:hover { transform:scale(1.06) rotate(-4deg); }
 .footer-brand-icon::after {
   content:'';
   position:absolute; inset:-1px;
-  border-radius:16px;
+  border-radius:18px;
   padding:1px;
-  background:linear-gradient(135deg, var(--aurora-cyan), var(--aurora-emerald));
+  background:linear-gradient(135deg, var(--aurora-cyan), var(--aurora-emerald), var(--aurora-cyan));
+  background-size:200% 200%;
   -webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);
   -webkit-mask-composite:xor;
   mask-composite:exclude;
-  opacity:.72;
+  opacity:.85;
   pointer-events:none;
+  animation:sb-ring-flow 6s linear infinite;
+}
+.footer-brand-text {
+  text-align:left;
 }
 .footer-brand-name {
-  background:linear-gradient(135deg, #f1f5fd 18%, var(--aurora-cyan) 68%, var(--aurora-emerald) 100%);
+  background:linear-gradient(135deg, #f1f5fd 20%, var(--aurora-cyan) 65%, var(--aurora-emerald) 100%);
   -webkit-background-clip:text;
   -webkit-text-fill-color:transparent;
   background-clip:text;
-  font:800 1.25rem var(--font-display);
-  letter-spacing:-.024em;
+  font:800 1.55rem var(--font-display);
+  letter-spacing:-.030em;
+  line-height:1.1;
 }
 .footer-brand-tag {
   color:#8fb0d9;
-  font:600 .72rem var(--font-body);
-  letter-spacing:.08em;
+  font:600 .68rem var(--font-mono);
+  letter-spacing:.20em;
   text-transform:uppercase;
-  margin-top:.15rem;
+  margin-top:.32rem;
 }
-.footer-desc {
+.footer-tagline {
   color:var(--text-2);
-  font:400 .82rem/1.72 var(--font-body);
-  max-width:50ch;
-  margin-bottom:1.15rem;
-  position:relative;
-  z-index:1;
+  font:400 .84rem/1.7 var(--font-body);
+  max-width:62ch;
+  margin:0 auto;
+  text-align:center;
 }
-.footer-copy {
-  color:#8fb0d9;
-  font:600 .72rem var(--font-body);
+
+/* ── Footer body: 3-col grid ── */
+.footer-body {
+  display:grid;
+  grid-template-columns:1.1fr 1fr 1fr;
+  gap:2.2rem;
   position:relative;
   z-index:1;
 }
 .footer-col-title {
-  background:linear-gradient(90deg, var(--aurora-cyan), var(--aurora-emerald));
-  -webkit-background-clip:text;
-  -webkit-text-fill-color:transparent;
-  background-clip:text;
+  display:flex;
+  align-items:center;
+  gap:.5rem;
   font:800 .64rem var(--font-body);
   text-transform:uppercase;
-  letter-spacing:.18em;
-  margin-bottom:.85rem;
+  letter-spacing:.20em;
+  margin-bottom:1rem;
+  color:var(--aurora-cyan);
   position:relative;
-  z-index:1;
+}
+.footer-col-title::after {
+  content:'';
+  flex:1;
+  height:1px;
+  background:linear-gradient(90deg, rgba(34,211,238,.42), transparent);
 }
 .footer-tech-badges {
   display:flex;
   flex-wrap:wrap;
   gap:.5rem;
-  position:relative;
-  z-index:1;
 }
 .ft-badge {
   display:inline-flex;
   align-items:center;
-  gap:.42rem;
-  padding:.4rem .85rem;
+  gap:.45rem;
+  padding:.42rem .85rem;
   border-radius:10px;
   background:linear-gradient(135deg, rgba(37,99,235,.22), rgba(16,185,129,.14));
-  border:1px solid rgba(34,211,238,.36);
+  border:1px solid rgba(34,211,238,.34);
   color:#e2ecf9;
-  font:600 .71rem var(--font-mono);
+  font:600 .70rem var(--font-mono);
   transition:all .22s var(--ease);
 }
 .ft-badge:hover {
-  border-color:rgba(34,211,238,.65);
+  border-color:rgba(34,211,238,.68);
   box-shadow:0 0 22px rgba(34,211,238,.36);
   transform:translateY(-2px);
 }
@@ -2597,36 +2636,72 @@ button:focus-visible {
   background:linear-gradient(135deg, var(--aurora-cyan), var(--aurora-emerald));
   box-shadow:0 0 8px rgba(34,211,238,.95);
 }
+.footer-build {
+  display:flex;
+  flex-direction:column;
+  gap:.55rem;
+}
+.footer-build-row {
+  display:flex;
+  justify-content:space-between;
+  gap:.75rem;
+  font:600 .72rem var(--font-body);
+  padding:.5rem .8rem;
+  border-radius:9px;
+  background:linear-gradient(135deg, rgba(20,50,114,.60), rgba(10,29,66,.60));
+  border:1px solid rgba(96,165,250,.18);
+}
+.footer-build-row span:first-child { color:#8fb0d9; }
+.footer-build-row span:last-child  { color:#e2ecf9; font-family:var(--font-mono); }
+
+/* ── Session stats (right column) ── */
 .footer-stats {
   display:flex;
   flex-direction:column;
-  gap:.7rem;
-  position:relative;
-  z-index:1;
+  gap:.65rem;
 }
 .f-stat {
-  padding:.85rem 1rem;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:.9rem;
+  padding:.8rem 1rem;
   border-radius:12px;
-  background:linear-gradient(135deg, rgba(20,50,114,.80), rgba(10,29,66,.65));
+  background:linear-gradient(135deg, rgba(20,50,114,.82), rgba(10,29,66,.70));
   border:1px solid var(--line-1);
   transition:all .22s var(--ease);
+  position:relative;
+  overflow:hidden;
+}
+.f-stat::before {
+  content:'';
+  position:absolute;
+  left:0; top:0; bottom:0;
+  width:3px;
+  background:linear-gradient(180deg, var(--aurora-cyan), var(--aurora-emerald));
+  opacity:.7;
 }
 .f-stat:hover {
   border-color:var(--line-2);
   box-shadow:0 0 24px rgba(34,211,238,.20);
-  transform:translateY(-2px);
+  transform:translateX(3px);
 }
-.f-stat-wide { padding:.95rem 1rem; }
+.f-stat-lbl {
+  color:#8fb0d9;
+  font:700 .62rem var(--font-body);
+  text-transform:uppercase;
+  letter-spacing:.14em;
+}
 .f-stat-val {
   display:flex;
   align-items:center;
-  gap:.6rem;
+  gap:.55rem;
   background:linear-gradient(135deg, #f1f5fd, var(--aurora-cyan));
   -webkit-background-clip:text;
   -webkit-text-fill-color:transparent;
   background-clip:text;
-  font:800 1.35rem/1 var(--font-display);
-  letter-spacing:-.024em;
+  font:800 1.15rem/1 var(--font-display);
+  letter-spacing:-.020em;
   font-variant-numeric:tabular-nums;
 }
 .f-stat-val .f-dot,
@@ -2635,13 +2710,6 @@ button:focus-visible {
   background:currentColor;
   -webkit-background-clip:initial;
   background-clip:initial;
-}
-.f-stat-lbl {
-  margin-top:.45rem;
-  color:#8fb0d9;
-  font:700 .64rem var(--font-body);
-  text-transform:uppercase;
-  letter-spacing:.12em;
 }
 .f-dot {
   width:9px; height:9px;
@@ -2653,6 +2721,80 @@ button:focus-visible {
 .f-dot-off {
   background:var(--danger-hi);
   box-shadow:0 0 12px rgba(248,113,113,1);
+}
+
+/* ── Developer credit block ── */
+.footer-credit {
+  position:relative;
+  z-index:1;
+  margin-top:2rem;
+  padding-top:1.8rem;
+  border-top:1px solid rgba(96,165,250,.16);
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  gap:.75rem;
+  text-align:center;
+}
+.footer-credit::before {
+  content:'';
+  position:absolute;
+  top:-1px; left:50%;
+  transform:translateX(-50%);
+  width:200px; height:1px;
+  background:linear-gradient(90deg,
+    transparent,
+    rgba(34,211,238,.85),
+    rgba(52,211,153,.65),
+    transparent);
+}
+.footer-credit-label {
+  font:700 .60rem var(--font-body);
+  text-transform:uppercase;
+  letter-spacing:.28em;
+  color:#7ba3d6;
+}
+.footer-credit-names {
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  flex-wrap:wrap;
+  gap:.55rem .9rem;
+  font:700 1.05rem var(--font-display);
+  letter-spacing:-.014em;
+}
+.footer-credit-name {
+  background:linear-gradient(135deg, #f1f5fd 30%, var(--aurora-cyan) 100%);
+  -webkit-background-clip:text;
+  -webkit-text-fill-color:transparent;
+  background-clip:text;
+  position:relative;
+  padding:.15rem .55rem;
+  border-radius:8px;
+  transition:all .3s var(--ease);
+}
+.footer-credit-name:hover {
+  background:linear-gradient(135deg, var(--aurora-cyan) 30%, var(--aurora-emerald) 100%);
+  -webkit-background-clip:text;
+  -webkit-text-fill-color:transparent;
+  background-clip:text;
+  transform:translateY(-1px);
+  filter:drop-shadow(0 0 12px rgba(34,211,238,.65));
+}
+.footer-credit-amp {
+  color:var(--aurora-emerald);
+  font:700 1rem var(--font-display);
+  opacity:.85;
+}
+.footer-credit-copy {
+  margin-top:.55rem;
+  color:#7ba3d6;
+  font:600 .68rem var(--font-body);
+  letter-spacing:.02em;
+}
+.footer-credit-copy b {
+  color:#a8bcd8;
+  font-weight:700;
 }
 
 /* ═══════════  33 · COPYRIGHT  ═══════════ */
@@ -2746,17 +2888,16 @@ button:focus-visible {
 
 @media (max-width: 1100px) {
   :root { --sb-w: 250px; }
-  .app-footer { grid-template-columns: 1fr 1fr; }
   .hd-ticker { flex-basis: 100%; order: 10; }
   .hero h1 { font-size: 2.5rem; }
 }
 
 @media (max-width: 900px) {
-  .app-footer { grid-template-columns: 1fr 1fr; gap: 1.6rem; }
   .hero h1 { font-size: 2.35rem; }
   .diag-prediction { font-size: 1.9rem; }
   .metric-value { font-size: 1.45rem; }
   .prob-value { font-size: 1.35rem; }
+  .footer-body { grid-template-columns: 1fr 1fr; gap:1.6rem; }
   [data-testid="stMainBlockContainer"] {
     padding: 1.5rem 1.15rem 2.8rem !important;
   }
@@ -2780,11 +2921,6 @@ button:focus-visible {
 }
 
 @media (max-width: 640px) {
-  .app-footer {
-    grid-template-columns: 1fr;
-    padding: 1.6rem;
-    gap: 1.4rem;
-  }
   .hero h1 { font-size: 1.95rem; letter-spacing: -.03em; }
   .hero-sub { font-size: .92rem; line-height: 1.6; }
   .diag-prediction { font-size: 1.65rem; }
@@ -2804,6 +2940,13 @@ button:focus-visible {
   }
   .sb-brand-name { font-size: .98rem; }
   .sb-engine { padding: .9rem; }
+  .app-footer { padding:2rem 1.3rem 1.5rem; margin-top:2.5rem; }
+  .footer-body { grid-template-columns: 1fr; gap:1.4rem; }
+  .footer-brand-lockup { flex-direction:column; text-align:center; gap:.75rem; }
+  .footer-brand-text { text-align:center; }
+  .footer-brand-icon { width:56px; height:56px; }
+  .footer-brand-name { font-size:1.3rem; }
+  .footer-credit-names { font-size:.95rem; gap:.4rem .65rem; }
 }
 
 @media (max-width: 560px) {
@@ -5401,52 +5544,90 @@ avg_c_f    = st.session_state.live_avg_confidence
 eng_ok     = model_error is None and MODEL_PATH.exists()
 torch_ver  = torch.__version__.split('+')[0]
 st_ver     = st.__version__
-brain_ft   = Icons.brain(26, "#22d3ee")
+brain_ft   = Icons.brain(30, "#22d3ee")
 
 st.markdown(safe_html(f"""
 <div class="app-footer">
-    <div>
+
+    <!-- Brand lockup -->
+    <div class="footer-lockup">
         <div class="footer-brand-lockup">
             <div class="footer-brand-icon">{brain_ft}</div>
-            <div>
+            <div class="footer-brand-text">
                 <div class="footer-brand-name">NeuroLens AI</div>
                 <div class="footer-brand-tag">Neurodiagnostic Intelligence</div>
             </div>
         </div>
     </div>
 
-    <div>
-        <div class="footer-col-title">Tech Stack</div>
-        <div class="footer-tech-badges">
-            <span class="ft-badge"><span class="ft-badge-dot"></span>PyTorch {_escape_html(torch_ver)}</span>
-            <span class="ft-badge"><span class="ft-badge-dot"></span>Streamlit {_escape_html(st_ver)}</span>
-            <span class="ft-badge"><span class="ft-badge-dot"></span>Grad-CAM</span>
-            <span class="ft-badge"><span class="ft-badge-dot"></span>Grad-CAM++</span>
-            <span class="ft-badge"><span class="ft-badge-dot"></span>MC Dropout</span>
-            <span class="ft-badge"><span class="ft-badge-dot"></span>{_escape_html(model_name or 'CustomCNN')}</span>
+    <!-- Body: 3 columns -->
+    <div class="footer-body">
+
+        <!-- Col 1: Tech stack -->
+        <div>
+            <div class="footer-col-title">Tech Stack</div>
+            <div class="footer-tech-badges">
+                <span class="ft-badge"><span class="ft-badge-dot"></span>PyTorch {_escape_html(torch_ver)}</span>
+                <span class="ft-badge"><span class="ft-badge-dot"></span>Streamlit {_escape_html(st_ver)}</span>
+                <span class="ft-badge"><span class="ft-badge-dot"></span>Grad-CAM</span>
+                <span class="ft-badge"><span class="ft-badge-dot"></span>Grad-CAM++</span>
+                <span class="ft-badge"><span class="ft-badge-dot"></span>MC Dropout</span>
+                <span class="ft-badge"><span class="ft-badge-dot"></span>{_escape_html(model_name or 'CustomCNN')}</span>
+            </div>
         </div>
-        <div class="footer-col-title" style="margin-top:.9rem">Build</div>
-        <div style="font-family:var(--font-mono);font-size:.66rem;color:#7ba3d6">{_escape_html(build_time)}</div>
+
+        <!-- Col 2: Build info -->
+        <div>
+            <div class="footer-col-title">Build Info</div>
+            <div class="footer-build">
+                <div class="footer-build-row">
+                    <span>Version</span>
+                    <span>v3.7.3</span>
+                </div>
+                <div class="footer-build-row">
+                    <span>Build</span>
+                    <span>{_escape_html(build_time)}</span>
+                </div>
+                <div class="footer-build-row">
+                    <span>Device</span>
+                    <span>{'CUDA' if DEVICE.type == 'cuda' else 'CPU'}</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Col 3: Session stats -->
+        <div>
+            <div class="footer-col-title">Session</div>
+            <div class="footer-stats">
+                <div class="f-stat">
+                    <span class="f-stat-lbl">Total Scans</span>
+                    <span class="f-stat-val">{total_s}</span>
+                </div>
+                <div class="f-stat">
+                    <span class="f-stat-lbl">Avg Confidence</span>
+                    <span class="f-stat-val">{avg_c_f:.1f}%</span>
+                </div>
+                <div class="f-stat">
+                    <span class="f-stat-lbl">Status</span>
+                    <span class="f-stat-val">
+                        <span class="f-dot {'f-dot-off' if not eng_ok else ''}"></span>
+                        {'Online' if eng_ok else 'Offline'}
+                    </span>
+                </div>
+            </div>
+        </div>
     </div>
 
-    <div>
-        <div class="footer-col-title">Session</div>
-        <div class="footer-stats">
-            <div class="f-stat">
-                <div class="f-stat-val">{total_s}</div>
-                <div class="f-stat-lbl">Total Scans</div>
-            </div>
-            <div class="f-stat">
-                <div class="f-stat-val">{avg_c_f:.1f}%</div>
-                <div class="f-stat-lbl">Avg Confidence</div>
-            </div>
-            <div class="f-stat f-stat-wide">
-                <div class="f-stat-val">
-                    <span class="f-dot {'f-dot-off' if not eng_ok else ''}"></span>
-                    {'Engine Online' if eng_ok else 'Engine Offline'}
-                </div>
-                <div class="f-stat-lbl">Status</div>
-            </div>
+    <!-- Developer credit -->
+    <div class="footer-credit">
+        <div class="footer-credit-label">Developed By</div>
+        <div class="footer-credit-names">
+            <span class="footer-credit-name">MD. Atique Shahriar</span>
+            <span class="footer-credit-amp">&amp;</span>
+            <span class="footer-credit-name">Aronna Das</span>
         </div>
+        <div class="footer-credit-copy">© {year} <b>NeuroLens AI</b> · All Rights Reserved</div>
     </div>
-</div>"""), unsafe_allow_html=True)
+
+</div>
+"""), unsafe_allow_html=True)
