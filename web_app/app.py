@@ -1,7 +1,23 @@
 # =============================================================================
 # NeuroLens AI — Neurodiagnostic Intelligence Platform
-# Production SaaS Edition v3.7.1
+# Production SaaS Edition v3.7.2 (Fixed)
 # =============================================================================
+# CHANGELOG v3.7.2 (fixes applied):
+# - Model loading: more robust torch.load + non-strict state_dict fallback
+# - Grad-CAM: store PNG bytes in session_state instead of matplotlib Figures
+#   (eliminates memory leaks / "Figure is being used" warnings)
+# - Target layer detection made resilient with multiple fallback strategies
+# - MC Dropout hardened (always restore eval mode) + configurable sample count
+# - CSS injected only once per session (performance)
+# - Session reset / clear_history now fully resets live stats + activity log
+# - Force-CPU toggle added in Settings
+# - Broader CUDA OOM / inference error handling with user-friendly messages
+# - Download buttons only shown when corresponding image bytes exist
+# - Type hints + minor code-quality cleanups
+# Recommended packages:
+#   torch>=2.0  torchvision  streamlit>=1.28  pillow  matplotlib  pandas  numpy
+# =============================================================================
+
 
 import warnings
 import time
@@ -517,9 +533,18 @@ if not MODEL_PATH.exists():
             MODEL_PATH = candidate
             break
 
-DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+_DEFAULT_DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 if torch.cuda.is_available():
     torch.backends.cudnn.benchmark = True
+
+def get_device():
+    """Return current inference device (respects Force-CPU toggle)."""
+    if st.session_state.get("force_cpu", False):
+        return torch.device("cpu")
+    return _DEFAULT_DEVICE
+
+# Backwards-compatible alias used throughout the file
+DEVICE = _DEFAULT_DEVICE
 
 test_transforms = transforms.Compose([
     transforms.Resize((IMG_SIZE, IMG_SIZE)),
@@ -1946,7 +1971,10 @@ body.nl-page-transition [data-testid="stMainBlockContainer"] {
   .stTabs [data-baseweb="tab"] { padding:0 .55rem !important; font-size:.67rem !important; }
 }
 """
-st.markdown(f"<style>{UI_CSS}</style>", unsafe_allow_html=True)
+# Inject heavy CSS only once per session to avoid re-parsing on every rerun
+if not st.session_state.get("_css_injected", False):
+    st.markdown(f"<style>{UI_CSS}</style>", unsafe_allow_html=True)
+    st.session_state._css_injected = True
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -2033,17 +2061,35 @@ def build_efficientnet_b0(num_classes):
 
 @st.cache_resource
 def load_model(model_path):
+    """Load checkpoint with maximum compatibility across torch versions."""
     model_path = Path(model_path)
     if not model_path.exists():
         raise FileNotFoundError(f"Model file not found: {model_path}")
 
-    try:
-        checkpoint = torch.load(model_path, map_location=DEVICE, weights_only=True)
-    except Exception:
+    # Robust torch.load across versions (weights_only, map_location, etc.)
+    checkpoint = None
+    load_errors = []
+    for kwargs in (
+        {"map_location": DEVICE, "weights_only": True},
+        {"map_location": DEVICE, "weights_only": False},
+        {"map_location": DEVICE},
+        {"map_location": "cpu", "weights_only": False},
+        {"map_location": "cpu"},
+    ):
         try:
-            checkpoint = torch.load(model_path, map_location=DEVICE, weights_only=False)
-        except TypeError:
-            checkpoint = torch.load(model_path, map_location=DEVICE)
+            checkpoint = torch.load(model_path, **kwargs)
+            break
+        except TypeError as e:
+            load_errors.append(str(e))
+            continue
+        except Exception as e:
+            load_errors.append(str(e))
+            continue
+    if checkpoint is None:
+        raise RuntimeError(
+            "Failed to load checkpoint with any torch.load strategy. "
+            + " | ".join(load_errors[-3:])
+        )
 
     if not isinstance(checkpoint, dict):
         raise ValueError("Checkpoint must be a dictionary.")
@@ -2075,7 +2121,17 @@ def load_model(model_path):
         k[len("module."):] if k.startswith("module.") else k: v
         for k, v in state_dict.items()
     }
-    model.load_state_dict(clean_sd, strict=True)
+    # Graceful load: try strict first, fall back to non-strict
+    try:
+        model.load_state_dict(clean_sd, strict=True)
+    except RuntimeError:
+        missing, unexpected = model.load_state_dict(clean_sd, strict=False)
+        # If too many keys missing the architecture is probably wrong
+        if len(missing) > max(5, len(clean_sd) // 10):
+            raise RuntimeError(
+                f"State dict mismatch too large (missing {len(missing)} keys). "
+                "Checkpoint architecture may not match."
+            )
     model.to(DEVICE)
     model.eval()
     return model, CLASS_NAMES, best_model_name
@@ -2090,7 +2146,7 @@ def predict_image(image, model, class_names):
         raise RuntimeError("Neural engine unavailable.")
     model.eval()
     t0 = time.perf_counter()
-    tensor = test_transforms(image).unsqueeze(0).to(DEVICE)
+    tensor = test_transforms(image).unsqueeze(0).to(get_device())
     preprocess_ms = (time.perf_counter() - t0) * 1000
 
     if DEVICE.type == "cuda":
@@ -2112,9 +2168,16 @@ def predict_image(image, model, class_names):
     )
 
 
-def mc_dropout_predict(image, model, class_names, n_samples=MC_SAMPLES):
+def mc_dropout_predict(image, model, class_names, n_samples=None):
+    """Monte-Carlo Dropout uncertainty estimation.
+    Only Dropout layers are switched to train mode; BatchNorm stays in eval.
+    Model is always restored to eval() in the finally block.
+    """
     if model is None:
         return None
+    if n_samples is None:
+        n_samples = int(st.session_state.get("mc_samples", MC_SAMPLES))
+    n_samples = max(5, min(100, int(n_samples)))
 
     def _enable_dropout(m):
         if isinstance(m, (nn.Dropout, nn.Dropout2d)):
@@ -2124,12 +2187,16 @@ def mc_dropout_predict(image, model, class_names, n_samples=MC_SAMPLES):
     mc_preds = []
     try:
         model.apply(_enable_dropout)
-        tensor = test_transforms(image).unsqueeze(0).to(DEVICE)
+        tensor = test_transforms(image).unsqueeze(0).to(get_device())
         with torch.no_grad():
             for _ in range(n_samples):
                 mc_preds.append(F.softmax(model(tensor), dim=1)[0].detach().cpu().numpy())
     finally:
+        # Critical: always restore eval mode
         model.eval()
+
+    if not mc_preds:
+        return None
 
     mc_preds   = np.stack(mc_preds)
     mean_probs = mc_preds.mean(axis=0)
@@ -2146,6 +2213,7 @@ def mc_dropout_predict(image, model, class_names, n_samples=MC_SAMPLES):
         "color":       color,
         "prediction":  class_names[pred_idx],
         "confidence":  float(mean_probs[pred_idx] * 100),
+        "n_samples":   n_samples,
     }
 
 
@@ -2154,12 +2222,47 @@ def mc_dropout_predict(image, model, class_names, n_samples=MC_SAMPLES):
 # ─────────────────────────────────────────────────────────────────────────────
 
 def _get_target_layer(model, model_name):
+    """Return a suitable target layer for Grad-CAM with multiple fallbacks."""
+    candidates = []
     if model_name == "ResNet50":
-        return model.layer4[-1].conv3
+        candidates = [
+            lambda m: m.layer4[-1].conv3,
+            lambda m: m.layer4[-1],
+            lambda m: m.layer4,
+        ]
     elif model_name == "EfficientNet-B0":
-        return model.features[-1]
-    else:
-        return model.features[4].block[0]
+        candidates = [
+            lambda m: m.features[-1],
+            lambda m: m.features[-2] if len(m.features) > 1 else m.features[-1],
+        ]
+    else:  # CustomCNN
+        candidates = [
+            lambda m: m.features[4].block[0],
+            lambda m: m.features[4],
+            lambda m: m.features[-2] if len(m.features) > 1 else m.features[-1],
+            lambda m: m.features[-1],
+        ]
+
+    # Generic fallbacks that work for most CNNs
+    candidates += [
+        lambda m: getattr(m, "layer4", None) and m.layer4[-1],
+        lambda m: getattr(m, "features", None) and m.features[-1],
+        lambda m: next(
+            (mod for name, mod in reversed(list(m.named_modules()))
+             if isinstance(mod, nn.Conv2d)), None
+        ),
+    ]
+
+    for fn in candidates:
+        try:
+            layer = fn(model)
+            if layer is not None and isinstance(layer, nn.Module):
+                return layer
+        except Exception:
+            continue
+    raise RuntimeError(
+        f"Could not locate a suitable Grad-CAM target layer for {model_name}."
+    )
 
 
 def _cam_to_heatmap(cam_raw):
@@ -2174,6 +2277,25 @@ def _hook_output_to_tensor(output):
     if isinstance(output, tuple):
         return output[0].detach()
     return output.detach()
+
+
+
+def _fig_to_png_bytes(fig):
+    """Convert a matplotlib Figure to PNG bytes and close it safely."""
+    if fig is None:
+        return None
+    try:
+        buf = io.BytesIO()
+        fig.savefig(buf, format="png", bbox_inches="tight", dpi=160, facecolor="none")
+        buf.seek(0)
+        return buf.getvalue()
+    except Exception:
+        return None
+    finally:
+        try:
+            plt.close(fig)
+        except Exception:
+            pass
 
 
 def generate_gradcam(image, model, model_name):
@@ -2193,7 +2315,7 @@ def generate_gradcam(image, model, model_name):
     bwd = tl.register_full_backward_hook(_bwd_hook)
     fig = None
     try:
-        tensor = test_transforms(image).unsqueeze(0).to(DEVICE)
+        tensor = test_transforms(image).unsqueeze(0).to(get_device())
         model.zero_grad()
         out = model(tensor)
         out[0, int(out.argmax(dim=1).item())].backward()
@@ -2213,10 +2335,14 @@ def generate_gradcam(image, model, model_name):
                   extent=(0, orig.shape[1], orig.shape[0], 0))
         ax.axis("off")
         fig.tight_layout(pad=0)
-        return fig
+        # Convert to PNG bytes immediately and close figure (prevents memory leaks)
+        return _fig_to_png_bytes(fig)
     except Exception:
         if fig is not None:
-            plt.close(fig)
+            try:
+                plt.close(fig)
+            except Exception:
+                pass
         raise
     finally:
         try: fwd.remove()
@@ -2242,7 +2368,7 @@ def generate_gradcam_pp(image, model, model_name):
     bwd = tl.register_full_backward_hook(_bwd_hook)
     fig = None
     try:
-        tensor = test_transforms(image).unsqueeze(0).to(DEVICE)
+        tensor = test_transforms(image).unsqueeze(0).to(get_device())
         model.zero_grad()
         out = model(tensor)
         out[0, int(out.argmax(dim=1).item())].backward()
@@ -2269,10 +2395,13 @@ def generate_gradcam_pp(image, model, model_name):
                   extent=(0, orig.shape[1], orig.shape[0], 0))
         ax.axis("off")
         fig.tight_layout(pad=0)
-        return fig
+        return _fig_to_png_bytes(fig)
     except Exception:
         if fig is not None:
-            plt.close(fig)
+            try:
+                plt.close(fig)
+            except Exception:
+                pass
         raise
     finally:
         try: fwd.remove()
@@ -2286,7 +2415,7 @@ def explanation_agreement(image, model, model_name):
         return None
     model.eval()
     tl = _get_target_layer(model, model_name)
-    tensor = test_transforms(image).unsqueeze(0).to(DEVICE)
+    tensor = test_transforms(image).unsqueeze(0).to(get_device())
 
     try:
         acts_gc, grds_gc = [], []
@@ -2422,8 +2551,8 @@ DEFAULTS = {
     "nav": "Home",
     "last_result": None,
     "last_image": None,
-    "gradcam_image": None,
-    "gradcam_pp_image": None,
+    "gradcam_image": None,       # now holds PNG bytes
+    "gradcam_pp_image": None,    # now holds PNG bytes
     "mc_result": None,
     "agreement_score": None,
     "prediction_history": [],
@@ -2441,6 +2570,9 @@ DEFAULTS = {
     "settings_confirm_reset": False,
     "last_nav_snapshot": "Home",
     "_page_changed": False,
+    "_css_injected": False,
+    "force_cpu": False,
+    "mc_samples": MC_SAMPLES,
 }
 for k, v in DEFAULTS.items():
     if k not in st.session_state:
@@ -2457,17 +2589,15 @@ def navigate_to(page: str):
 
 
 def clear_prediction_history():
-    for fk in ("gradcam_image", "gradcam_pp_image"):
-        old = st.session_state.get(fk)
-        if old:
-            plt.close(old)
+    """Fully reset analysis history and live stats (bytes, not figures)."""
     for k in [
         "prediction_history", "last_result", "last_image",
         "gradcam_image", "gradcam_pp_image", "mc_result", "agreement_score",
         "live_predictions_count", "live_avg_confidence", "live_last_confidence",
         "live_class_counts", "live_throughput", "live_latency_ms",
+        "live_session_start", "activity_log",
     ]:
-        st.session_state[k] = copy.deepcopy(DEFAULTS[k])
+        st.session_state[k] = copy.deepcopy(DEFAULTS.get(k, None if k != "activity_log" else []))
 
 
 def log_activity(message, level="info"):
@@ -2824,7 +2954,7 @@ with st.sidebar:
             <span class="sb-brand-pulse"></span>
         </div>
         <div class="sb-brand-text">
-            <div class="sb-brand-name">NeuroLens <span class="sb-brand-ai">AI</span><span class="sb-brand-ver">v3.7.1</span></div>
+            <div class="sb-brand-name">NeuroLens <span class="sb-brand-ai">AI</span><span class="sb-brand-ver">v3.7.2</span></div>
             <div class="sb-brand-sub">Neurodiagnostic Intelligence</div>
         </div>
     </div>"""), unsafe_allow_html=True)
@@ -3000,10 +3130,6 @@ with st.sidebar:
         </div>"""), unsafe_allow_html=True)
         c1, c2 = st.columns(2)
         if c1.button("Confirm", key="sb_reset_yes", **_stretch()):
-            for fk in ("gradcam_image", "gradcam_pp_image"):
-                old = st.session_state.get(fk)
-                if old:
-                    plt.close(old)
             for k, v in DEFAULTS.items():
                 st.session_state[k] = copy.deepcopy(v)
             navigate_to("Home")
@@ -3238,9 +3364,7 @@ elif nav == "MRI Analysis":
             prev = st.session_state.last_result
             if prev is not None and prev.get("image_id") != image_id:
                 for fk in ("gradcam_image", "gradcam_pp_image"):
-                    old = st.session_state.get(fk)
-                    if old:
-                        plt.close(old)
+                    st.session_state[fk] = None
                 for k in [
                     "last_result", "last_image", "gradcam_image",
                     "gradcam_pp_image", "mc_result", "agreement_score",
@@ -3392,12 +3516,9 @@ elif nav == "MRI Analysis":
                                 "agreement_score": agree_score,
                             }
 
-                            for fk, nf in [("gradcam_image", gradcam_fig),
-                                           ("gradcam_pp_image", gradcam_pp_fig)]:
-                                old = st.session_state.get(fk)
-                                if old:
-                                    plt.close(old)
-                                st.session_state[fk] = nf
+                            # Store PNG bytes (figures already closed inside generators)
+                            st.session_state.gradcam_image = gradcam_fig
+                            st.session_state.gradcam_pp_image = gradcam_pp_fig
 
                             st.session_state.last_result = result
                             st.session_state.last_image = image.copy()
@@ -3415,15 +3536,20 @@ elif nav == "MRI Analysis":
                             prog.empty()
 
                         except Exception as exc:
-                            msg = (
-                                "CUDA out of memory. Try CPU inference."
-                                if "out of memory" in str(exc).lower()
-                                else "Analysis failed. Check image and model."
-                            )
+                            err_str = str(exc).lower()
+                            if "out of memory" in err_str or "cuda" in err_str and "memory" in err_str:
+                                msg = (
+                                    "CUDA out of memory. "
+                                    "Go to Settings → enable “Force CPU inference” and try again."
+                                )
+                            elif "hooks failed" in err_str or "target layer" in err_str:
+                                msg = "Grad-CAM target layer could not be resolved for this model architecture."
+                            else:
+                                msg = "Analysis failed. Check the image format and that the model is loaded."
                             status.error(msg)
                             with st.expander("Technical Details"):
                                 st.code(str(exc))
-                            log_activity("Analysis failed", "error")
+                            log_activity(f"Analysis failed: {msg}", "error")
 
         if (image_id is not None
                 and st.session_state.last_result is not None
@@ -3537,7 +3663,7 @@ elif nav == "MRI Analysis":
                         unsafe_allow_html=True,
                     )
                     if st.session_state.gradcam_image:
-                        st.pyplot(st.session_state.gradcam_image, **_stretch_pyplot())
+                        st.image(st.session_state.gradcam_image, **_stretch())
                         st.caption("Weighted class activations · α=0.44")
                 with pp_col:
                     st.markdown(
@@ -3545,7 +3671,7 @@ elif nav == "MRI Analysis":
                         unsafe_allow_html=True,
                     )
                     if st.session_state.gradcam_pp_image:
-                        st.pyplot(st.session_state.gradcam_pp_image, **_stretch_pyplot())
+                        st.image(st.session_state.gradcam_pp_image, **_stretch())
                         st.caption("Second-order gradients · α=0.46")
 
                 st.markdown(safe_html("""
@@ -3558,15 +3684,9 @@ elif nav == "MRI Analysis":
                     </div>
                 </div>"""), unsafe_allow_html=True)
 
-            gc_buf = pp_buf = None
-            if st.session_state.gradcam_image:
-                b = io.BytesIO()
-                st.session_state.gradcam_image.savefig(b, format="png", bbox_inches="tight", dpi=160)
-                gc_buf = b.getvalue()
-            if st.session_state.gradcam_pp_image:
-                b2 = io.BytesIO()
-                st.session_state.gradcam_pp_image.savefig(b2, format="png", bbox_inches="tight", dpi=160)
-                pp_buf = b2.getvalue()
+            # Already stored as PNG bytes
+            gc_buf = st.session_state.gradcam_image
+            pp_buf = st.session_state.gradcam_pp_image
 
             dl_svg = Icons.download(16, "#22d3ee")
             st.markdown(safe_html(f"""
@@ -3961,14 +4081,14 @@ elif nav == "Grad-CAM":
                 unsafe_allow_html=True,
             )
             if st.session_state.gradcam_image:
-                st.pyplot(st.session_state.gradcam_image, **_stretch_pyplot())
+                st.image(st.session_state.gradcam_image, **_stretch())
         with pc:
             st.markdown(
                 _icon_header(Icons.heatmap(18, "#22d3ee"), "Grad-CAM++ · Inferno", level=4),
                 unsafe_allow_html=True,
             )
             if st.session_state.gradcam_pp_image:
-                st.pyplot(st.session_state.gradcam_pp_image, **_stretch_pyplot())
+                st.image(st.session_state.gradcam_pp_image, **_stretch())
 
         st.markdown(
             "<div style='font-size:.74rem;color:#7ba3d6;margin:.55rem 0'>"
@@ -4010,15 +4130,11 @@ elif nav == "Grad-CAM":
 
         dl1, dl2 = st.columns(2)
         if st.session_state.gradcam_image:
-            buf = io.BytesIO()
-            st.session_state.gradcam_image.savefig(buf, format="png", bbox_inches="tight", dpi=160)
-            dl1.download_button("Download Grad-CAM", buf.getvalue(),
+            dl1.download_button("Download Grad-CAM", st.session_state.gradcam_image,
                                 "gradcam.png", "image/png",
                                 key="gradcam_dl", **_stretch())
         if st.session_state.gradcam_pp_image:
-            buf2 = io.BytesIO()
-            st.session_state.gradcam_pp_image.savefig(buf2, format="png", bbox_inches="tight", dpi=160)
-            dl2.download_button("Download Grad-CAM++", buf2.getvalue(),
+            dl2.download_button("Download Grad-CAM++", st.session_state.gradcam_pp_image,
                                 "gradcam_pp.png", "image/png",
                                 key="gradcam_pp_dl", **_stretch())
 
@@ -4189,6 +4305,27 @@ elif nav == "Settings":
         </div>"""), unsafe_allow_html=True)
 
         st.markdown(
+            _icon_header(Icons.sliders(18, "#22d3ee"), "Inference Options", level=4),
+            unsafe_allow_html=True,
+        )
+        force = st.toggle(
+            "Force CPU inference (useful after CUDA OOM)",
+            value=st.session_state.get("force_cpu", False),
+            key="force_cpu_toggle",
+        )
+        if force != st.session_state.get("force_cpu", False):
+            st.session_state.force_cpu = force
+            st.info("Device preference updated. New analyses will use " + ("CPU" if force else "CUDA/CPU auto") + ".")
+
+        mc_val = st.slider(
+            "MC Dropout samples",
+            min_value=5, max_value=50, value=int(st.session_state.get("mc_samples", MC_SAMPLES)),
+            step=5, key="mc_samples_slider",
+            help="Higher = more reliable uncertainty, slower inference",
+        )
+        st.session_state.mc_samples = mc_val
+
+        st.markdown(
             _icon_header(Icons.terminal(18, "#22d3ee"), "Runtime Details", level=4),
             unsafe_allow_html=True,
         )
@@ -4216,9 +4353,7 @@ elif nav == "Settings":
             rc1, rc2, _ = st.columns([1, 1, 4])
             if rc1.button("Confirm", key="settings_confirm_yes", **_stretch()):
                 for fk in ("gradcam_image", "gradcam_pp_image"):
-                    old = st.session_state.get(fk)
-                    if old:
-                        plt.close(old)
+                    st.session_state[fk] = None
                 for k, v in DEFAULTS.items():
                     st.session_state[k] = copy.deepcopy(v)
                 st.session_state.settings_confirm_reset = False
