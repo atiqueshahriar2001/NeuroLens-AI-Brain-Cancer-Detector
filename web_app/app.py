@@ -1945,6 +1945,66 @@ body.nl-page-transition [data-testid="stMainBlockContainer"] {
   [data-testid="stMetric"] { padding:.65rem !important; }
   .stTabs [data-baseweb="tab"] { padding:0 .55rem !important; font-size:.67rem !important; }
 }
+
+/* ═══════════════════════════════════════════════════════════════════════
+   TEXT JUSTIFICATION — v3.7.4
+   Paragraph-style text in cards/panels gets justified.
+   Short labels, badges, chips, and metric values stay untouched.
+   ═══════════════════════════════════════════════════════════════════════ */
+.info-card p,
+.info-card h3,
+.hero-sub,
+.upload-sub,
+.step-card .step-desc,
+.xai-text,
+.xai-text b,
+.xai-text em,
+.disclaimer,
+.disclaimer span,
+.uncertainty-card,
+.unc-band,
+.empty-text,
+.footer-desc,
+.act-msg,
+.sb-warning span,
+.sb-confirm-text,
+.export-head-sub,
+.thumb-meta,
+.prob-label,
+.latest-val {
+  text-align: justify !important;
+  text-justify: inter-word !important;
+  -webkit-hyphens: auto !important;
+  -ms-hyphens: auto !important;
+  hyphens: auto !important;
+  word-break: normal !important;
+  overflow-wrap: anywhere !important;
+}
+
+/* Keep last line left-aligned (avoid stretched final line) */
+.info-card p,
+.hero-sub,
+.upload-sub,
+.step-card .step-desc,
+.xai-text,
+.disclaimer span,
+.empty-text,
+.footer-desc,
+.act-msg,
+.sb-warning span,
+.sb-confirm-text,
+.export-head-sub,
+.latest-val {
+  text-align-last: left !important;
+}
+
+/* Titles should remain left-aligned but justified text-align doesn't hurt them; force left */
+.info-card h3,
+.unc-title,
+.xai-title,
+.prob-label {
+  text-align-last: left !important;
+}
 """
 
 
