@@ -1,6 +1,6 @@
 # =============================================================================
 # NeuroLens AI — Neurodiagnostic Intelligence Platform
-# Production SaaS Edition v3.7.1 — Web-App Edition + Sidebar Toggle Fix
+# Production SaaS Edition v3.7.1 
 # =============================================================================
 
 import warnings
@@ -597,7 +597,6 @@ UI_CSS = r"""
   --font-mono:'JetBrains Mono',ui-monospace,SFMono-Regular,Menlo,monospace;
 
   --sb-w:280px;
-  --hd-h:64px;
 }
 
 html, body, [data-testid="stAppViewContainer"], [data-testid="stApp"] {
@@ -618,7 +617,7 @@ html, body, [data-testid="stAppViewContainer"], [data-testid="stApp"] {
   width:100% !important;
   max-width:1380px !important;
   margin:0 auto !important;
-  padding:calc(var(--hd-h) + 1.5rem) 1.25rem 2.5rem !important;
+  padding:1.5rem 1.25rem 2.5rem !important;
 }
 
 /* ── PAGE TRANSITION (only on nav change, driven by JS) ── */
@@ -958,14 +957,14 @@ body.nl-sb-collapsed [data-testid="stSidebar"] {
 [data-testid="stMetricLabel"] { color:#7ba3d6 !important; }
 [data-testid="stMetricValue"] { color:#e2e8f0 !important; }
 
-/* STICKY HEADER */
+/* DYNAMIC HEADER — flows with page content, not fixed */
 #nl-sticky-header-root { all: initial; }
 #nl-sticky-header-root * { box-sizing: border-box; }
 
 .sticky-header {
-  position:fixed; z-index:999999;
-  top:.7rem; left:calc(var(--nl-sb-offset, var(--sb-w)) + .75rem); right:.75rem;
-  min-height:var(--hd-h);
+  position:relative;
+  width:100%;
+  margin-bottom:1.25rem;
   display:flex; align-items:center; gap:.9rem;
   padding:.55rem 1.05rem;
   border:1px solid rgba(59,130,246,.42);
@@ -976,16 +975,11 @@ body.nl-sb-collapsed [data-testid="stSidebar"] {
   backdrop-filter:blur(22px) saturate(150%);
   -webkit-backdrop-filter:blur(22px) saturate(150%);
   box-shadow:
-    0 12px 44px rgba(0,0,0,.35),
+    0 4px 24px rgba(0,0,0,.25),
     0 0 0 1px rgba(34,211,238,.10),
     inset 0 1px 0 rgba(255,255,255,.06);
   overflow:hidden;
   font-family:'Inter',system-ui,sans-serif;
-  transition:left .28s cubic-bezier(.2,.8,.2,1) !important;
-}
-/* When sidebar collapses, sticky header shifts to near-left edge */
-body.nl-sb-collapsed .sticky-header {
-  left: 3.75rem !important;
 }
 .sticky-header::before {
   content:'';
@@ -1885,7 +1879,6 @@ body.nl-sb-collapsed .sticky-header {
 
 @media (max-width: 1100px) {
   :root { --sb-w:240px; }
-  .sticky-header { left:calc(var(--nl-sb-offset, var(--sb-w)) + .6rem); }
   .hd-ticker { display:none; }
   .app-footer { grid-template-columns:1fr 1fr; }
 }
@@ -1893,12 +1886,6 @@ body.nl-sb-collapsed .sticky-header {
   .app-footer { grid-template-columns:1fr 1fr; }
 }
 @media (max-width: 760px) {
-  /* Sidebar width handled via aria-expanded rules above — nothing to force here. */
-  .sticky-header {
-    left: 3.25rem !important;
-    right: .5rem !important;
-    top: .5rem !important;
-  }
   .hd-brand-name { display:none; }
   .hd-divider, .hd-status { display:none; }
   .hd-page { margin-left:auto; }
@@ -2657,49 +2644,7 @@ def render_sticky_header():
             root.innerHTML = new TextDecoder().decode(bytes);
             d.body.appendChild(root);
 
-            // ── 5. Sidebar state watchdog ──
-            // Uses polling + targeted MutationObserver on the sidebar element only.
-            // Re-attaches observer every poll if the sidebar DOM node was swapped
-            // by a Streamlit rerun (identified by node identity, not a sticky flag).
-            function syncSidebarState() {{
-                const sb = d.querySelector('[data-testid="stSidebar"]');
-                if (!sb) return;
-
-                const ariaExpanded  = sb.getAttribute('aria-expanded');
-                const sbWidth       = sb.getBoundingClientRect().width;
-                const hasCollapseClass = sb.classList.contains('st-emotion-cache-collapsed') ||
-                                         sb.classList.contains('collapsed');
-                const isCollapsed = ariaExpanded === 'false' || sbWidth < 80 || hasCollapseClass;
-
-                d.body.classList.toggle('nl-sb-collapsed', isCollapsed);
-
-                // Keep CSS variable in sync with real sidebar width
-                if (!isCollapsed && sbWidth > 80) {{
-                    d.documentElement.style.setProperty('--nl-sb-offset', sbWidth + 'px');
-                }}
-
-                // Re-attach MutationObserver if sidebar node was replaced by Streamlit
-                if (w.__nl_sb_observed_node !== sb) {{
-                    if (w.__nl_sb_mo) w.__nl_sb_mo.disconnect();
-                    w.__nl_sb_mo = new MutationObserver(syncSidebarState);
-                    w.__nl_sb_mo.observe(sb, {{
-                        attributes: true,
-                        attributeFilter: ['aria-expanded', 'style', 'class'],
-                        subtree: false
-                    }});
-                    w.__nl_sb_observed_node = sb;
-                }}
-            }}
-
-            // Run after two animation frames so the sidebar has finished painting
-            // its initial width — avoids the first-load position flicker.
-            requestAnimationFrame(() => requestAnimationFrame(syncSidebarState));
-
-            // Lightweight poll for subsequent reruns / user toggles.
-            // Only one interval lives across all Streamlit reruns.
-            if (!w.__nl_sb_poller) {{
-                w.__nl_sb_poller = setInterval(syncSidebarState, 300);
-            }}
+            // ── 5. Header is dynamic (not fixed), no sidebar watchdog needed ──
         }} catch (e) {{
             console.error('[NeuroLens] Header sync failed:', e);
         }}
@@ -2828,18 +2773,17 @@ with st.sidebar:
         uptime = "—"
 
     brain_large = Icons.brain(22, "#22d3ee")
-    _sb_brand_html = (
-        f'<div class="sb-brand">'
-        f'<div class="sb-brand-icon">{brain_large}'
-        f'<span class="sb-brand-pulse"></span></div>'
-        f'<div class="sb-brand-text">'
-        f'<div class="sb-brand-name">NeuroLens '
-        f'<span class="sb-brand-ai">AI</span>'
-        f' <span class="sb-brand-ver">v3.7.1</span></div>'
-        f'<div class="sb-brand-sub">Neurodiagnostic Intelligence</div>'
-        f'</div></div>'
-    )
-    st.markdown(_sb_brand_html, unsafe_allow_html=True)
+    st.markdown(safe_html(f"""
+    <div class="sb-brand">
+        <div class="sb-brand-icon">
+            {brain_large}
+            <span class="sb-brand-pulse"></span>
+        </div>
+        <div class="sb-brand-text">
+            <div class="sb-brand-name">NeuroLens <span class="sb-brand-ai">AI</span><span class="sb-brand-ver">v3.7.1</span></div>
+            <div class="sb-brand-sub">Neurodiagnostic Intelligence</div>
+        </div>
+    </div>"""), unsafe_allow_html=True)
 
     dot_color = "var(--success-hi)" if engine_ok else "var(--danger-hi)"
     st.markdown(safe_html(f"""
