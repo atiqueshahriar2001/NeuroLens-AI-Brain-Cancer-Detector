@@ -1,10 +1,8 @@
-# Ignore everything
-*
-
-# But not these files/directories
-!.gitignore
-!README.md
-!requirements.txt
-!packages.txt
-!web_app/
-!web_app/**
+__pycache__/
+*.pyc
+.venv/
+venv/
+.env
+.streamlit/secrets.toml
+*.pth
+*.pt
