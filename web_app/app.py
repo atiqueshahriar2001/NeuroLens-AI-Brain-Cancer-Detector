@@ -1,6 +1,6 @@
 # =============================================================================
 # NeuroLens AI — Neurodiagnostic Intelligence Platform
-# Reconstructed Edition · v2 (SVG iconography · responsive redesign)
+# Reconstructed Edition · v3 (SVG iconography · responsive · safe reset)
 # =============================================================================
 
 import warnings
@@ -1271,9 +1271,23 @@ DEFAULTS: Dict[str, Any] = {
     "force_cpu":                False,
     "mc_samples":               MC_SAMPLES_DEF,
     "settings_confirm_reset":   False,
+    "sb_clear_confirm":         False,
     "_page_changed":            False,
     "_prev_nav":                "Home",
+    "_do_reset":                False,
 }
+
+# Pending hard-reset from a previous run: wipe ALL keys before any widget is
+# instantiated this run. This is the only safe way to reset widget-bound keys
+# such as `force_cpu` — Streamlit forbids reassigning them once their widget
+# has already been created in the current script run.
+if st.session_state.get("_do_reset", False):
+    for _rk in list(st.session_state.keys()):
+        try:
+            del st.session_state[_rk]
+        except Exception:
+            pass
+
 for k, v in DEFAULTS.items():
     if k not in st.session_state:
         st.session_state[k] = copy.deepcopy(v)
@@ -2356,11 +2370,11 @@ elif nav == "Settings":
         st.warning("This will clear all analyses, history, and live stats.")
         r1, r2, _ = st.columns([1, 1, 4])
         if r1.button("Confirm", key="settings_confirm_yes", **_W()):
-            for k, v in DEFAULTS.items():
-                st.session_state[k] = copy.deepcopy(v)
-            st.session_state.settings_confirm_reset = False
-            st.success("Session cleared.")
-            navigate_to("Home")
+            # Defer the wipe to the top of the next script run, where no widget
+            # has been instantiated yet — this bypasses Streamlit's restriction
+            # on reassigning widget-bound keys like `force_cpu`.
+            st.session_state["_do_reset"] = True
+            st.rerun()
         if r2.button("Cancel", key="settings_confirm_no", **_W()):
             st.session_state.settings_confirm_reset = False
 
