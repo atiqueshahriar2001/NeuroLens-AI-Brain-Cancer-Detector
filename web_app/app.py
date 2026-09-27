@@ -838,10 +838,29 @@ def _e(text) -> str:
 
 def _st_version_tuple() -> Tuple[int, int]:
     try:
-        major, minor = (int(p) for p in st.__version__.split(".")[:2])
-        return major, minor
+        parts = st.__version__.split(".")
+        return int(parts[0]), int(parts[1])
     except Exception:
         return (0, 0)
+
+
+# Material Symbols inside button icons requires Streamlit >= 1.36.
+# Only use names that are guaranteed to exist in the bundled Material Symbols font.
+_MATERIAL_BTN_ICONS = {
+    "home", "document_scanner", "visibility", "bar_chart",
+    "history", "settings", "delete_sweep", "rocket_launch",
+    "play_arrow", "image", "description", "download", "restart_alt",
+}
+
+
+def _btn_icon(material_name: str) -> dict:
+    """Return {'icon': ...} only when the running Streamlit both supports
+    Material Symbols in buttons (>= 1.36) and the icon name is known-valid."""
+    if _st_version_tuple() < (1, 36):
+        return {}
+    if material_name not in _MATERIAL_BTN_ICONS:
+        return {}
+    return {"icon": f":material/{material_name}:"}
 
 
 def _st_width(container: bool) -> dict:
@@ -853,13 +872,6 @@ def _st_width(container: bool) -> dict:
 
 def _W() -> dict:   return _st_width(True)
 def _Wc() -> dict:  return _st_width(False)
-
-
-def _btn_icon(material_name: str) -> dict:
-    """Return {'icon': ...} if the running Streamlit supports button icons."""
-    if _st_version_tuple() >= (1, 32):
-        return {"icon": f":material/{material_name}:"}
-    return {}
 
 
 def section_heading(title: str, icon: str) -> str:
@@ -1487,22 +1499,27 @@ with st.sidebar:
 
     nav_map = [
         ("Home",         "Home",         "home"),
-        ("MRI Analysis", "MRI Analysis", "scan"),
-        ("XAI Lab",      "XAI Lab",      "eye"),
-        ("Dashboard",    "Dashboard",    "chart"),
+        ("MRI Analysis", "MRI Analysis", "document_scanner"),
+        ("XAI Lab",      "XAI Lab",      "visibility"),
+        ("Dashboard",    "Dashboard",    "bar_chart"),
         ("History",      "History",      "history"),
         ("Settings",     "Settings",     "settings"),
     ]
     for page, label_txt, mat_icon in nav_map:
         active = st.session_state.nav == page
         badge  = f"  ({total_scans})" if page in ("MRI Analysis", "History") and total_scans else ""
-        if st.button(
-            label_txt + badge,
+        nav_kwargs = dict(
             key=f"nav_{page.lower().replace(' ','_')}",
             type="primary" if active else "secondary",
-            **_btn_icon(mat_icon),
             **_W(),
-        ):
+        )
+        icon_kw = _btn_icon(mat_icon)
+        try:
+            clicked = st.button(label_txt + badge, **icon_kw, **nav_kwargs)
+        except Exception:
+            # Older Streamlit or unsupported icon — retry without icon
+            clicked = st.button(label_txt + badge, **nav_kwargs)
+        if clicked:
             navigate_to(page)
 
     st.divider()
