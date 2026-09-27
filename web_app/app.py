@@ -1,6 +1,6 @@
 # =============================================================================
 # NeuroLens AI — Neurodiagnostic Intelligence Platform
-# Reconstructed Edition
+# Reconstructed Edition · v2 (SVG iconography · responsive redesign)
 # =============================================================================
 
 import warnings
@@ -35,7 +35,7 @@ warnings.filterwarnings("ignore")
 
 
 # =============================================================================
-# PAGE CONFIG  (must be first Streamlit call)
+# PAGE CONFIG
 # =============================================================================
 
 st.set_page_config(
@@ -83,366 +83,634 @@ test_transforms = transforms.Compose([
 
 
 # =============================================================================
-# GLOBAL CSS  — clean, minimal, purposeful
+# SVG ICON LIBRARY
+# =============================================================================
+
+SVG_ICONS: Dict[str, str] = {
+    "brain": (
+        '<path d="M9.5 2A2.5 2.5 0 0 1 12 4.5v15a2.5 2.5 0 0 1-4.96.44 2.5 2.5 0 0 1-2.96-3.08 3 3 0 0 1-.34-5.58 2.5 2.5 0 0 1 1.32-4.24 2.5 2.5 0 0 1 1.98-3A2.5 2.5 0 0 1 9.5 2Z"/>'
+        '<path d="M14.5 2A2.5 2.5 0 0 0 12 4.5v15a2.5 2.5 0 0 0 4.96.44 2.5 2.5 0 0 0 2.96-3.08 3 3 0 0 0 .34-5.58 2.5 2.5 0 0 0-1.32-4.24 2.5 2.5 0 0 0-1.98-3A2.5 2.5 0 0 0 14.5 2Z"/>'
+    ),
+    "home": '<path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/>',
+    "scan": (
+        '<path d="M3 7V5a2 2 0 0 1 2-2h2"/><path d="M17 3h2a2 2 0 0 1 2 2v2"/>'
+        '<path d="M21 17v2a2 2 0 0 1-2 2h-2"/><path d="M7 21H5a2 2 0 0 1-2-2v-2"/>'
+        '<path d="M7 12h10"/><circle cx="12" cy="12" r="2.4"/>'
+    ),
+    "eye": '<path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/>',
+    "chart": '<path d="M3 3v18h18"/><path d="M18 17V9"/><path d="M13 17V5"/><path d="M8 17v-3"/>',
+    "history": '<path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5"/><path d="M12 7v5l3 2"/>',
+    "settings": (
+        '<circle cx="12" cy="12" r="3"/>'
+        '<path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09a1.65 1.65 0 0 0-1-1.51 1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09a1.65 1.65 0 0 0 1.51-1 1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33h.01a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51h.01a1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82v.01a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1Z"/>'
+    ),
+    "activity": '<path d="M22 12h-4l-3 9L9 3l-3 9H2"/>',
+    "upload": '<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/>',
+    "download": '<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/>',
+    "zap": '<polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/>',
+    "shield": '<path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10Z"/>',
+    "check": '<path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/>',
+    "alert": '<circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>',
+    "info": '<circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/>',
+    "cpu": '<rect x="4" y="4" width="16" height="16" rx="2"/><rect x="9" y="9" width="6" height="6"/><path d="M9 2v2M15 2v2M9 20v2M15 20v2M2 9h2M2 15h2M20 9h2M20 15h2"/>',
+    "layers": '<polygon points="12 2 2 7 12 12 22 7 12 2"/><polyline points="2 17 12 22 22 17"/><polyline points="2 12 12 17 22 12"/>',
+    "target": '<circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/>',
+    "sparkles": '<path d="M9.9 2.5 12 7l4.5 2.1L12 11l-2.1 4.5L7.9 11 3.4 8.9 7.9 7z"/><path d="M19 14l1 2 2 1-2 1-1 2-1-2-2-1 2-1z"/>',
+    "pulse": '<polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>',
+    "file": '<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/>',
+    "trash": '<polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/>',
+    "refresh": '<polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/>',
+    "clock": '<circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>',
+    "monitor": '<rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/>',
+    "database": '<ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"/><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/>',
+    "sliders": '<line x1="4" y1="21" x2="4" y2="14"/><line x1="4" y1="10" x2="4" y2="3"/><line x1="12" y1="21" x2="12" y2="12"/><line x1="12" y1="8" x2="12" y2="3"/><line x1="20" y1="21" x2="20" y2="16"/><line x1="20" y1="12" x2="20" y2="3"/><line x1="1" y1="14" x2="7" y2="14"/><line x1="9" y1="8" x2="15" y2="8"/><line x1="17" y1="16" x2="23" y2="16"/>',
+}
+
+
+def svg(name: str, size: int = 18, stroke: float = 1.8,
+        color: str = "currentColor", extra: str = "") -> str:
+    """Return inline SVG markup for a named icon."""
+    paths = SVG_ICONS.get(name, "")
+    return (
+        f'<svg xmlns="http://www.w3.org/2000/svg" width="{size}" height="{size}" '
+        f'viewBox="0 0 24 24" fill="none" stroke="{color}" '
+        f'stroke-width="{stroke}" stroke-linecap="round" stroke-linejoin="round" '
+        f'style="display:inline-block;vertical-align:-0.18em;flex-shrink:0;{extra}">'
+        f'{paths}</svg>'
+    )
+
+
+# =============================================================================
+# GLOBAL CSS
 # =============================================================================
 
 st.markdown(
     '<link rel="preconnect" href="https://fonts.googleapis.com">'
     '<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>'
     '<link href="https://fonts.googleapis.com/css2?'
-    'family=Inter:wght@400;500;600;700&'
-    'family=JetBrains+Mono:wght@400;600&display=swap" '
+    'family=Inter:wght@400;500;600;700;800&'
+    'family=JetBrains+Mono:wght@400;500;600&display=swap" '
     'rel="stylesheet">',
     unsafe_allow_html=True,
 )
 
 st.markdown("""
 <style>
-/* ── Tokens ─────────────────────────────────────────────── */
+/* ── Design tokens ──────────────────────────────────────── */
 :root {
-  --bg:       #0b1628;
-  --surface:  #111f38;
-  --border:   rgba(96,165,250,.18);
-  --cyan:     #22d3ee;
-  --emerald:  #34d399;
-  --amber:    #fbbf24;
-  --danger:   #f87171;
-  --text:     #e2ecf9;
-  --muted:    #7f9bbd;
-  --mono:     'JetBrains Mono', monospace;
-  --sans:     'Inter', system-ui, sans-serif;
-  --radius:   10px;
+  --bg:            #08121f;
+  --bg-2:          #0a1828;
+  --surface:       #0f1e33;
+  --surface-2:     #142543;
+  --surface-3:     #182c4d;
+  --border:        rgba(125,165,220,.14);
+  --border-2:      rgba(125,165,220,.22);
+  --border-strong: rgba(34,211,238,.38);
+
+  --cyan:    #22d3ee;
+  --cyan-2:  #06b6d4;
+  --emerald: #34d399;
+  --amber:   #fbbf24;
+  --danger:  #f87171;
+  --violet:  #a78bfa;
+
+  --text:    #e8eefb;
+  --text-2:  #b9cbe2;
+  --muted:   #7f9bbd;
+
+  --mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, monospace;
+  --sans: 'Inter', system-ui, -apple-system, "Segoe UI", sans-serif;
+
+  --r-sm: 8px;
+  --r:    12px;
+  --r-lg: 16px;
+  --r-xl: 20px;
+
+  --sh-sm: 0 1px 2px rgba(0,0,0,.35);
+  --sh:    0 10px 26px -10px rgba(0,0,0,.55);
+  --sh-lg: 0 24px 60px -22px rgba(0,0,0,.65);
+  --sh-in: inset 0 1px 0 rgba(255,255,255,.04);
+
+  --ring: 0 0 0 1px rgba(34,211,238,.55), 0 0 0 4px rgba(34,211,238,.15);
+  --ease: cubic-bezier(.22,.61,.36,1);
+  --ease-out: cubic-bezier(.16,.84,.44,1);
 }
 
-/* ── Base ────────────────────────────────────────────────── */
+/* ── Base ──────────────────────────────────────────────── */
 html, body,
 [data-testid="stAppViewContainer"],
 [data-testid="stApp"] {
   background: var(--bg) !important;
   font-family: var(--sans);
+  color: var(--text);
   -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
 }
 [data-testid="stAppViewContainer"] > .main {
   background:
-    radial-gradient(ellipse 90% 50% at 50% -10%, rgba(34,211,238,.12), transparent 60%),
-    linear-gradient(180deg, #0d2347 0%, #080f1e 60%) !important;
+    radial-gradient(1100px 600px at 50% -15%, rgba(34,211,238,.10), transparent 55%),
+    radial-gradient(900px 500px at 95% 10%, rgba(167,139,250,.07), transparent 55%),
+    linear-gradient(180deg, #0a1a30 0%, #050c18 60%, #040911 100%) !important;
   background-attachment: fixed;
 }
 [data-testid="stMainBlockContainer"] {
-  max-width: 1320px !important;
-  padding: 1.5rem 1.4rem 3rem !important;
+  max-width: 1380px !important;
+  padding: clamp(.9rem, 2vw, 1.6rem) clamp(.8rem, 2vw, 1.6rem) 4rem !important;
 }
 
-/* ── Sidebar ─────────────────────────────────────────────── */
+/* ── Sidebar ───────────────────────────────────────────── */
 [data-testid="stSidebar"] {
-  background: linear-gradient(180deg, #0e2455 0%, #060d1c 100%) !important;
+  background: linear-gradient(180deg, #0b1e3d 0%, #060f1f 100%) !important;
   border-right: 1px solid var(--border) !important;
 }
 [data-testid="stSidebar"] > div:first-child {
-  padding: 0 .9rem 1rem !important;
+  padding: .85rem .8rem 1.2rem !important;
+}
+[data-testid="stSidebar"] hr {
+  border-color: var(--border) !important;
+  margin: 1rem 0 !important;
 }
 
-/* ── Headings ────────────────────────────────────────────── */
-h1 { font-size: 1.7rem !important; font-weight: 700; color: var(--text); letter-spacing: -.02em; }
-h2 { font-size: 1.25rem !important; font-weight: 700; color: var(--text); }
-h3 { font-size: 1rem !important; font-weight: 600; color: var(--text); }
-h4 { font-size: .875rem !important; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: .06em; }
+/* Sidebar nav buttons — styled as nav rail items */
+[data-testid="stSidebar"] .stButton > button {
+  justify-content: flex-start !important;
+  text-align: left !important;
+  border-radius: 10px !important;
+  padding: .6rem .85rem !important;
+  font-size: .875rem !important;
+  font-weight: 500 !important;
+  letter-spacing: .005em;
+  transition: background .18s var(--ease), border-color .18s var(--ease),
+              color .18s var(--ease), transform .12s var(--ease) !important;
+  min-height: 42px !important;
+}
+[data-testid="stSidebar"] .stButton > button[kind="secondary"] {
+  background: transparent !important;
+  border: 1px solid transparent !important;
+  color: var(--text-2) !important;
+}
+[data-testid="stSidebar"] .stButton > button[kind="secondary"]:hover {
+  background: rgba(34,211,238,.07) !important;
+  border-color: rgba(34,211,238,.22) !important;
+  color: var(--text) !important;
+}
+[data-testid="stSidebar"] .stButton > button[kind="secondary"]:active {
+  transform: translateY(1px);
+}
+[data-testid="stSidebar"] .stButton > button[kind="primary"] {
+  background: linear-gradient(135deg, rgba(34,211,238,.17), rgba(52,211,153,.10)) !important;
+  border: 1px solid rgba(34,211,238,.42) !important;
+  color: var(--text) !important;
+  box-shadow: var(--sh-in), 0 0 0 1px rgba(34,211,238,.08) !important;
+}
+[data-testid="stSidebar"] .stButton > button[kind="primary"]::before {
+  content: "";
+  position: absolute;
+  left: -1px; top: 20%; bottom: 20%;
+  width: 3px; border-radius: 3px;
+  background: linear-gradient(180deg, var(--cyan), var(--emerald));
+}
 
-/* ── Card ────────────────────────────────────────────────── */
+/* Streamlit default buttons elsewhere */
+.stButton > button, .stDownloadButton > button {
+  border-radius: 10px !important;
+  font-weight: 600 !important;
+  font-size: .875rem !important;
+  transition: transform .12s var(--ease), box-shadow .18s var(--ease),
+              background .18s var(--ease), border-color .18s var(--ease) !important;
+}
+.stButton > button[kind="primary"], .stDownloadButton > button[kind="primary"] {
+  background: linear-gradient(135deg, #0ea5e9, #06b6d4) !important;
+  border: 1px solid rgba(255,255,255,.10) !important;
+  color: #031422 !important;
+  box-shadow: 0 6px 18px -6px rgba(34,211,238,.55) !important;
+}
+.stButton > button[kind="primary"]:hover, .stDownloadButton > button[kind="primary"]:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 10px 26px -8px rgba(34,211,238,.75) !important;
+}
+.stButton > button:focus-visible, .stDownloadButton > button:focus-visible,
+[data-testid="stSidebar"] .stButton > button:focus-visible {
+  outline: none !important;
+  box-shadow: var(--ring) !important;
+}
+
+/* ── Headings ──────────────────────────────────────────── */
+h1 { font-size: clamp(1.35rem, 2.6vw, 1.75rem) !important; font-weight: 800 !important; letter-spacing: -.022em !important; color: var(--text) !important; margin: .2rem 0 .35rem !important; }
+h2 { font-size: clamp(1.15rem, 2.2vw, 1.4rem) !important; font-weight: 700 !important; color: var(--text) !important; letter-spacing: -.018em !important; margin: .4rem 0 .4rem !important; }
+h3 { font-size: clamp(.95rem, 1.6vw, 1.05rem) !important; font-weight: 700 !important; color: var(--text) !important; }
+h4 { font-size: .78rem !important; font-weight: 700 !important; color: var(--muted) !important; text-transform: uppercase; letter-spacing: .08em; margin: .8rem 0 .35rem !important; }
+
+/* Section heading with icon */
+.nl-h {
+  display: flex; align-items: center; gap: .55rem;
+  font-size: 1rem; font-weight: 700; color: var(--text);
+  margin: .9rem 0 .55rem;
+}
+.nl-h .ico {
+  width: 26px; height: 26px; display: grid; place-items: center;
+  border-radius: 8px; background: rgba(34,211,238,.10);
+  border: 1px solid rgba(34,211,238,.28); color: var(--cyan);
+}
+
+/* ── Card ──────────────────────────────────────────────── */
 .nl-card {
-  background: var(--surface);
+  background: linear-gradient(180deg, rgba(20,37,67,.85), rgba(15,30,51,.85));
   border: 1px solid var(--border);
-  border-radius: var(--radius);
-  padding: 1.1rem 1.2rem;
+  border-radius: var(--r);
+  padding: 1.05rem 1.15rem;
   height: 100%;
+  box-shadow: var(--sh-sm), var(--sh-in);
+  transition: border-color .2s var(--ease), transform .2s var(--ease), box-shadow .2s var(--ease);
 }
-.nl-card h3 { margin: 0 0 .5rem; }
-.nl-card p  { color: var(--muted); font-size: .85rem; line-height: 1.6; margin: .25rem 0; }
+.nl-card:hover {
+  border-color: rgba(34,211,238,.30);
+  transform: translateY(-2px);
+  box-shadow: var(--sh), var(--sh-in);
+}
+.nl-card h3 { margin: 0 0 .4rem; display: flex; align-items: center; gap: .5rem; }
+.nl-card p  { color: var(--muted); font-size: .84rem; line-height: 1.6; margin: .2rem 0 0; }
+.nl-card .ic {
+  width: 30px; height: 30px; display: grid; place-items: center;
+  border-radius: 9px; background: rgba(34,211,238,.10);
+  border: 1px solid rgba(34,211,238,.28); color: var(--cyan);
+  flex-shrink: 0;
+}
 
-/* ── Metric card ─────────────────────────────────────────── */
+/* ── Metric card ───────────────────────────────────────── */
 .nl-metric {
-  background: var(--surface);
+  background: linear-gradient(180deg, rgba(20,37,67,.9), rgba(15,30,51,.9));
   border: 1px solid var(--border);
-  border-radius: var(--radius);
+  border-radius: var(--r);
   padding: 1rem 1.1rem;
+  box-shadow: var(--sh-sm), var(--sh-in);
+  position: relative;
+  overflow: hidden;
 }
-.nl-metric-value {
-  font-size: 1.55rem;
-  font-weight: 700;
-  color: var(--text);
-  font-variant-numeric: tabular-nums;
-  letter-spacing: -.02em;
+.nl-metric::after {
+  content: "";
+  position: absolute; inset: 0;
+  background: radial-gradient(300px 100px at 100% 0%, rgba(34,211,238,.10), transparent 70%);
+  pointer-events: none;
+}
+.nl-metric-head {
+  display: flex; align-items: center; justify-content: space-between;
+  gap: .5rem; margin-bottom: .35rem;
 }
 .nl-metric-label {
-  font-size: .72rem;
-  font-weight: 600;
-  color: var(--muted);
-  text-transform: uppercase;
-  letter-spacing: .08em;
-  margin-top: .3rem;
+  font-size: .68rem; font-weight: 700; color: var(--muted);
+  text-transform: uppercase; letter-spacing: .09em;
+}
+.nl-metric-icon {
+  width: 26px; height: 26px; display: grid; place-items: center;
+  border-radius: 7px; background: rgba(34,211,238,.10);
+  border: 1px solid rgba(34,211,238,.24); color: var(--cyan);
+  flex-shrink: 0;
+}
+.nl-metric-value {
+  font-size: clamp(1.25rem, 2.2vw, 1.55rem);
+  font-weight: 800;
+  color: var(--text);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -.022em;
+  line-height: 1.15;
 }
 
-/* ── Diagnostic result ───────────────────────────────────── */
+/* ── Responsive auto-fit grids ─────────────────────────── */
+.nl-grid       { display: grid; gap: .7rem; }
+.nl-grid.cols-2{ grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); }
+.nl-grid.cols-3{ grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); }
+.nl-grid.cols-4{ grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); }
+.nl-grid.cols-5{ grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); }
+.nl-grid.cols-7{ grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); }
+
+/* ── Diagnostic result ─────────────────────────────────── */
 .nl-result {
-  background: linear-gradient(135deg, rgba(37,99,235,.14), rgba(16,185,129,.07));
-  border: 1px solid rgba(34,211,238,.40);
-  border-radius: var(--radius);
-  padding: 1.4rem 1.5rem;
-  margin: .75rem 0;
+  position: relative;
+  background:
+    radial-gradient(600px 120px at 0% 0%, rgba(34,211,238,.16), transparent 60%),
+    linear-gradient(135deg, rgba(37,99,235,.16), rgba(16,185,129,.08));
+  border: 1px solid rgba(34,211,238,.42);
+  border-radius: var(--r-lg);
+  padding: 1.3rem 1.4rem;
+  margin: .55rem 0 .8rem;
+  box-shadow: var(--sh), var(--sh-in);
+  overflow: hidden;
+}
+.nl-result::before {
+  content: "";
+  position: absolute; left: 0; top: 0; bottom: 0; width: 4px;
+  background: linear-gradient(180deg, var(--cyan), var(--emerald));
 }
 .nl-result-label {
-  font-size: .68rem;
-  font-weight: 700;
+  display: flex; align-items: center; gap: .4rem;
+  font-size: .66rem; font-weight: 800;
   color: var(--cyan);
-  text-transform: uppercase;
-  letter-spacing: .1em;
-  margin-bottom: .5rem;
+  text-transform: uppercase; letter-spacing: .12em;
+  margin-bottom: .55rem;
 }
 .nl-result-prediction {
-  font-size: 2rem;
-  font-weight: 700;
+  font-size: clamp(1.5rem, 3.2vw, 2.05rem);
+  font-weight: 800;
   color: var(--text);
-  letter-spacing: -.025em;
-  line-height: 1;
+  letter-spacing: -.028em; line-height: 1.05;
 }
 .nl-result-conf {
-  font-size: .9rem;
-  color: var(--muted);
-  margin-top: .35rem;
+  font-size: .9rem; color: var(--text-2);
+  margin-top: .55rem;
+  display: flex; align-items: center; gap: .55rem; flex-wrap: wrap;
 }
 
-/* ── Prob grid ───────────────────────────────────────────── */
+/* ── Prob grid ─────────────────────────────────────────── */
 .nl-prob-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
   gap: .6rem;
-  margin: .5rem 0;
+  margin: .55rem 0;
 }
 .nl-prob-card {
-  background: var(--surface);
+  background: linear-gradient(180deg, rgba(20,37,67,.9), rgba(15,30,51,.9));
   border: 1px solid var(--border);
-  border-radius: var(--radius);
+  border-radius: var(--r);
   padding: .9rem 1rem;
   position: relative;
+  box-shadow: var(--sh-sm), var(--sh-in);
 }
 .nl-prob-card.top {
   border-color: rgba(34,211,238,.55);
-  background: linear-gradient(135deg, rgba(37,99,235,.18), rgba(16,185,129,.10));
+  background: linear-gradient(135deg, rgba(37,99,235,.20), rgba(16,185,129,.12));
+  box-shadow: var(--sh), 0 0 0 1px rgba(34,211,238,.16), var(--sh-in);
 }
 .nl-prob-value {
-  font-size: 1.35rem;
-  font-weight: 700;
-  color: var(--text);
-  font-family: var(--mono);
+  font-size: 1.35rem; font-weight: 800;
+  color: var(--text); font-family: var(--mono);
+  letter-spacing: -.02em;
 }
 .nl-prob-card.top .nl-prob-value { color: var(--cyan); }
-.nl-prob-label { font-size: .78rem; color: var(--muted); margin-top: .3rem; }
+.nl-prob-label { font-size: .78rem; color: var(--muted); margin-top: .3rem; font-weight: 500; }
 .nl-prob-top-tag {
-  position: absolute;
-  top: .5rem; right: .6rem;
-  font-size: .58rem;
-  font-weight: 700;
+  position: absolute; top: .5rem; right: .55rem;
+  font-size: .55rem; font-weight: 800;
   color: var(--cyan);
-  text-transform: uppercase;
-  letter-spacing: .07em;
-  background: rgba(34,211,238,.14);
-  border: 1px solid rgba(34,211,238,.40);
-  border-radius: 999px;
-  padding: .1rem .45rem;
+  text-transform: uppercase; letter-spacing: .09em;
+  background: rgba(34,211,238,.15);
+  border: 1px solid rgba(34,211,238,.42);
+  border-radius: 999px; padding: .12rem .5rem;
 }
 
-/* ── Uncertainty card ────────────────────────────────────── */
+/* ── Uncertainty card ──────────────────────────────────── */
 .nl-unc {
-  background: rgba(139,92,246,.09);
-  border: 1px solid rgba(139,92,246,.32);
-  border-radius: var(--radius);
-  padding: .9rem 1.1rem;
-  margin: .6rem 0;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 1rem;
-  flex-wrap: wrap;
+  background: linear-gradient(135deg, rgba(139,92,246,.10), rgba(139,92,246,.04));
+  border: 1px solid rgba(139,92,246,.34);
+  border-radius: var(--r);
+  padding: .95rem 1.1rem;
+  margin: .55rem 0;
+  display: flex; justify-content: space-between; align-items: center;
+  gap: 1rem; flex-wrap: wrap;
+  box-shadow: var(--sh-sm), var(--sh-in);
 }
-.nl-unc-title { font-size: .68rem; font-weight: 700; color: #a78bfa; text-transform: uppercase; letter-spacing: .08em; }
-.nl-unc-value { font-size: 1.25rem; font-weight: 700; font-family: var(--mono); }
-.nl-unc-band  { font-size: .76rem; margin-top: .15rem; font-weight: 600; }
+.nl-unc-title { font-size: .66rem; font-weight: 800; color: #b8a4ff; text-transform: uppercase; letter-spacing: .1em; }
+.nl-unc-value { font-size: 1.3rem; font-weight: 800; font-family: var(--mono); letter-spacing: -.02em; }
+.nl-unc-band  { font-size: .76rem; margin-top: .1rem; font-weight: 600; }
 
-/* ── XAI agree ───────────────────────────────────────────── */
+/* ── XAI agree ─────────────────────────────────────────── */
 .nl-agree {
-  background: rgba(34,211,238,.07);
-  border: 1px solid rgba(34,211,238,.28);
-  border-radius: var(--radius);
-  padding: .85rem 1.1rem;
+  background: linear-gradient(135deg, rgba(34,211,238,.08), rgba(34,211,238,.02));
+  border: 1px solid rgba(34,211,238,.30);
+  border-radius: var(--r);
+  padding: .9rem 1.1rem;
   margin: .5rem 0;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 1rem;
-  flex-wrap: wrap;
+  display: flex; justify-content: space-between; align-items: center;
+  gap: 1rem; flex-wrap: wrap;
+  box-shadow: var(--sh-sm), var(--sh-in);
 }
-.nl-agree-score { font-size: 1.5rem; font-weight: 700; font-family: var(--mono); letter-spacing: -.02em; }
+.nl-agree-score {
+  font-size: 1.5rem; font-weight: 800;
+  font-family: var(--mono); letter-spacing: -.02em;
+}
 
-/* ── History row ─────────────────────────────────────────── */
+/* ── History row ───────────────────────────────────────── */
 .nl-hist-row {
-  display: flex;
-  align-items: center;
-  gap: 1rem;
+  display: flex; align-items: center; gap: 1rem;
   padding: .8rem 1rem;
   border: 1px solid var(--border);
-  border-radius: var(--radius);
-  background: var(--surface);
+  border-radius: var(--r);
+  background: linear-gradient(180deg, rgba(20,37,67,.8), rgba(15,30,51,.8));
   margin: .4rem 0;
+  box-shadow: var(--sh-sm), var(--sh-in);
+  transition: border-color .18s var(--ease), transform .15s var(--ease);
 }
-.nl-hist-title { font-weight: 600; color: var(--text); font-size: .9rem; }
-.nl-hist-meta  { font-size: .72rem; color: var(--muted); margin-top: .15rem; font-family: var(--mono); }
+.nl-hist-row:hover {
+  border-color: rgba(34,211,238,.35);
+  transform: translateX(2px);
+}
+.nl-hist-title { font-weight: 700; color: var(--text); font-size: .9rem; }
+.nl-hist-meta  { font-size: .72rem; color: var(--muted); margin-top: .18rem; font-family: var(--mono); }
 
-/* ── Confidence badge ────────────────────────────────────── */
+/* ── Badges ────────────────────────────────────────────── */
 .nl-badge {
-  display: inline-block;
-  padding: .2rem .65rem;
+  display: inline-flex; align-items: center; gap: .3rem;
+  padding: .22rem .65rem;
   border-radius: 999px;
-  font-size: .72rem;
-  font-weight: 700;
+  font-size: .72rem; font-weight: 700;
   font-family: var(--mono);
 }
-.nl-badge-hi  { background: rgba(52,211,153,.14); border: 1px solid rgba(52,211,153,.42); color: #34d399; }
-.nl-badge-mid { background: rgba(251,191,36,.14);  border: 1px solid rgba(251,191,36,.42);  color: #fbbf24; }
-.nl-badge-lo  { background: rgba(248,113,113,.14); border: 1px solid rgba(248,113,113,.42); color: #f87171; }
+.nl-badge-hi  { background: rgba(52,211,153,.14); border: 1px solid rgba(52,211,153,.44); color: #34d399; }
+.nl-badge-mid { background: rgba(251,191,36,.14);  border: 1px solid rgba(251,191,36,.44);  color: #fbbf24; }
+.nl-badge-lo  { background: rgba(248,113,113,.14); border: 1px solid rgba(248,113,113,.44); color: #f87171; }
 
-/* ── Distribution bar ────────────────────────────────────── */
+/* ── Distribution bar ──────────────────────────────────── */
 .nl-dist {
-  padding: .7rem .9rem;
+  padding: .75rem .95rem;
   border: 1px solid var(--border);
-  border-radius: var(--radius);
-  background: var(--surface);
+  border-radius: var(--r);
+  background: linear-gradient(180deg, rgba(20,37,67,.85), rgba(15,30,51,.85));
   margin: .35rem 0;
+  box-shadow: var(--sh-sm), var(--sh-in);
 }
-.nl-dist-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: .45rem; }
-.nl-dist-name  { font-size: .84rem; font-weight: 600; color: var(--text); }
+.nl-dist-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: .5rem; }
+.nl-dist-name  { font-size: .84rem; font-weight: 700; color: var(--text); }
 .nl-dist-count { font-size: .74rem; color: var(--muted); font-family: var(--mono); }
 .nl-dist-track { height: 6px; border-radius: 999px; background: rgba(96,165,250,.12); overflow: hidden; }
-.nl-dist-fill  { height: 100%; border-radius: 999px; background: linear-gradient(90deg, var(--cyan), var(--emerald)); }
-
-/* ── Engine status block ─────────────────────────────────── */
-.nl-engine {
-  padding: 1rem 1.1rem;
-  border-radius: var(--radius);
-  margin: .5rem 0;
+.nl-dist-fill  {
+  height: 100%; border-radius: 999px;
+  background: linear-gradient(90deg, var(--cyan), var(--emerald));
+  transition: width 1s var(--ease-out);
 }
-.nl-engine.ok  { background: rgba(16,185,129,.07); border: 1px solid rgba(16,185,129,.38); }
-.nl-engine.err { background: rgba(239,68,68,.07);  border: 1px solid rgba(239,68,68,.35); }
-.nl-engine-title { font-weight: 700; margin-bottom: .6rem; }
+
+/* ── Engine status ─────────────────────────────────────── */
+.nl-engine {
+  padding: 1rem 1.15rem;
+  border-radius: var(--r-lg);
+  margin: .5rem 0;
+  box-shadow: var(--sh-sm), var(--sh-in);
+}
+.nl-engine.ok  {
+  background: linear-gradient(135deg, rgba(16,185,129,.10), rgba(34,211,238,.06));
+  border: 1px solid rgba(16,185,129,.40);
+}
+.nl-engine.err {
+  background: linear-gradient(135deg, rgba(239,68,68,.10), rgba(239,68,68,.04));
+  border: 1px solid rgba(239,68,68,.38);
+}
+.nl-engine-title {
+  display: flex; align-items: center; gap: .5rem;
+  font-weight: 800; margin-bottom: .7rem; font-size: .95rem;
+}
 .nl-engine.ok  .nl-engine-title { color: var(--emerald); }
 .nl-engine.err .nl-engine-title { color: var(--danger); }
 .nl-engine p { font-size: .82rem; color: var(--muted); margin: .2rem 0; }
 
-/* ── Spec grid (engine ready sub-info) ───────────────────── */
 .nl-spec-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
   gap: .5rem;
-  margin-top: .75rem;
+  margin-top: .25rem;
 }
 .nl-spec-item {
-  background: rgba(37,99,235,.12);
-  border: 1px solid rgba(34,211,238,.22);
-  border-radius: 8px;
-  padding: .55rem .75rem;
+  background: rgba(10,26,48,.55);
+  border: 1px solid rgba(34,211,238,.20);
+  border-radius: 9px;
+  padding: .6rem .8rem;
 }
-.nl-spec-key   { font-size: .6rem; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: .08em; }
-.nl-spec-value { font-size: .85rem; font-weight: 700; color: var(--text); font-family: var(--mono); margin-top: .15rem; }
+.nl-spec-key   { font-size: .58rem; font-weight: 800; color: var(--muted); text-transform: uppercase; letter-spacing: .1em; }
+.nl-spec-value { font-size: .85rem; font-weight: 700; color: var(--text); font-family: var(--mono); margin-top: .18rem; }
 
-/* ── Empty state ─────────────────────────────────────────── */
+/* ── Empty state ───────────────────────────────────────── */
 .nl-empty {
   padding: 3rem 1rem;
   text-align: center;
-  border: 1.5px dashed rgba(96,165,250,.28);
-  border-radius: var(--radius);
+  border: 1.5px dashed rgba(96,165,250,.30);
+  border-radius: var(--r-lg);
   color: var(--muted);
+  background: rgba(15,30,51,.35);
 }
-.nl-empty p { font-size: .9rem; margin: .4rem 0 0; }
+.nl-empty .em-ic {
+  width: 52px; height: 52px; margin: 0 auto .8rem;
+  display: grid; place-items: center;
+  border-radius: 50%;
+  background: rgba(34,211,238,.08);
+  border: 1px solid rgba(34,211,238,.28);
+  color: var(--cyan);
+}
+.nl-empty h3 { color: var(--text); margin: .2rem 0 .35rem; }
+.nl-empty p  { font-size: .88rem; margin: 0; }
 
-/* ── Activity feed ───────────────────────────────────────── */
-.nl-feed { max-height: 370px; overflow-y: auto; }
+/* ── Activity feed ─────────────────────────────────────── */
+.nl-feed { max-height: 380px; overflow-y: auto; padding-right: .25rem; }
 .nl-feed-row {
-  display: flex;
-  gap: .6rem;
-  padding: .4rem .2rem;
-  border-bottom: 1px solid rgba(96,165,250,.10);
-  font-size: .74rem;
+  display: flex; gap: .65rem;
+  padding: .5rem .25rem;
+  border-bottom: 1px solid rgba(96,165,250,.08);
+  font-size: .76rem;
+  align-items: flex-start;
 }
 .nl-feed-row:last-child { border-bottom: 0; }
-.nl-feed-time { color: var(--muted); font-family: var(--mono); flex: 0 0 auto; }
-.nl-feed-msg  { color: var(--text); }
+.nl-feed-time { color: var(--muted); font-family: var(--mono); flex: 0 0 auto; font-size: .68rem; padding-top: 1px; }
+.nl-feed-msg  { color: var(--text-2); line-height: 1.45; }
 .nl-feed-row.err  .nl-feed-msg { color: var(--danger); }
 .nl-feed-row.warn .nl-feed-msg { color: var(--amber); }
 .nl-feed-row.ok   .nl-feed-msg { color: var(--emerald); }
 
-/* ── Sidebar brand block ─────────────────────────────────── */
+/* ── Sidebar brand ─────────────────────────────────────── */
 .nl-brand {
-  padding: .9rem .4rem .75rem;
+  padding: .9rem .4rem 1rem;
   border-bottom: 1px solid var(--border);
-  margin-bottom: .6rem;
+  margin-bottom: .85rem;
 }
-.nl-brand-name { font-size: 1.05rem; font-weight: 700; color: var(--text); letter-spacing: -.01em; }
+.nl-brand-top { display: flex; align-items: center; gap: .7rem; }
+.nl-brand-logo {
+  width: 40px; height: 40px; display: grid; place-items: center;
+  border-radius: 11px;
+  background: linear-gradient(135deg, rgba(34,211,238,.20), rgba(52,211,153,.14));
+  border: 1px solid rgba(34,211,238,.42);
+  color: var(--cyan);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.06), 0 6px 20px -8px rgba(34,211,238,.55);
+}
+.nl-brand-name { font-size: 1.02rem; font-weight: 800; color: var(--text); letter-spacing: -.012em; line-height: 1.1; }
 .nl-brand-name span { color: var(--cyan); }
-.nl-brand-sub  { font-size: .72rem; color: var(--muted); margin-top: .15rem; }
+.nl-brand-sub  {
+  font-size: .72rem; color: var(--muted); margin-top: .35rem;
+  display: flex; align-items: center; gap: .4rem;
+}
+.nl-brand-sub .dot {
+  width: 8px; height: 8px; border-radius: 50%;
+  box-shadow: 0 0 0 4px rgba(0,0,0,0);
+  animation: pulse 2.4s var(--ease) infinite;
+}
+.nl-brand-sub .dot.ok  { background: var(--emerald); box-shadow: 0 0 0 0 rgba(52,211,153,.55); }
+.nl-brand-sub .dot.err { background: var(--danger);  box-shadow: 0 0 0 0 rgba(248,113,113,.55); }
+@keyframes pulse {
+  0%   { box-shadow: 0 0 0 0 rgba(52,211,153,.5); }
+  70%  { box-shadow: 0 0 0 8px rgba(52,211,153,0); }
+  100% { box-shadow: 0 0 0 0 rgba(52,211,153,0); }
+}
 
-/* ── Scrollbar ───────────────────────────────────────────── */
-::-webkit-scrollbar { width: 8px; }
+/* ── Scrollbar ─────────────────────────────────────────── */
+::-webkit-scrollbar { width: 9px; height: 9px; }
 ::-webkit-scrollbar-track { background: rgba(5,14,34,.6); }
-::-webkit-scrollbar-thumb { background: rgba(34,211,238,.35); border-radius: 8px; }
+::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, rgba(34,211,238,.42), rgba(6,182,212,.32));
+  border-radius: 8px;
+  border: 2px solid transparent;
+  background-clip: padding-box;
+}
+::-webkit-scrollbar-thumb:hover { background: rgba(34,211,238,.65); background-clip: padding-box; }
 
-/* ── Disclaimer ──────────────────────────────────────────── */
+/* ── Disclaimer ────────────────────────────────────────── */
 .nl-disclaimer {
   border-left: 3px solid var(--amber);
-  background: rgba(245,158,11,.07);
-  border-radius: 0 var(--radius) var(--radius) 0;
-  padding: .75rem 1rem;
+  background: linear-gradient(90deg, rgba(245,158,11,.10), rgba(245,158,11,.02));
+  border-radius: 0 var(--r) var(--r) 0;
+  padding: .8rem 1rem;
   font-size: .82rem;
-  color: var(--muted);
-  margin: .8rem 0;
+  color: var(--text-2);
+  margin: .7rem 0 1rem;
   line-height: 1.6;
+  display: flex; gap: .7rem; align-items: flex-start;
+  box-shadow: var(--sh-sm);
 }
 .nl-disclaimer b { color: var(--amber); }
+.nl-disclaimer svg { color: var(--amber); flex-shrink: 0; margin-top: 2px; }
 
-/* ── Latest summary ──────────────────────────────────────── */
+/* ── Summary rows ──────────────────────────────────────── */
 .nl-summary-row {
-  display: flex;
-  justify-content: space-between;
-  padding: .45rem 0;
+  display: flex; justify-content: space-between; gap: .8rem;
+  padding: .5rem 0;
   border-bottom: 1px solid rgba(96,165,250,.10);
-  font-size: .8rem;
+  font-size: .82rem;
 }
 .nl-summary-row:last-child { border-bottom: 0; }
 .nl-summary-key { color: var(--muted); font-weight: 500; }
-.nl-summary-val { color: var(--text); font-family: var(--mono); font-weight: 600; }
+.nl-summary-val { color: var(--text); font-family: var(--mono); font-weight: 600; text-align: right; }
 
-/* ── Steps row ───────────────────────────────────────────── */
+/* ── Steps row ─────────────────────────────────────────── */
 .nl-step {
   text-align: center;
-  padding: .9rem .5rem;
-  background: var(--surface);
+  padding: 1rem .55rem;
+  background: linear-gradient(180deg, rgba(20,37,67,.85), rgba(15,30,51,.85));
   border: 1px solid var(--border);
-  border-radius: var(--radius);
+  border-radius: var(--r);
   height: 100%;
+  box-shadow: var(--sh-sm), var(--sh-in);
+  transition: transform .18s var(--ease), border-color .18s var(--ease);
 }
+.nl-step:hover { transform: translateY(-2px); border-color: rgba(34,211,238,.35); }
 .nl-step-num {
-  width: 30px; height: 30px;
-  margin: 0 auto .5rem;
+  width: 32px; height: 32px;
+  margin: 0 auto .6rem;
   display: grid; place-items: center;
   border-radius: 50%;
   background: linear-gradient(135deg, var(--cyan), var(--emerald));
-  color: #fff;
-  font-size: .78rem;
-  font-weight: 700;
+  color: #05121c;
+  font-size: .8rem; font-weight: 800;
+  box-shadow: 0 6px 16px -6px rgba(34,211,238,.6);
 }
 .nl-step-title { font-size: .8rem; font-weight: 600; color: var(--text); }
 
-/* ── Footer ──────────────────────────────────────────────── */
+/* ── Footer ────────────────────────────────────────────── */
 .nl-footer {
-  margin-top: 2.5rem;
+  margin-top: 2.6rem;
   padding-top: 1.2rem;
   border-top: 1px solid var(--border);
   display: flex;
@@ -453,55 +721,100 @@ h4 { font-size: .875rem !important; font-weight: 600; color: var(--muted); text-
   font-size: .76rem;
   color: var(--muted);
 }
-.nl-footer a { color: var(--cyan); text-decoration: none; }
+.nl-footer strong { color: var(--text-2); font-weight: 700; }
+.nl-footer .rt { display: flex; align-items: center; gap: .55rem; font-family: var(--mono); font-size: .72rem; }
+.nl-footer .rt .sep { color: rgba(125,165,220,.35); }
 
-/* ── LP bars ─────────────────────────────────────────────── */
-.lp-wrap { border: 1px solid var(--border); border-radius: var(--radius); padding: 1rem 1.1rem; background: var(--surface); }
-.lp-head { font-size: .65rem; font-weight: 700; color: var(--cyan); text-transform: uppercase; letter-spacing: .1em; margin-bottom: .7rem; }
-.lp-row  { display: flex; align-items: center; gap: .6rem; margin: .32rem 0; }
-.lp-label { min-width: 120px; font-size: .76rem; color: var(--muted); }
-.lp-track { flex: 1; height: 5px; border-radius: 999px; background: rgba(59,130,246,.14); overflow: hidden; }
-.lp-fill  { height: 100%; width: 0%; border-radius: 999px; background: linear-gradient(90deg, var(--cyan), var(--emerald)); transition: width 1.1s cubic-bezier(.2,.8,.2,1); }
-.lp-mc    { background: linear-gradient(90deg, #a78bfa, var(--cyan)) !important; }
-.lp-val   { min-width: 50px; text-align: right; font-family: var(--mono); font-size: .72rem; color: var(--text); font-weight: 600; }
-.lp-sec   { font-size: .6rem; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: .1em; margin: .6rem 0 .25rem; }
-
-/* ── Ticker ──────────────────────────────────────────────── */
+/* ── Ticker ────────────────────────────────────────────── */
 .nl-ticker {
   display: flex;
   align-items: center;
-  gap: 1.4rem;
+  gap: .3rem;
   overflow-x: auto;
-  padding: .55rem .85rem;
-  background: rgba(14,40,88,.55);
+  padding: .5rem .6rem;
+  background: linear-gradient(180deg, rgba(14,40,88,.55), rgba(9,23,48,.55));
   border: 1px solid var(--border);
-  border-radius: var(--radius);
+  border-radius: var(--r);
   margin-bottom: 1rem;
   font-size: .72rem;
   font-family: var(--mono);
   scrollbar-width: none;
   white-space: nowrap;
+  box-shadow: var(--sh-sm), var(--sh-in);
 }
 .nl-ticker::-webkit-scrollbar { display: none; }
-.nl-ticker-item { color: var(--muted); }
-.nl-ticker-item span { color: var(--text); font-weight: 600; margin-left: .3rem; }
+.nl-ticker-item {
+  display: inline-flex; align-items: center; gap: .4rem;
+  padding: .35rem .7rem;
+  border-radius: 8px;
+  color: var(--muted);
+  flex: 0 0 auto;
+}
+.nl-ticker-item .ic {
+  width: 20px; height: 20px; display: grid; place-items: center;
+  border-radius: 6px; background: rgba(34,211,238,.10);
+  border: 1px solid rgba(34,211,238,.24); color: var(--cyan);
+  flex-shrink: 0;
+}
+.nl-ticker-item strong { color: var(--text); font-weight: 700; }
+.nl-ticker-sep {
+  width: 1px; align-self: stretch; margin: .35rem .15rem;
+  background: linear-gradient(180deg, transparent, rgba(125,165,220,.24), transparent);
+}
 
-/* ── Info rows (Settings) ────────────────────────────────── */
+/* ── Info rows (Settings) ──────────────────────────────── */
 .nl-info-row {
-  display: flex;
-  justify-content: space-between;
-  padding: .5rem 0;
+  display: flex; justify-content: space-between; gap: .8rem;
+  padding: .55rem 0;
   border-bottom: 1px solid var(--border);
   font-size: .82rem;
 }
 .nl-info-row:last-child { border-bottom: 0; }
 .nl-info-key { color: var(--muted); }
-.nl-info-val { color: var(--text); font-family: var(--mono); font-weight: 600; }
+.nl-info-val { color: var(--text); font-family: var(--mono); font-weight: 600; text-align: right; word-break: break-word; }
+
+/* ── Streamlit widget polish ──────────────────────────── */
+[data-testid="stFileUploader"] section {
+  border: 1.5px dashed rgba(96,165,250,.32) !important;
+  border-radius: var(--r) !important;
+  background: rgba(15,30,51,.55) !important;
+  transition: border-color .2s var(--ease), background .2s var(--ease) !important;
+}
+[data-testid="stFileUploader"] section:hover {
+  border-color: rgba(34,211,238,.55) !important;
+  background: rgba(20,37,67,.7) !important;
+}
+[data-testid="stExpander"] {
+  border: 1px solid var(--border) !important;
+  border-radius: var(--r) !important;
+  background: rgba(15,30,51,.55) !important;
+  overflow: hidden;
+}
+[data-testid="stExpander"] summary { font-weight: 600 !important; }
+
+/* ── Mobile / tablet responsiveness ────────────────────── */
+@media (max-width: 900px) {
+  [data-testid="stMainBlockContainer"] {
+    padding: .85rem .7rem 3rem !important;
+  }
+  .nl-grid.cols-5, .nl-grid.cols-4 { grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); }
+}
+@media (max-width: 640px) {
+  .nl-result-prediction { font-size: 1.45rem; }
+  .nl-prob-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .nl-metric-value { font-size: 1.15rem; }
+  .nl-step { padding: .75rem .4rem; }
+  .nl-step-num { width: 26px; height: 26px; font-size: .72rem; }
+  .nl-footer { flex-direction: column; align-items: flex-start; }
+  [data-testid="stSidebar"] .stButton > button { font-size: .84rem !important; min-height: 40px !important; }
+}
 
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {
     animation-duration: .01ms !important;
+    animation-iteration-count: 1 !important;
     transition-duration: .01ms !important;
+    scroll-behavior: auto !important;
   }
 }
 </style>
@@ -523,18 +836,37 @@ def _e(text) -> str:
     )
 
 
-def _st_width(container: bool) -> dict:
+def _st_version_tuple() -> Tuple[int, int]:
     try:
         major, minor = (int(p) for p in st.__version__.split(".")[:2])
-        if (major, minor) >= (1, 42):
-            return {"width": "stretch" if container else "content"}
+        return major, minor
     except Exception:
-        pass
+        return (0, 0)
+
+
+def _st_width(container: bool) -> dict:
+    major, minor = _st_version_tuple()
+    if (major, minor) >= (1, 42):
+        return {"width": "stretch" if container else "content"}
     return {"use_container_width": bool(container)}
 
 
 def _W() -> dict:   return _st_width(True)
 def _Wc() -> dict:  return _st_width(False)
+
+
+def _btn_icon(material_name: str) -> dict:
+    """Return {'icon': ...} if the running Streamlit supports button icons."""
+    if _st_version_tuple() >= (1, 32):
+        return {"icon": f":material/{material_name}:"}
+    return {}
+
+
+def section_heading(title: str, icon: str) -> str:
+    return (
+        f'<div class="nl-h"><span class="ico">{svg(icon, 15, 2)}</span>'
+        f'<span>{_e(title)}</span></div>'
+    )
 
 
 def uncertainty_band(u: float) -> Tuple[str, str]:
@@ -1015,17 +1347,25 @@ def render_ticker() -> None:
     thr   = st.session_state.live_throughput
     latest_pred = hist[-1]["prediction"] if hist else "—"
 
-    st.markdown(
-        f'<div class="nl-ticker">'
-        f'<span class="nl-ticker-item">Scans<span>{total}</span></span>'
-        f'<span class="nl-ticker-item">Avg Confidence<span>{avg_c:.1f}%</span></span>'
-        f'<span class="nl-ticker-item">Throughput<span>{thr:.2f}/min</span></span>'
-        f'<span class="nl-ticker-item">Last Result<span>{_e(latest_pred)}</span></span>'
-        f'<span class="nl-ticker-item">Model<span>{_e(model_name or "—")}</span></span>'
-        f'<span class="nl-ticker-item">Device<span>{_e(str(DEVICE))}</span></span>'
-        f'</div>',
-        unsafe_allow_html=True,
-    )
+    items = [
+        ("activity", "Scans",       str(total)),
+        ("target",   "Avg Conf",    f"{avg_c:.1f}%"),
+        ("pulse",    "Throughput",  f"{thr:.2f}/min"),
+        ("check",    "Last Result", latest_pred),
+        ("layers",   "Model",       model_name or "—"),
+        ("cpu",      "Device",      str(DEVICE)),
+    ]
+    inner = ""
+    for i, (ic, label, val) in enumerate(items):
+        if i > 0:
+            inner += '<span class="nl-ticker-sep"></span>'
+        inner += (
+            f'<span class="nl-ticker-item">'
+            f'<span class="ic">{svg(ic, 12, 2)}</span>'
+            f'{_e(label)} <strong>{_e(val)}</strong>'
+            f'</span>'
+        )
+    st.markdown(f'<div class="nl-ticker">{inner}</div>', unsafe_allow_html=True)
 
 
 def render_prob_bars(result: dict, mc_result: Optional[dict] = None) -> None:
@@ -1052,19 +1392,22 @@ def render_prob_bars(result: dict, mc_result: Optional[dict] = None) -> None:
             for n, p in mc_result["mean_probs"].items()
         )
 
-    h = 110 + 34 * len(items) + (130 + 34 * len(items) if mc_result else 0)
+    h = 118 + 34 * len(items) + (135 + 34 * len(items) if mc_result else 0)
     components.html(f"""
     <style>
-    .lp-wrap{{padding:1rem 1.1rem;border-radius:10px;border:1px solid rgba(96,165,250,.18);
-    background:#111f38;font-family:Inter,sans-serif;color:#e2ecf9}}
-    .lp-head{{font-size:.65rem;font-weight:700;color:#22d3ee;text-transform:uppercase;letter-spacing:.1em;margin-bottom:.7rem}}
-    .lp-row{{display:flex;align-items:center;gap:.6rem;margin:.32rem 0}}
-    .lp-label{{min-width:120px;font-size:.76rem;color:#7f9bbd}}
-    .lp-track{{flex:1;height:5px;border-radius:999px;background:rgba(59,130,246,.14);overflow:hidden}}
-    .lp-fill{{height:100%;width:0%;border-radius:999px;background:linear-gradient(90deg,#22d3ee,#34d399);transition:width 1.1s cubic-bezier(.2,.8,.2,1)}}
+    .lp-wrap{{padding:1rem 1.1rem;border-radius:12px;border:1px solid rgba(125,165,220,.14);
+    background:linear-gradient(180deg,#142543,#0f1e33);font-family:Inter,system-ui,sans-serif;color:#e8eefb;
+    box-shadow:inset 0 1px 0 rgba(255,255,255,.04)}}
+    .lp-head{{font-size:.66rem;font-weight:800;color:#22d3ee;text-transform:uppercase;letter-spacing:.1em;margin-bottom:.7rem;
+    display:flex;align-items:center;gap:.45rem}}
+    .lp-row{{display:flex;align-items:center;gap:.65rem;margin:.35rem 0}}
+    .lp-label{{min-width:125px;font-size:.76rem;color:#b9cbe2;font-weight:500}}
+    .lp-track{{flex:1;height:6px;border-radius:999px;background:rgba(59,130,246,.14);overflow:hidden}}
+    .lp-fill{{height:100%;width:0%;border-radius:999px;background:linear-gradient(90deg,#22d3ee,#34d399);
+    transition:width 1.1s cubic-bezier(.16,.84,.44,1)}}
     .lp-mc{{background:linear-gradient(90deg,#a78bfa,#22d3ee)!important}}
-    .lp-val{{min-width:50px;text-align:right;font-family:'JetBrains Mono',monospace;font-size:.72rem;color:#e2ecf9;font-weight:600}}
-    .lp-sec{{font-size:.6rem;font-weight:700;color:#7f9bbd;text-transform:uppercase;letter-spacing:.1em;margin:.6rem 0 .25rem}}
+    .lp-val{{min-width:52px;text-align:right;font-family:'JetBrains Mono',monospace;font-size:.72rem;color:#e8eefb;font-weight:600}}
+    .lp-sec{{font-size:.6rem;font-weight:800;color:#7f9bbd;text-transform:uppercase;letter-spacing:.12em;margin:.75rem 0 .3rem}}
     </style>
     <div class="lp-wrap">
       <div class="lp-head">Live Probability · {_e(top)} {result['confidence']:.1f}%</div>
@@ -1085,8 +1428,11 @@ def render_prob_bars(result: dict, mc_result: Optional[dict] = None) -> None:
 def render_activity_feed() -> None:
     log  = st.session_state.activity_log[-14:][::-1]
     if not log:
-        st.markdown('<p style="color:var(--muted);font-size:.8rem">No activity yet.</p>',
-                    unsafe_allow_html=True)
+        st.markdown(
+            f'<div style="color:var(--muted);font-size:.82rem;padding:.6rem .2rem;'
+            f'display:flex;align-items:center;gap:.5rem">{svg("info", 14)} No activity yet.</div>',
+            unsafe_allow_html=True,
+        )
         return
     rows = "".join(
         f'<div class="nl-feed-row {e["level"] if e["level"] != "info" else ""}">'
@@ -1102,8 +1448,13 @@ def render_footer() -> None:
     st.markdown(
         f'<div class="nl-footer">'
         f'<span>© {year} <strong>NeuroLens AI</strong> · Developed by MD. Atique Shahriar &amp; Aronna Das</span>'
-        f'<span>PyTorch {torch.__version__.split("+")[0]} · Streamlit {st.__version__} · '
-        f'{"CUDA" if DEVICE.type == "cuda" else "CPU"}</span>'
+        f'<span class="rt">'
+        f'{svg("cpu", 13)} PyTorch {torch.__version__.split("+")[0]}'
+        f'<span class="sep">·</span>'
+        f'Streamlit {st.__version__}'
+        f'<span class="sep">·</span>'
+        f'{"CUDA" if DEVICE.type == "cuda" else "CPU"}'
+        f'</span>'
         f'</div>',
         unsafe_allow_html=True,
     )
@@ -1118,31 +1469,38 @@ with st.sidebar:
     total_scans = len(hist_sb)
     engine_ok   = MODEL_PATH.exists() and model_error is None
 
-    dot   = "🟢" if engine_ok else "🔴"
-    label = "Engine ready" if engine_ok else "Engine offline"
+    dot_cls  = "ok" if engine_ok else "err"
+    dot_txt  = "Engine ready" if engine_ok else "Engine offline"
 
     st.markdown(
         f'<div class="nl-brand">'
+        f'<div class="nl-brand-top">'
+        f'<div class="nl-brand-logo">{svg("brain", 22, 1.9)}</div>'
+        f'<div>'
         f'<div class="nl-brand-name">NeuroLens <span>AI</span></div>'
-        f'<div class="nl-brand-sub">{dot} {label}</div>'
+        f'</div>'
+        f'</div>'
+        f'<div class="nl-brand-sub"><span class="dot {dot_cls}"></span>{dot_txt}</div>'
         f'</div>',
         unsafe_allow_html=True,
     )
 
-    nav_map = {
-        "Home":         "🏠 Home",
-        "MRI Analysis": "🔬 MRI Analysis",
-        "XAI Lab":      "👁 XAI Lab",
-        "Dashboard":    "📊 Dashboard",
-        "History":      "🕘 History",
-        "Settings":     "⚙️ Settings",
-    }
-    for page, label_txt in nav_map.items():
+    nav_map = [
+        ("Home",         "Home",         "home"),
+        ("MRI Analysis", "MRI Analysis", "scan"),
+        ("XAI Lab",      "XAI Lab",      "eye"),
+        ("Dashboard",    "Dashboard",    "chart"),
+        ("History",      "History",      "history"),
+        ("Settings",     "Settings",     "settings"),
+    ]
+    for page, label_txt, mat_icon in nav_map:
         active = st.session_state.nav == page
+        badge  = f"  ({total_scans})" if page in ("MRI Analysis", "History") and total_scans else ""
         if st.button(
-            label_txt + (f"  ({total_scans})" if page in ("MRI Analysis", "History") and total_scans else ""),
+            label_txt + badge,
             key=f"nav_{page.lower().replace(' ','_')}",
             type="primary" if active else "secondary",
+            **_btn_icon(mat_icon),
             **_W(),
         ):
             navigate_to(page)
@@ -1151,16 +1509,26 @@ with st.sidebar:
 
     if hist_sb:
         avg_c = float(np.mean([h["confidence"] for h in hist_sb]))
-        st.caption(f"Session · {total_scans} scans · avg {avg_c:.1f}%")
+        st.markdown(
+            f'<div style="font-size:.74rem;color:var(--muted);padding:.1rem .15rem .5rem;'
+            f'display:flex;align-items:center;gap:.45rem">{svg("activity", 12)} '
+            f'Session · <strong style="color:var(--text-2)">{total_scans} scans</strong> · avg '
+            f'<strong style="color:var(--cyan)">{avg_c:.1f}%</strong></div>',
+            unsafe_allow_html=True,
+        )
     else:
-        st.caption("No scans this session")
+        st.markdown(
+            f'<div style="font-size:.74rem;color:var(--muted);padding:.1rem .15rem .5rem;'
+            f'display:flex;align-items:center;gap:.45rem">{svg("info", 12)} No scans this session</div>',
+            unsafe_allow_html=True,
+        )
 
-    if st.button("Clear History", key="sb_clear", **_W()):
+    if st.button("Clear History", key="sb_clear", **_btn_icon("delete_sweep"), **_W()):
         st.session_state.sb_clear_confirm = True
     if st.session_state.get("sb_clear_confirm"):
         st.warning("Clear all session data?")
         c1, c2 = st.columns(2)
-        if c1.button("Yes", key="sb_clear_yes", **_W()):
+        if c1.button("Yes", key="sb_clear_yes", type="primary", **_W()):
             clear_prediction_history()
             st.session_state.sb_clear_confirm = False
             st.rerun()
@@ -1185,76 +1553,90 @@ if nav not in PAGE_LABELS:
 if nav == "Home":
     render_ticker()
 
-    st.markdown("## NeuroLens AI")
     st.markdown(
-        "<p style='color:var(--muted);max-width:60ch;margin-bottom:1.2rem'>"
-        "Upload a brain MRI scan to receive an AI classification across four tumor types, "
-        "with Grad-CAM explainability and MC Dropout uncertainty quantification.</p>",
+        f'<h2 style="display:flex;align-items:center;gap:.6rem">'
+        f'<span style="width:32px;height:32px;display:grid;place-items:center;border-radius:10px;'
+        f'background:linear-gradient(135deg,rgba(34,211,238,.22),rgba(52,211,153,.14));'
+        f'border:1px solid rgba(34,211,238,.42);color:#22d3ee">{svg("brain", 18, 2)}</span>'
+        f'NeuroLens AI</h2>'
+        f'<p style="color:var(--muted);max-width:64ch;margin:.2rem 0 1.1rem;font-size:.9rem;line-height:1.65">'
+        f'Upload a brain MRI scan to receive an AI classification across four tumor types, '
+        f'with Grad-CAM explainability and MC Dropout uncertainty quantification.</p>',
         unsafe_allow_html=True,
     )
 
     _, c, _ = st.columns([2, 1, 2])
     with c:
-        if st.button("Run MRI Analysis", type="primary", key="home_cta", **_W()):
+        if st.button("Run MRI Analysis", type="primary", key="home_cta",
+                     **_btn_icon("rocket_launch"), **_W()):
             navigate_to("MRI Analysis")
 
     st.write("")
 
-    # Metrics
+    # Metrics grid
     hist = st.session_state.prediction_history
-    m1, m2, m3, m4 = st.columns(4)
     avg_lat = f"{np.mean([x.get('latency_ms',0) for x in hist]):.0f} ms" if hist else "—"
-    for col, (val, lbl) in zip([m1, m2, m3, m4], [
-        (st.session_state.live_predictions_count,          "Scans"),
-        (f"{st.session_state.live_avg_confidence:.1f}%",  "Avg Confidence"),
-        (f"{st.session_state.live_throughput:.2f}/min",   "Throughput"),
-        (avg_lat,                                          "Avg Inference"),
-    ]):
-        with col:
-            st.markdown(
-                f'<div class="nl-metric">'
-                f'<div class="nl-metric-value">{_e(val)}</div>'
-                f'<div class="nl-metric-label">{lbl}</div>'
-                f'</div>',
-                unsafe_allow_html=True,
-            )
+
+    metrics = [
+        ("activity", "Scans",         str(st.session_state.live_predictions_count)),
+        ("target",   "Avg Confidence",f"{st.session_state.live_avg_confidence:.1f}%"),
+        ("pulse",    "Throughput",    f"{st.session_state.live_throughput:.2f}/min"),
+        ("clock",    "Avg Inference", avg_lat),
+    ]
+    st.markdown(
+        '<div class="nl-grid cols-4">' + "".join(
+            f'<div class="nl-metric">'
+            f'<div class="nl-metric-head">'
+            f'<div class="nl-metric-label">{_e(lbl)}</div>'
+            f'<div class="nl-metric-icon">{svg(ic, 14, 2)}</div>'
+            f'</div>'
+            f'<div class="nl-metric-value">{_e(val)}</div>'
+            f'</div>'
+            for ic, lbl, val in metrics
+        ) + '</div>',
+        unsafe_allow_html=True,
+    )
 
     st.write("")
 
     # Feature cards
-    c1, c2, c3, c4 = st.columns(4)
-    for col, (title, body) in zip([c1, c2, c3, c4], [
-        ("Brain MRI Classification",  "Classifies into Glioma, Meningioma, No Tumor, or Pituitary tumor."),
-        ("MC Dropout Uncertainty",     "Bayesian uncertainty via repeated stochastic forward passes."),
-        ("Dual XAI (Grad-CAM / ++)",   "Grad-CAM and Grad-CAM++ heatmaps with Pearson agreement score."),
-        ("Real-Time Inference",        "Sub-100 ms on GPU; CPU fallback always available."),
-    ]):
-        with col:
-            st.markdown(
-                f'<div class="nl-card"><h3>{title}</h3><p>{body}</p></div>',
-                unsafe_allow_html=True,
-            )
+    features = [
+        ("brain", "Brain MRI Classification", "Classifies into Glioma, Meningioma, No Tumor, or Pituitary tumor."),
+        ("activity", "MC Dropout Uncertainty", "Bayesian uncertainty via repeated stochastic forward passes."),
+        ("eye", "Dual XAI (Grad-CAM / ++)", "Grad-CAM and Grad-CAM++ heatmaps with Pearson agreement score."),
+        ("zap", "Real-Time Inference", "Sub-100 ms on GPU; CPU fallback always available."),
+    ]
+    st.markdown(
+        '<div class="nl-grid cols-4">' + "".join(
+            f'<div class="nl-card">'
+            f'<h3><span class="ic">{svg(ic, 15, 2)}</span>{_e(title)}</h3>'
+            f'<p>{_e(body)}</p>'
+            f'</div>'
+            for ic, title, body in features
+        ) + '</div>',
+        unsafe_allow_html=True,
+    )
 
     st.write("")
-    st.markdown("#### Analysis Pipeline")
-    pcols = st.columns(7)
-    for col, (num, title) in zip(pcols, [
-        ("1", "Upload"), ("2", "Preprocess"), ("3", "Inference"),
-        ("4", "MC Dropout"), ("5", "Grad-CAM"), ("6", "Grad-CAM++"), ("7", "Report"),
-    ]):
-        with col:
-            st.markdown(
-                f'<div class="nl-step"><div class="nl-step-num">{num}</div>'
-                f'<div class="nl-step-title">{title}</div></div>',
-                unsafe_allow_html=True,
-            )
+    st.markdown(section_heading("Analysis Pipeline", "layers"), unsafe_allow_html=True)
+    steps = [("1", "Upload"), ("2", "Preprocess"), ("3", "Inference"),
+             ("4", "MC Dropout"), ("5", "Grad-CAM"), ("6", "Grad-CAM++"), ("7", "Report")]
+    st.markdown(
+        '<div class="nl-grid cols-7">' + "".join(
+            f'<div class="nl-step"><div class="nl-step-num">{n}</div>'
+            f'<div class="nl-step-title">{_e(t)}</div></div>'
+            for n, t in steps
+        ) + '</div>',
+        unsafe_allow_html=True,
+    )
 
     st.write("")
 
     # Engine status
     if model_error:
         st.markdown(
-            f'<div class="nl-engine err"><div class="nl-engine-title">Neural Engine Unavailable</div>'
+            f'<div class="nl-engine err">'
+            f'<div class="nl-engine-title">{svg("alert", 18, 2)} Neural Engine Unavailable</div>'
             f'<p>Expected checkpoint: <code>{_e(MODEL_PATH)}</code></p></div>',
             unsafe_allow_html=True,
         )
@@ -1273,14 +1655,14 @@ if nav == "Home":
         )
         st.markdown(
             f'<div class="nl-engine ok">'
-            f'<div class="nl-engine-title">Neural Engine Ready</div>'
+            f'<div class="nl-engine-title">{svg("check", 18, 2)} Neural Engine Ready</div>'
             f'<div class="nl-spec-grid">{spec_html}</div></div>',
             unsafe_allow_html=True,
         )
 
     if st.session_state.last_result:
         st.write("")
-        st.markdown("#### Last Analysis")
+        st.markdown(section_heading("Last Analysis", "file"), unsafe_allow_html=True)
         render_prob_bars(st.session_state.last_result, mc_result=st.session_state.mc_result)
 
     render_footer()
@@ -1291,13 +1673,20 @@ if nav == "Home":
 # ═══════════════════════════════════════════════════════════════
 
 elif nav == "MRI Analysis":
-    st.markdown("## MRI Analysis")
+    st.markdown(
+        f'<h2 style="display:flex;align-items:center;gap:.6rem">'
+        f'<span style="width:32px;height:32px;display:grid;place-items:center;border-radius:10px;'
+        f'background:linear-gradient(135deg,rgba(34,211,238,.22),rgba(52,211,153,.14));'
+        f'border:1px solid rgba(34,211,238,.42);color:#22d3ee">{svg("scan", 18, 2)}</span>'
+        f'MRI Analysis</h2>',
+        unsafe_allow_html=True,
+    )
     render_ticker()
 
     st.markdown(
-        '<div class="nl-disclaimer">'
-        '<b>Research use only.</b> This tool is not a medical device and must not be used '
-        'for clinical diagnosis or treatment decisions.</div>',
+        f'<div class="nl-disclaimer">{svg("shield", 18, 2)}'
+        f'<div><b>Research use only.</b> This tool is not a medical device and must not be used '
+        f'for clinical diagnosis or treatment decisions.</div></div>',
         unsafe_allow_html=True,
     )
 
@@ -1308,7 +1697,7 @@ elif nav == "MRI Analysis":
     col_up, col_res = st.columns([1, 1.3])
 
     with col_up:
-        st.markdown("#### Upload Scan")
+        st.markdown(section_heading("Upload Scan", "upload"), unsafe_allow_html=True)
         uploaded = st.file_uploader(
             "Brain MRI image (JPEG / PNG / TIFF)",
             type=["jpg","jpeg","png","tif","tiff","bmp","webp"],
@@ -1331,7 +1720,8 @@ elif nav == "MRI Analysis":
                 image_id = hashlib.md5(raw).hexdigest()[:12]
                 with col_up:
                     st.image(image, caption=f"{uploaded.name} ({image.size[0]}×{image.size[1]})", **_W())
-                    if st.button("Analyze", type="primary", key="run_analysis", **_W()):
+                    if st.button("Analyze", type="primary", key="run_analysis",
+                                 **_btn_icon("play_arrow"), **_W()):
                         with col_res:
                             with st.status("Running analysis…", expanded=True) as status:
                                 try:
@@ -1425,26 +1815,23 @@ elif nav == "MRI Analysis":
         bc     = conf_badge_class(conf_v)
 
         with col_res:
-            # Primary result
             st.markdown(
                 f'<div class="nl-result">'
-                f'<div class="nl-result-label">AI Classification</div>'
+                f'<div class="nl-result-label">{svg("sparkles", 13, 2)} AI Classification</div>'
                 f'<div class="nl-result-prediction">{_e(result["prediction"])}</div>'
-                f'<div class="nl-result-conf">{conf_v:.2f}% confidence &nbsp;'
+                f'<div class="nl-result-conf"><strong>{conf_v:.2f}%</strong> confidence '
                 f'<span class="nl-badge nl-badge-{bc}">'
                 f'{"High" if bc=="hi" else "Moderate" if bc=="mid" else "Low"}</span></div>'
                 f'</div>',
                 unsafe_allow_html=True,
             )
 
-            # Timing metrics
             m1, m2, m3, m4 = st.columns(4)
             m1.metric("Confidence",    f"{conf_v:.2f}%")
             m2.metric("Inference",     f"{result['latency_ms']:.1f} ms")
             m3.metric("Preprocess",    f"{result.get('preprocessing_ms',0):.1f} ms")
             m4.metric("Total",         f"{result.get('total_ms',0):.1f} ms")
 
-            # MC Uncertainty
             if mc_res:
                 unc, band, color = mc_res["uncertainty"], mc_res["band"], mc_res["color"]
                 st.markdown(
@@ -1454,19 +1841,19 @@ elif nav == "MRI Analysis":
                     f'<div class="nl-unc-band" style="color:{color}">{_e(band)}</div></div>'
                     f'<div style="text-align:right;font-size:.78rem;color:var(--muted)">'
                     f'MC conf: <strong style="color:#22d3ee">{mc_res["confidence"]:.2f}%</strong><br>'
-                    f'Prediction: <strong>{_e(mc_res["prediction"])}</strong></div>'
+                    f'Prediction: <strong style="color:var(--text)">{_e(mc_res["prediction"])}</strong></div>'
                     f'</div>',
                     unsafe_allow_html=True,
                 )
 
-            # Agreement
             agree = result.get("agreement_score")
             if agree is not None:
                 ac = "#34d399" if agree >= 0.7 else "#fbbf24" if agree >= 0.5 else "#f87171"
                 al = "High Agreement" if agree >= 0.7 else "Moderate Agreement" if agree >= 0.5 else "Low Agreement"
                 st.markdown(
                     f'<div class="nl-agree">'
-                    f'<span style="font-size:.78rem;color:var(--muted)">Grad-CAM ↔ Grad-CAM++ Pearson correlation</span>'
+                    f'<span style="font-size:.78rem;color:var(--muted);display:flex;align-items:center;gap:.45rem">'
+                    f'{svg("eye", 13)} Grad-CAM ↔ Grad-CAM++ Pearson correlation</span>'
                     f'<div style="text-align:right">'
                     f'<div class="nl-agree-score" style="color:{ac}">{agree:.3f}</div>'
                     f'<div style="font-size:.7rem;color:{ac};font-weight:600">{_e(al)}</div></div>'
@@ -1474,44 +1861,40 @@ elif nav == "MRI Analysis":
                     unsafe_allow_html=True,
                 )
 
-            # Probability grid
-            st.markdown("#### Probability Distribution")
+            st.markdown(section_heading("Probability Distribution", "chart"), unsafe_allow_html=True)
             grid_html = '<div class="nl-prob-grid">' + "".join(
                 f'<div class="nl-prob-card {"top" if lbl == result["prediction"] else ""}">'
                 f'<div class="nl-prob-value">{p:.1f}%</div>'
                 f'<div class="nl-prob-label">{_e(lbl)}</div>'
-                f'{"<div class=\"nl-prob-top-tag\">Top</div>" if lbl == result["prediction"] else ""}'
+                f'{"<div class=\'nl-prob-top-tag\'>Top</div>" if lbl == result["prediction"] else ""}'
                 f'</div>'
                 for lbl, p in result["probabilities"].items()
             ) + '</div>'
             st.markdown(grid_html, unsafe_allow_html=True)
 
-            # Probability bars
-            st.markdown("#### Live Probability Stream")
+            st.markdown(section_heading("Live Probability Stream", "activity"), unsafe_allow_html=True)
             render_prob_bars(result, mc_result=mc_res)
 
-            # XAI heatmaps
             if gc_png or pp_png:
-                st.markdown("#### Dual XAI Visualization")
+                st.markdown(section_heading("Dual XAI Visualization", "eye"), unsafe_allow_html=True)
                 gc_col, pp_col = st.columns(2)
                 with gc_col:
-                    st.markdown("**Grad-CAM** (jet · α=0.44)")
+                    st.markdown("**Grad-CAM** &nbsp;<span style='color:var(--muted);font-size:.75rem'>(jet · α=0.44)</span>", unsafe_allow_html=True)
                     if gc_png: st.image(gc_png, **_W())
                 with pp_col:
-                    st.markdown("**Grad-CAM++** (inferno · α=0.46)")
+                    st.markdown("**Grad-CAM++** &nbsp;<span style='color:var(--muted);font-size:.75rem'>(inferno · α=0.46)</span>", unsafe_allow_html=True)
                     if pp_png: st.image(pp_png, **_W())
 
-            # Downloads
-            st.markdown("#### Export")
+            st.markdown(section_heading("Export", "download"), unsafe_allow_html=True)
             dl1, dl2, dl3 = st.columns(3)
             if gc_png:
                 with dl1:
-                    st.download_button("Download Grad-CAM", gc_png, "gradcam.png", "image/png",
-                                       key="dl_gc", **_W())
+                    st.download_button("Grad-CAM", gc_png, "gradcam.png", "image/png",
+                                       key="dl_gc", **_btn_icon("image"), **_W())
             if pp_png:
                 with dl2:
-                    st.download_button("Download Grad-CAM++", pp_png, "gradcam_pp.png", "image/png",
-                                       key="dl_pp", **_W())
+                    st.download_button("Grad-CAM++", pp_png, "gradcam_pp.png", "image/png",
+                                       key="dl_pp", **_btn_icon("image"), **_W())
             report_lines = [
                 "NeuroLens AI — MRI Analysis Report",
                 "=" * 52,
@@ -1533,9 +1916,10 @@ elif nav == "MRI Analysis":
                 f"Total             : {result.get('total_ms', 0):.2f} ms",
             ]
             with dl3:
-                st.download_button("Download Report (.txt)", "\n".join(report_lines),
+                st.download_button("Report (.txt)", "\n".join(report_lines),
                                    "neurolens_report.txt", "text/plain",
-                                   key="dl_report", type="primary", **_W())
+                                   key="dl_report", type="primary",
+                                   **_btn_icon("description"), **_W())
 
     render_footer()
 
@@ -1545,7 +1929,14 @@ elif nav == "MRI Analysis":
 # ═══════════════════════════════════════════════════════════════
 
 elif nav == "XAI Lab":
-    st.markdown("## XAI Lab")
+    st.markdown(
+        f'<h2 style="display:flex;align-items:center;gap:.6rem">'
+        f'<span style="width:32px;height:32px;display:grid;place-items:center;border-radius:10px;'
+        f'background:linear-gradient(135deg,rgba(34,211,238,.22),rgba(52,211,153,.14));'
+        f'border:1px solid rgba(34,211,238,.42);color:#22d3ee">{svg("eye", 18, 2)}</span>'
+        f'XAI Lab</h2>',
+        unsafe_allow_html=True,
+    )
     render_ticker()
 
     hist   = st.session_state.prediction_history
@@ -1553,27 +1944,33 @@ elif nav == "XAI Lab":
     pp_png = st.session_state.get("gradcam_pp_png")
 
     if not hist:
-        st.markdown('<div class="nl-empty"><h3>No analyses yet</h3>'
-                    '<p>Run an MRI analysis first to view explanations here.</p></div>',
-                    unsafe_allow_html=True)
+        st.markdown(
+            f'<div class="nl-empty">'
+            f'<div class="em-ic">{svg("eye", 22, 1.9)}</div>'
+            f'<h3>No analyses yet</h3>'
+            f'<p>Run an MRI analysis first to view explanations here.</p></div>',
+            unsafe_allow_html=True,
+        )
     else:
         result = st.session_state.last_result
         agree  = result.get("agreement_score") if result else None
 
-        st.markdown("#### Heatmaps — Most Recent Analysis")
+        st.markdown(section_heading("Heatmaps — Most Recent Analysis", "layers"), unsafe_allow_html=True)
         c1, c2 = st.columns(2)
         with c1:
-            st.markdown("**Grad-CAM** (jet colormap)")
+            st.markdown("**Grad-CAM** &nbsp;<span style='color:var(--muted);font-size:.75rem'>(jet)</span>", unsafe_allow_html=True)
             if gc_png:
                 st.image(gc_png, **_W())
-                st.download_button("Download Grad-CAM", gc_png, "gradcam.png", "image/png", key="xai_gc")
+                st.download_button("Download Grad-CAM", gc_png, "gradcam.png", "image/png",
+                                   key="xai_gc", **_btn_icon("image"), **_W())
             else:
                 st.info("Grad-CAM not available for this analysis.")
         with c2:
-            st.markdown("**Grad-CAM++** (inferno colormap)")
+            st.markdown("**Grad-CAM++** &nbsp;<span style='color:var(--muted);font-size:.75rem'>(inferno)</span>", unsafe_allow_html=True)
             if pp_png:
                 st.image(pp_png, **_W())
-                st.download_button("Download Grad-CAM++", pp_png, "gradcam_pp.png", "image/png", key="xai_pp")
+                st.download_button("Download Grad-CAM++", pp_png, "gradcam_pp.png", "image/png",
+                                   key="xai_pp", **_btn_icon("image"), **_W())
             else:
                 st.info("Grad-CAM++ not available for this analysis.")
 
@@ -1591,10 +1988,9 @@ elif nav == "XAI Lab":
                 unsafe_allow_html=True,
             )
 
-        # Historical agreement trend
         agree_vals = [h["agreement_score"] for h in hist if h.get("agreement_score") is not None]
         if len(agree_vals) >= 2:
-            st.markdown("#### Agreement Score Trend")
+            st.markdown(section_heading("Agreement Score Trend", "chart"), unsafe_allow_html=True)
             fig, ax = _dark_fig()
             xs = list(range(1, len(agree_vals)+1))
             ax.plot(xs, agree_vals, marker="o", lw=2, ms=3.5, color="#22d3ee")
@@ -1618,14 +2014,25 @@ elif nav == "XAI Lab":
 # ═══════════════════════════════════════════════════════════════
 
 elif nav == "Dashboard":
-    st.markdown("## Dashboard")
+    st.markdown(
+        f'<h2 style="display:flex;align-items:center;gap:.6rem">'
+        f'<span style="width:32px;height:32px;display:grid;place-items:center;border-radius:10px;'
+        f'background:linear-gradient(135deg,rgba(34,211,238,.22),rgba(52,211,153,.14));'
+        f'border:1px solid rgba(34,211,238,.42);color:#22d3ee">{svg("chart", 18, 2)}</span>'
+        f'Dashboard</h2>',
+        unsafe_allow_html=True,
+    )
     render_ticker()
 
     dash_hist = st.session_state.prediction_history
     if not dash_hist:
-        st.markdown('<div class="nl-empty"><h3>No data yet</h3>'
-                    '<p>Run at least one MRI analysis to populate the dashboard.</p></div>',
-                    unsafe_allow_html=True)
+        st.markdown(
+            f'<div class="nl-empty">'
+            f'<div class="em-ic">{svg("chart", 22, 1.9)}</div>'
+            f'<h3>No data yet</h3>'
+            f'<p>Run at least one MRI analysis to populate the dashboard.</p></div>',
+            unsafe_allow_html=True,
+        )
     else:
         total    = st.session_state.live_predictions_count
         avg_c    = st.session_state.live_avg_confidence
@@ -1634,28 +2041,32 @@ elif nav == "Dashboard":
         unc_data = [h["uncertainty"] for h in dash_hist if h.get("uncertainty") is not None]
         avg_unc  = float(np.mean(unc_data)) if unc_data else None
 
-        m1, m2, m3, m4, m5 = st.columns(5)
-        for col, (val, lbl) in zip([m1, m2, m3, m4, m5], [
-            (total,                                            "Total Scans"),
-            (f"{avg_c:.1f}%",                                 "Avg Confidence"),
-            (unique,                                           "Classes Seen"),
-            (f"{avg_lat:.0f} ms",                             "Avg Latency"),
-            (f"σ={avg_unc:.4f}" if avg_unc is not None else "—", "Avg Uncertainty"),
-        ]):
-            with col:
-                st.markdown(
-                    f'<div class="nl-metric">'
-                    f'<div class="nl-metric-value">{_e(val)}</div>'
-                    f'<div class="nl-metric-label">{lbl}</div>'
-                    f'</div>',
-                    unsafe_allow_html=True,
-                )
+        metrics = [
+            ("activity", "Total Scans",     str(total)),
+            ("target",   "Avg Confidence",  f"{avg_c:.1f}%"),
+            ("layers",   "Classes Seen",    str(unique)),
+            ("clock",    "Avg Latency",     f"{avg_lat:.0f} ms"),
+            ("pulse",    "Avg Uncertainty", f"σ={avg_unc:.4f}" if avg_unc is not None else "—"),
+        ]
+        st.markdown(
+            '<div class="nl-grid cols-5">' + "".join(
+                f'<div class="nl-metric">'
+                f'<div class="nl-metric-head">'
+                f'<div class="nl-metric-label">{_e(lbl)}</div>'
+                f'<div class="nl-metric-icon">{svg(ic, 14, 2)}</div>'
+                f'</div>'
+                f'<div class="nl-metric-value">{_e(val)}</div>'
+                f'</div>'
+                for ic, lbl, val in metrics
+            ) + '</div>',
+            unsafe_allow_html=True,
+        )
 
         st.write("")
         col_l, col_r = st.columns([2, 1])
 
         with col_l:
-            st.markdown("#### Prediction Distribution")
+            st.markdown(section_heading("Prediction Distribution", "chart"), unsafe_allow_html=True)
             counts = st.session_state.live_class_counts
             mx = max(counts.values()) if max(counts.values()) > 0 else 1
             for label, count in counts.items():
@@ -1671,27 +2082,27 @@ elif nav == "Dashboard":
                     unsafe_allow_html=True,
                 )
 
-            st.markdown("#### Confidence Trend")
+            st.markdown(section_heading("Confidence Trend", "activity"), unsafe_allow_html=True)
             fig = plot_confidence_trend(dash_hist)
             if fig: st.pyplot(fig, **_W()); plt.close(fig)
             else:   st.caption("Need ≥ 2 analyses.")
 
-            st.markdown("#### Inference Latency")
+            st.markdown(section_heading("Inference Latency", "clock"), unsafe_allow_html=True)
             fig = plot_latency_trend(dash_hist)
             if fig: st.pyplot(fig, **_W()); plt.close(fig)
             else:   st.caption("Need ≥ 2 analyses.")
 
             if unc_data:
-                st.markdown("#### Uncertainty Trend")
+                st.markdown(section_heading("Uncertainty Trend", "pulse"), unsafe_allow_html=True)
                 fig = plot_uncertainty_history(dash_hist)
                 if fig: st.pyplot(fig, **_W()); plt.close(fig)
 
         with col_r:
-            st.markdown("#### Activity Feed")
+            st.markdown(section_heading("Activity Feed", "database"), unsafe_allow_html=True)
             render_activity_feed()
 
             st.write("")
-            st.markdown("#### Latest Result")
+            st.markdown(section_heading("Latest Result", "file"), unsafe_allow_html=True)
             latest = dash_hist[-1]
             rows = [
                 ("Prediction",   latest["prediction"]),
@@ -1720,16 +2131,26 @@ elif nav == "Dashboard":
 # ═══════════════════════════════════════════════════════════════
 
 elif nav == "History":
-    st.markdown("## History")
+    st.markdown(
+        f'<h2 style="display:flex;align-items:center;gap:.6rem">'
+        f'<span style="width:32px;height:32px;display:grid;place-items:center;border-radius:10px;'
+        f'background:linear-gradient(135deg,rgba(34,211,238,.22),rgba(52,211,153,.14));'
+        f'border:1px solid rgba(34,211,238,.42);color:#22d3ee">{svg("history", 18, 2)}</span>'
+        f'History</h2>',
+        unsafe_allow_html=True,
+    )
     render_ticker()
 
     hist_list = st.session_state.prediction_history
     if not hist_list:
-        st.markdown('<div class="nl-empty"><h3>No history</h3>'
-                    '<p>Analyses you run will appear here.</p></div>',
-                    unsafe_allow_html=True)
+        st.markdown(
+            f'<div class="nl-empty">'
+            f'<div class="em-ic">{svg("history", 22, 1.9)}</div>'
+            f'<h3>No history</h3>'
+            f'<p>Analyses you run will appear here.</p></div>',
+            unsafe_allow_html=True,
+        )
     else:
-        # Filters
         fc1, fc2, fc3, fc4 = st.columns([1, 1, 1, 2])
         pred_f   = fc1.selectbox("Prediction", ["All"] + CLASS_NAMES, key="hist_pred")
         conf_f   = fc2.selectbox("Confidence", ["All","High (≥80%)","Moderate (60–79%)","Low (<60%)"], key="hist_conf")
@@ -1787,7 +2208,6 @@ elif nav == "History":
                         for cls, prob in item.get("probabilities", {}).items():
                             st.write(f"  · {cls}: {prob:.4f}%")
 
-        # CSV export
         st.write("")
         df_rows = []
         for rec in hist_list:
@@ -1799,7 +2219,7 @@ elif nav == "History":
         df = pd.DataFrame(df_rows)
         st.download_button("Export as CSV", df.to_csv(index=False),
                            "neurolens_history.csv", "text/csv",
-                           key="hist_csv", **_W())
+                           key="hist_csv", **_btn_icon("download"), **_W())
 
     render_footer()
 
@@ -1809,12 +2229,19 @@ elif nav == "History":
 # ═══════════════════════════════════════════════════════════════
 
 elif nav == "Settings":
-    st.markdown("## Settings")
+    st.markdown(
+        f'<h2 style="display:flex;align-items:center;gap:.6rem">'
+        f'<span style="width:32px;height:32px;display:grid;place-items:center;border-radius:10px;'
+        f'background:linear-gradient(135deg,rgba(34,211,238,.22),rgba(52,211,153,.14));'
+        f'border:1px solid rgba(34,211,238,.42);color:#22d3ee">{svg("settings", 18, 2)}</span>'
+        f'Settings</h2>',
+        unsafe_allow_html=True,
+    )
 
     c1, c2 = st.columns(2)
 
     with c1:
-        st.markdown("#### Model")
+        st.markdown(section_heading("Model", "brain"), unsafe_allow_html=True)
         info_rows = [
             ("Status",        "Ready" if not model_error else "Failed"),
             ("Architecture",  model_name or "—"),
@@ -1835,7 +2262,7 @@ elif nav == "Settings":
         )
 
     with c2:
-        st.markdown("#### System")
+        st.markdown(section_heading("System", "cpu"), unsafe_allow_html=True)
         try:
             tv = metadata.version("torchvision")
         except Exception:
@@ -1860,7 +2287,7 @@ elif nav == "Settings":
         )
 
     st.write("")
-    st.markdown("#### Runtime Controls")
+    st.markdown(section_heading("Runtime Controls", "sliders"), unsafe_allow_html=True)
 
     rc1, rc2 = st.columns(2)
     with rc1:
@@ -1892,7 +2319,7 @@ elif nav == "Settings":
             st.session_state.mc_samples = int(mc_val)
 
     st.write("")
-    st.markdown("#### Technical Details")
+    st.markdown(section_heading("Technical Details", "info"), unsafe_allow_html=True)
     with st.expander("Checkpoint & Runtime"):
         st.code(
             f"Checkpoint : {MODEL_PATH}\n"
@@ -1904,8 +2331,9 @@ elif nav == "Settings":
         )
 
     st.write("")
-    st.markdown("#### Reset Session")
-    if st.button("Reset All Session Data", type="primary", key="settings_reset"):
+    st.markdown(section_heading("Reset Session", "refresh"), unsafe_allow_html=True)
+    if st.button("Reset All Session Data", type="primary", key="settings_reset",
+                 **_btn_icon("restart_alt")):
         st.session_state.settings_confirm_reset = True
     if st.session_state.get("settings_confirm_reset", False):
         st.warning("This will clear all analyses, history, and live stats.")
