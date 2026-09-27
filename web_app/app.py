@@ -1,6 +1,6 @@
 # =============================================================================
 # NeuroLens AI — Neurodiagnostic Intelligence Platform
-# Polished Edition · v4 (component-driven · responsive · safe reset)
+# Website Edition · v5 (URL routing · hidden chrome · hero landing · site footer)
 # =============================================================================
 
 import warnings
@@ -38,7 +38,7 @@ warnings.filterwarnings("ignore")
 # =============================================================================
 
 st.set_page_config(
-    page_title="NeuroLens AI",
+    page_title="NeuroLens AI · Brain MRI Intelligence",
     page_icon=":material/neurology:",
     layout="wide",
     initial_sidebar_state="expanded",
@@ -58,6 +58,10 @@ CLASS_NAMES      = ["Glioma", "Meningioma", "No Tumor", "Pituitary"]
 MAX_UPLOAD_BYTES = 200 * 1024 * 1024
 MAX_IMAGE_PIXELS = 50_000_000
 PAGE_LABELS      = ["Home", "MRI Analysis", "XAI Lab", "Dashboard", "History", "Settings"]
+
+# Slug maps for URL routing (?page=mri-analysis)
+PAGE_TO_SLUG: Dict[str, str] = {p: p.lower().replace(" ", "-") for p in PAGE_LABELS}
+SLUG_TO_PAGE: Dict[str, str] = {v: k for k, v in PAGE_TO_SLUG.items()}
 
 try:
     Image.MAX_IMAGE_PIXELS = MAX_IMAGE_PIXELS
@@ -123,6 +127,11 @@ SVG_ICONS: Dict[str, str] = {
     "monitor": '<rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/>',
     "database": '<ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"/><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/>',
     "sliders": '<line x1="4" y1="21" x2="4" y2="14"/><line x1="4" y1="10" x2="4" y2="3"/><line x1="12" y1="21" x2="12" y2="12"/><line x1="12" y1="8" x2="12" y2="3"/><line x1="20" y1="21" x2="20" y2="16"/><line x1="20" y1="12" x2="20" y2="3"/><line x1="1" y1="14" x2="7" y2="14"/><line x1="9" y1="8" x2="15" y2="8"/><line x1="17" y1="16" x2="23" y2="16"/>',
+    "arrow-right": '<line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/>',
+    "menu": '<line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/>',
+    "external": '<path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/>',
+    "github": '<path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"/>',
+    "book": '<path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/>',
 }
 
 
@@ -195,6 +204,22 @@ st.markdown("""
   --ease-out: cubic-bezier(.16,.84,.44,1);
 }
 
+/* ── Hide Streamlit chrome (website mode) ──────────────── */
+#MainMenu, footer, header [data-testid="stToolbar"],
+[data-testid="stToolbar"], [data-testid="stDecoration"],
+[data-testid="stStatusWidget"], [data-testid="stHeader"],
+.stDeployButton, .stAppDeployButton,
+[data-testid="stAppDeployButton"],
+[data-testid="stAppViewBlockContainer"] > div:first-child > div:first-child[style*="height: 0px"] {
+  display: none !important;
+  visibility: hidden !important;
+  height: 0 !important;
+}
+[data-testid="stHeader"] { background: transparent !important; }
+[data-testid="stAppViewContainer"] > .main > div:first-child {
+  padding-top: 0 !important;
+}
+
 /* ── Base ──────────────────────────────────────────────── */
 html, body,
 [data-testid="stAppViewContainer"],
@@ -214,8 +239,15 @@ html, body,
 }
 [data-testid="stMainBlockContainer"] {
   max-width: 1380px !important;
-  padding: clamp(.9rem, 2vw, 1.6rem) clamp(.8rem, 2vw, 1.6rem) 4rem !important;
+  padding: 1.2rem clamp(.8rem, 2vw, 1.6rem) 0 !important;
 }
+
+/* ── Page fade-in ──────────────────────────────────────── */
+@keyframes nlFadeIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.nl-page { animation: nlFadeIn .38s var(--ease-out) both; }
 
 /* ── Sidebar ───────────────────────────────────────────── */
 [data-testid="stSidebar"] {
@@ -292,7 +324,7 @@ h2 { font-size: clamp(1.15rem, 2.2vw, 1.4rem) !important; font-weight: 700 !impo
 h3 { font-size: clamp(.95rem, 1.6vw, 1.05rem) !important; font-weight: 700 !important; color: var(--text) !important; }
 h4 { font-size: .78rem !important; font-weight: 700 !important; color: var(--muted) !important; text-transform: uppercase; letter-spacing: .08em; margin: .8rem 0 .35rem !important; }
 
-/* ── Page header (used by all pages) ───────────────────── */
+/* ── Page header ───────────────────────────────────────── */
 .nl-page-head {
   display: flex;
   align-items: center;
@@ -324,6 +356,115 @@ h4 { font-size: .78rem !important; font-weight: 700 !important; color: var(--mut
   font-size: .86rem;
   line-height: 1.5;
   max-width: 72ch;
+}
+
+/* ── Breadcrumb ────────────────────────────────────────── */
+.nl-crumb {
+  display: flex;
+  align-items: center;
+  gap: .4rem;
+  font-size: .72rem;
+  color: var(--muted);
+  font-family: var(--mono);
+  margin-bottom: .55rem;
+  text-transform: uppercase;
+  letter-spacing: .08em;
+}
+.nl-crumb a, .nl-crumb span { color: var(--muted); text-decoration: none; }
+.nl-crumb .cur { color: var(--cyan); font-weight: 700; }
+.nl-crumb .sep { color: rgba(125,165,220,.35); }
+
+/* ── Hero (home page) ──────────────────────────────────── */
+.nl-hero {
+  position: relative;
+  padding: 2.6rem 2rem 2.2rem;
+  margin: 0 0 1.6rem;
+  border-radius: var(--r-xl);
+  border: 1px solid var(--border-2);
+  background:
+    radial-gradient(900px 320px at 15% 0%, rgba(34,211,238,.20), transparent 60%),
+    radial-gradient(700px 260px at 95% 100%, rgba(167,139,250,.14), transparent 60%),
+    linear-gradient(180deg, rgba(20,37,67,.85), rgba(12,22,40,.85));
+  box-shadow: var(--sh-lg), var(--sh-in);
+  overflow: hidden;
+}
+.nl-hero::before {
+  content: "";
+  position: absolute; inset: 0;
+  background-image:
+    linear-gradient(rgba(125,165,220,.045) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(125,165,220,.045) 1px, transparent 1px);
+  background-size: 44px 44px;
+  -webkit-mask-image: radial-gradient(ellipse at center, #000 20%, transparent 75%);
+  mask-image: radial-gradient(ellipse at center, #000 20%, transparent 75%);
+  pointer-events: none;
+}
+.nl-hero-inner { position: relative; z-index: 1; }
+.nl-hero-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: .45rem;
+  padding: .32rem .78rem;
+  border-radius: 999px;
+  background: rgba(34,211,238,.10);
+  border: 1px solid rgba(34,211,238,.35);
+  color: var(--cyan);
+  font-size: .72rem;
+  font-weight: 700;
+  font-family: var(--mono);
+  letter-spacing: .04em;
+  margin-bottom: 1.1rem;
+}
+.nl-hero-badge .dot {
+  width: 6px; height: 6px; border-radius: 50%;
+  background: var(--emerald);
+  box-shadow: 0 0 0 3px rgba(52,211,153,.18);
+  animation: pulse 2.4s var(--ease) infinite;
+}
+.nl-hero-title {
+  font-size: clamp(2rem, 4.4vw, 3.25rem) !important;
+  font-weight: 800 !important;
+  line-height: 1.05 !important;
+  letter-spacing: -.035em !important;
+  color: var(--text) !important;
+  margin: 0 0 .85rem !important;
+  max-width: 18ch;
+}
+.nl-hero-title .grad {
+  background: linear-gradient(135deg, var(--cyan), var(--emerald));
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+.nl-hero-sub {
+  font-size: clamp(.92rem, 1.3vw, 1.05rem);
+  color: var(--text-2);
+  line-height: 1.62;
+  max-width: 60ch;
+  margin: 0 0 1.4rem;
+}
+.nl-hero-stats {
+  display: flex;
+  gap: 2rem;
+  flex-wrap: wrap;
+  padding-top: 1.3rem;
+  border-top: 1px solid var(--border);
+  margin-top: .4rem;
+}
+.nl-hero-stat-val {
+  font-size: 1.35rem;
+  font-weight: 800;
+  color: var(--text);
+  font-family: var(--mono);
+  letter-spacing: -.02em;
+}
+.nl-hero-stat-lbl {
+  font-size: .68rem;
+  font-weight: 700;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: .1em;
+  margin-top: .15rem;
 }
 
 /* ── Section heading ───────────────────────────────────── */
@@ -483,7 +624,7 @@ h4 { font-size: .78rem !important; font-weight: 700 !important; color: var(--mut
   border-radius: 999px; padding: .12rem .5rem;
 }
 
-/* ── Uncertainty / agreement cards ─────────────────────── */
+/* ── Uncertainty / agreement ───────────────────────────── */
 .nl-unc {
   background: linear-gradient(135deg, rgba(139,92,246,.10), rgba(139,92,246,.04));
   border: 1px solid rgba(139,92,246,.34);
@@ -731,22 +872,86 @@ h4 { font-size: .78rem !important; font-weight: 700 !important; color: var(--mut
 }
 .nl-step-title { font-size: .8rem; font-weight: 600; color: var(--text); }
 
-/* ── Footer ────────────────────────────────────────────── */
-.nl-footer {
-  margin-top: 2.6rem;
-  padding-top: 1.2rem;
+/* ── Website footer ────────────────────────────────────── */
+.nl-site-footer {
+  margin: 3rem calc(-1 * clamp(.8rem, 2vw, 1.6rem)) 0;
+  padding: 2.4rem clamp(.8rem, 2vw, 1.6rem) 1.6rem;
+  background: linear-gradient(180deg, rgba(8,18,31,.4), rgba(5,12,22,.9));
   border-top: 1px solid var(--border);
+}
+.nl-site-footer-inner {
+  max-width: 1380px;
+  margin: 0 auto;
+}
+.nl-footer-brand-row {
+  display: grid;
+  grid-template-columns: 1.4fr 1fr 1fr 1fr;
+  gap: 2rem;
+  margin-bottom: 2rem;
+}
+@media (max-width: 780px) {
+  .nl-footer-brand-row { grid-template-columns: 1fr 1fr; }
+}
+.nl-footer-col h4 {
+  font-size: .68rem !important;
+  font-weight: 800 !important;
+  color: var(--text-2) !important;
+  text-transform: uppercase;
+  letter-spacing: .11em;
+  margin: 0 0 .8rem !important;
+}
+.nl-footer-col p {
+  color: var(--muted);
+  font-size: .82rem;
+  line-height: 1.6;
+  margin: 0;
+  max-width: 40ch;
+}
+.nl-footer-links { display: flex; flex-direction: column; gap: .45rem; }
+.nl-footer-links a {
+  color: var(--muted);
+  font-size: .82rem;
+  text-decoration: none;
+  transition: color .15s var(--ease);
+  display: inline-flex;
+  align-items: center;
+  gap: .35rem;
+}
+.nl-footer-links a:hover { color: var(--cyan); }
+.nl-footer-brand {
+  display: flex; align-items: center; gap: .6rem;
+  margin-bottom: .7rem;
+}
+.nl-footer-brand-logo {
+  width: 32px; height: 32px; display: grid; place-items: center;
+  border-radius: 9px;
+  background: linear-gradient(135deg, rgba(34,211,238,.20), rgba(52,211,153,.14));
+  border: 1px solid rgba(34,211,238,.42);
+  color: var(--cyan);
+}
+.nl-footer-brand-name {
+  font-size: .95rem; font-weight: 800; color: var(--text);
+  letter-spacing: -.01em;
+}
+.nl-footer-brand-name span { color: var(--cyan); }
+
+.nl-footer-bottom {
   display: flex;
   justify-content: space-between;
   align-items: center;
   flex-wrap: wrap;
-  gap: .75rem;
-  font-size: .76rem;
+  gap: .8rem;
+  padding-top: 1.2rem;
+  border-top: 1px solid var(--border);
+  font-size: .74rem;
   color: var(--muted);
 }
-.nl-footer strong { color: var(--text-2); font-weight: 700; }
-.nl-footer .rt { display: flex; align-items: center; gap: .55rem; font-family: var(--mono); font-size: .72rem; }
-.nl-footer .rt .sep { color: rgba(125,165,220,.35); }
+.nl-footer-bottom strong { color: var(--text-2); font-weight: 700; }
+.nl-footer-bottom .rt {
+  display: flex; align-items: center; gap: .5rem;
+  font-family: var(--mono); font-size: .7rem;
+}
+.nl-footer-bottom .rt .sep { color: rgba(125,165,220,.35); }
 
 /* ── Ticker ────────────────────────────────────────────── */
 .nl-ticker {
@@ -785,7 +990,7 @@ h4 { font-size: .78rem !important; font-weight: 700 !important; color: var(--mut
   background: linear-gradient(180deg, transparent, rgba(125,165,220,.24), transparent);
 }
 
-/* ── Info rows (Settings) ──────────────────────────────── */
+/* ── Info rows ─────────────────────────────────────────── */
 .nl-info-row {
   display: flex; justify-content: space-between; gap: .8rem;
   padding: .55rem 0;
@@ -817,17 +1022,21 @@ h4 { font-size: .78rem !important; font-weight: 700 !important; color: var(--mut
 
 /* ── Responsive ────────────────────────────────────────── */
 @media (max-width: 900px) {
-  [data-testid="stMainBlockContainer"] { padding: .85rem .7rem 3rem !important; }
+  [data-testid="stMainBlockContainer"] { padding: .9rem .7rem 0 !important; }
   .nl-grid.cols-5, .nl-grid.cols-4 { grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); }
+  .nl-hero { padding: 2rem 1.3rem 1.6rem; }
 }
 @media (max-width: 640px) {
   .nl-page-icon { width: 38px; height: 38px; border-radius: 10px; }
+  .nl-hero-title { font-size: 1.85rem !important; }
+  .nl-hero { padding: 1.7rem 1.1rem 1.4rem; border-radius: var(--r-lg); }
+  .nl-hero-stats { gap: 1.2rem; }
   .nl-result-prediction { font-size: 1.45rem; }
   .nl-prob-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .nl-metric-value { font-size: 1.15rem; }
   .nl-step { padding: .75rem .4rem; }
   .nl-step-num { width: 26px; height: 26px; font-size: .72rem; }
-  .nl-footer { flex-direction: column; align-items: flex-start; }
+  .nl-footer-bottom { flex-direction: column; align-items: flex-start; }
   [data-testid="stSidebar"] .stButton > button { font-size: .84rem !important; min-height: 40px !important; }
 }
 
@@ -890,6 +1099,39 @@ def _st_width(container: bool) -> dict:
 
 def _W() -> dict:   return _st_width(True)
 def _Wc() -> dict:  return _st_width(False)
+
+
+# ── URL query-param routing ─────────────────────────────────
+
+def _read_page_from_url() -> Optional[str]:
+    """Return the current page name from the URL, if valid."""
+    try:
+        qp = st.query_params
+        slug = qp.get("page")
+        if isinstance(slug, list):
+            slug = slug[0] if slug else None
+        return SLUG_TO_PAGE.get(slug) if slug else None
+    except Exception:
+        try:
+            qp = st.experimental_get_query_params()
+            slug = qp.get("page", [None])[0]
+            return SLUG_TO_PAGE.get(slug) if slug else None
+        except Exception:
+            return None
+
+
+def _write_page_to_url(page: str) -> None:
+    """Persist the current page name into the URL as ?page=<slug>."""
+    slug = PAGE_TO_SLUG.get(page)
+    if not slug:
+        return
+    try:
+        st.query_params["page"] = slug
+    except Exception:
+        try:
+            st.experimental_set_query_params(page=slug)
+        except Exception:
+            pass
 
 
 def uncertainty_band(u: float) -> Tuple[str, str]:
@@ -1299,13 +1541,27 @@ for k, v in DEFAULTS.items():
     if k not in st.session_state:
         st.session_state[k] = copy.deepcopy(v)
 
+# URL routing: on first boot, if the URL has ?page=<slug>, honour it.
+if st.session_state.get("_url_checked") is not True:
+    _page_from_url = _read_page_from_url()
+    if _page_from_url:
+        st.session_state.nav = _page_from_url
+    st.session_state._url_checked = True
+
+# Ensure the URL always reflects the current page (deep-linkable).
+if _read_page_from_url() != st.session_state.nav:
+    _write_page_to_url(st.session_state.nav)
+
 
 # =============================================================================
 # SESSION HELPERS
 # =============================================================================
 
 def navigate_to(page: str) -> None:
+    if page not in PAGE_LABELS:
+        page = "Home"
     st.session_state.nav = page
+    _write_page_to_url(page)
     st.rerun()
 
 
@@ -1368,15 +1624,29 @@ if st.session_state.live_session_start is None:
 
 
 # =============================================================================
-# UI COMPONENTS (reusable)
+# UI COMPONENTS
 # =============================================================================
 
-def page_header(icon: str, title: str, subtitle: Optional[str] = None) -> None:
+def page_header(icon: str, title: str, subtitle: Optional[str] = None,
+                breadcrumb: bool = True) -> None:
+    crumb = ""
+    if breadcrumb:
+        cur = st.session_state.nav
+        crumb = (
+            f'<div class="nl-crumb">'
+            f'<span>{svg("home", 11)}</span>'
+            f'<span class="sep">/</span>'
+            f'<span class="cur">{_e(cur)}</span>'
+            f'</div>'
+        )
     sub = f'<p class="nl-page-sub">{_e(subtitle)}</p>' if subtitle else ""
     st.markdown(
+        f'<div class="nl-page">'
+        f'{crumb}'
         f'<div class="nl-page-head">'
         f'<div class="nl-page-icon">{svg(icon, 20, 2)}</div>'
         f'<div><h1 class="nl-page-title">{_e(title)}</h1>{sub}</div>'
+        f'</div>'
         f'</div>',
         unsafe_allow_html=True,
     )
@@ -1391,7 +1661,6 @@ def section_heading(title: str, icon: str) -> None:
 
 
 def metric_grid(items: List[Tuple[str, str, str]], cols: int = 4) -> None:
-    """items = [(icon, label, value), ...]"""
     html = '<div class="nl-grid cols-%d">' % cols + "".join(
         f'<div class="nl-metric">'
         f'<div class="nl-metric-head">'
@@ -1406,7 +1675,6 @@ def metric_grid(items: List[Tuple[str, str, str]], cols: int = 4) -> None:
 
 
 def feature_grid(items: List[Tuple[str, str, str]], cols: int = 4) -> None:
-    """items = [(icon, title, body), ...]"""
     html = '<div class="nl-grid cols-%d">' % cols + "".join(
         f'<div class="nl-card">'
         f'<h3><span class="ic">{svg(ic, 15, 2)}</span>{_e(title)}</h3>'
@@ -1455,6 +1723,37 @@ def badge_html(conf: float) -> str:
     bc = conf_badge_class(conf)
     label = "High" if bc == "hi" else "Moderate" if bc == "mid" else "Low"
     return f'<span class="nl-badge nl-badge-{bc}">{label}</span>'
+
+
+def hero_section() -> None:
+    """Landing-page hero for the Home page."""
+    hist = st.session_state.prediction_history
+    total = st.session_state.live_predictions_count
+    avg_c = st.session_state.live_avg_confidence
+    engine_status = "Online" if (MODEL_PATH.exists() and not model_error) else "Offline"
+
+    st.markdown(
+        f'<section class="nl-hero"><div class="nl-hero-inner">'
+        f'<div class="nl-hero-badge"><span class="dot"></span>'
+        f'AI-Powered Neurodiagnostics · Engine {_e(engine_status)}</div>'
+        f'<h1 class="nl-hero-title">Intelligent <span class="grad">brain MRI</span> analysis, '
+        f'explained.</h1>'
+        f'<p class="nl-hero-sub">Classify brain tumors with medical-grade accuracy. '
+        f'Every prediction ships with Grad-CAM++ visual explanations and Bayesian '
+        f'uncertainty quantification — so you always know when to trust the model.</p>'
+        f'<div class="nl-hero-stats">'
+        f'<div><div class="nl-hero-stat-val">{total}</div>'
+        f'<div class="nl-hero-stat-lbl">Scans this session</div></div>'
+        f'<div><div class="nl-hero-stat-val">{avg_c:.1f}%</div>'
+        f'<div class="nl-hero-stat-lbl">Average confidence</div></div>'
+        f'<div><div class="nl-hero-stat-val">{len(hist)}</div>'
+        f'<div class="nl-hero-stat-lbl">In history</div></div>'
+        f'<div><div class="nl-hero-stat-val">4</div>'
+        f'<div class="nl-hero-stat-lbl">Tumor classes</div></div>'
+        f'</div>'
+        f'</div></section>',
+        unsafe_allow_html=True,
+    )
 
 
 # =============================================================================
@@ -1564,11 +1863,58 @@ def render_activity_feed() -> None:
     st.markdown(f'<div class="nl-feed">{rows}</div>', unsafe_allow_html=True)
 
 
-def render_footer() -> None:
+def render_site_footer() -> None:
+    """Website-style footer with brand, quick links, resources, and status."""
     year = datetime.now().year
+
+    nav_links_html = "".join(
+        f'<a href="?page={PAGE_TO_SLUG[p]}">{_e(p)}</a>'
+        for p in ["Home", "MRI Analysis", "XAI Lab", "Dashboard", "History"]
+    )
+
     st.markdown(
-        f'<div class="nl-footer">'
-        f'<span>© {year} <strong>NeuroLens AI</strong> · Developed by MD. Atique Shahriar &amp; Aronna Das</span>'
+        f'<footer class="nl-site-footer"><div class="nl-site-footer-inner">'
+        f'<div class="nl-footer-brand-row">'
+
+        f'<div class="nl-footer-col">'
+        f'<div class="nl-footer-brand">'
+        f'<div class="nl-footer-brand-logo">{svg("brain", 16, 2)}</div>'
+        f'<div class="nl-footer-brand-name">NeuroLens <span>AI</span></div>'
+        f'</div>'
+        f'<p>AI-powered brain MRI classification with explainable heatmaps '
+        f'and Bayesian uncertainty quantification. Built for research and education.</p>'
+        f'</div>'
+
+        f'<div class="nl-footer-col">'
+        f'<h4>Navigation</h4>'
+        f'<div class="nl-footer-links">{nav_links_html}</div>'
+        f'</div>'
+
+        f'<div class="nl-footer-col">'
+        f'<h4>Resources</h4>'
+        f'<div class="nl-footer-links">'
+        f'<a href="#">{svg("book", 12)} Documentation</a>'
+        f'<a href="#">{svg("github", 12)} Source Code</a>'
+        f'<a href="#">{svg("file", 12)} Model Card</a>'
+        f'<a href="#">{svg("external", 12)} Research Paper</a>'
+        f'</div>'
+        f'</div>'
+
+        f'<div class="nl-footer-col">'
+        f'<h4>System</h4>'
+        f'<div class="nl-footer-links">'
+        f'<a style="cursor:default">{svg("layers", 12)} Model: {_e(model_name or "—")}</a>'
+        f'<a style="cursor:default">{svg("cpu", 12)} Device: {_e(str(DEVICE))}</a>'
+        f'<a style="cursor:default">{svg("monitor", 12)} Streamlit {_e(st.__version__)}</a>'
+        f'<a style="cursor:default">{svg("database", 12)} Classes: {len(CLASS_NAMES)}</a>'
+        f'</div>'
+        f'</div>'
+
+        f'</div>'
+
+        f'<div class="nl-footer-bottom">'
+        f'<span>© {year} <strong>NeuroLens AI</strong> · Developed by '
+        f'MD. Atique Shahriar &amp; Aronna Das · Research use only</span>'
         f'<span class="rt">'
         f'{svg("cpu", 13)} PyTorch {torch.__version__.split("+")[0]}'
         f'<span class="sep">·</span>'
@@ -1576,7 +1922,9 @@ def render_footer() -> None:
         f'<span class="sep">·</span>'
         f'{"CUDA" if DEVICE.type == "cuda" else "CPU"}'
         f'</span>'
-        f'</div>',
+        f'</div>'
+
+        f'</div></footer>',
         unsafe_allow_html=True,
     )
 
@@ -1623,7 +1971,7 @@ def render_sidebar() -> None:
                 clicked = st.button(label + badge, **_btn_icon(mat_icon), **kwargs)
             except Exception:
                 clicked = st.button(label + badge, **kwargs)
-            if clicked:
+            if clicked and not active:
                 navigate_to(page)
 
         st.divider()
@@ -1662,20 +2010,23 @@ def render_sidebar() -> None:
 # =============================================================================
 
 def render_home_page() -> None:
-    page_header(
-        "brain", "NeuroLens AI",
-        "Upload a brain MRI scan to receive an AI classification across four tumor types, "
-        "with Grad-CAM explainability and MC Dropout uncertainty quantification.",
-    )
-    render_ticker()
+    st.markdown('<div class="nl-page">', unsafe_allow_html=True)
 
-    _, c, _ = st.columns([2, 1, 2])
-    with c:
-        if st.button("Run MRI Analysis", type="primary", key="home_cta",
+    hero_section()
+
+    # CTA row
+    _, cta1, cta2, _ = st.columns([1.5, 1.3, 1.3, 1.5])
+    with cta1:
+        if st.button("Start MRI Analysis", type="primary", key="home_cta",
                      **_btn_icon("rocket_launch"), **_W()):
             navigate_to("MRI Analysis")
+    with cta2:
+        if st.button("View Dashboard", key="home_cta2",
+                     **_btn_icon("bar_chart"), **_W()):
+            navigate_to("Dashboard")
 
     st.write("")
+    render_ticker()
 
     hist = st.session_state.prediction_history
     avg_lat = f"{np.mean([x.get('latency_ms',0) for x in hist]):.0f} ms" if hist else "—"
@@ -1688,6 +2039,7 @@ def render_home_page() -> None:
     ], cols=4)
 
     st.write("")
+    section_heading("Capabilities", "sparkles")
     feature_grid([
         ("brain",    "Brain MRI Classification", "Classifies into Glioma, Meningioma, No Tumor, or Pituitary tumor."),
         ("activity", "MC Dropout Uncertainty",   "Bayesian uncertainty via repeated stochastic forward passes."),
@@ -1696,7 +2048,7 @@ def render_home_page() -> None:
     ], cols=4)
 
     st.write("")
-    section_heading("Analysis Pipeline", "layers")
+    section_heading("How It Works", "layers")
     steps = [("1", "Upload"), ("2", "Preprocess"), ("3", "Inference"),
              ("4", "MC Dropout"), ("5", "Grad-CAM"), ("6", "Grad-CAM++"), ("7", "Report")]
     st.markdown(
@@ -1709,6 +2061,7 @@ def render_home_page() -> None:
     )
 
     st.write("")
+    section_heading("Engine Status", "cpu")
 
     if model_error:
         st.markdown(
@@ -1742,7 +2095,8 @@ def render_home_page() -> None:
         section_heading("Last Analysis", "file")
         render_prob_bars(st.session_state.last_result, mc_result=st.session_state.mc_result)
 
-    render_footer()
+    st.markdown('</div>', unsafe_allow_html=True)
+    render_site_footer()
 
 
 # =============================================================================
@@ -1750,7 +2104,10 @@ def render_home_page() -> None:
 # =============================================================================
 
 def render_analysis_page() -> None:
-    page_header("scan", "MRI Analysis")
+    st.markdown('<div class="nl-page">', unsafe_allow_html=True)
+    page_header("scan", "MRI Analysis",
+                "Upload a brain MRI scan to receive classification, uncertainty, "
+                "and explainability results.")
     render_ticker()
 
     st.markdown(
@@ -1762,7 +2119,9 @@ def render_analysis_page() -> None:
 
     if model_error:
         st.error(f"Neural engine unavailable: {model_error}")
-        st.stop()
+        st.markdown('</div>', unsafe_allow_html=True)
+        render_site_footer()
+        return
 
     col_up, col_res = st.columns([1, 1.3])
 
@@ -1795,12 +2154,12 @@ def render_analysis_page() -> None:
             except (UnidentifiedImageError, Exception) as exc:
                 st.error(f"Could not open image: {exc}")
 
-    # ── Results ─────────────────────────────────────────────
     if (image_id and st.session_state.last_result
             and st.session_state.last_result.get("image_id") == image_id):
         _render_analysis_results(col_res)
 
-    render_footer()
+    st.markdown('</div>', unsafe_allow_html=True)
+    render_site_footer()
 
 
 def _run_analysis_pipeline(image, image_id, run_mc, run_xcam, col_res) -> None:
@@ -1890,7 +2249,6 @@ def _render_analysis_results(col_res) -> None:
     conf_v = result["confidence"]
 
     with col_res:
-        # Headline result
         st.markdown(
             f'<div class="nl-result">'
             f'<div class="nl-result-label">{svg("sparkles", 13, 2)} AI Classification</div>'
@@ -1901,14 +2259,12 @@ def _render_analysis_results(col_res) -> None:
             unsafe_allow_html=True,
         )
 
-        # Metric row
         m1, m2, m3, m4 = st.columns(4)
         m1.metric("Confidence",  f"{conf_v:.2f}%")
         m2.metric("Inference",   f"{result['latency_ms']:.1f} ms")
         m3.metric("Preprocess",  f"{result.get('preprocessing_ms', 0):.1f} ms")
         m4.metric("Total",       f"{result.get('total_ms', 0):.1f} ms")
 
-        # MC Dropout
         if mc_res:
             unc, band, color = mc_res["uncertainty"], mc_res["band"], mc_res["color"]
             st.markdown(
@@ -1924,7 +2280,6 @@ def _render_analysis_results(col_res) -> None:
                 unsafe_allow_html=True,
             )
 
-        # XAI agreement
         agree = result.get("agreement_score")
         if agree is not None:
             ac = "#34d399" if agree >= 0.7 else "#fbbf24" if agree >= 0.5 else "#f87171"
@@ -1940,14 +2295,12 @@ def _render_analysis_results(col_res) -> None:
                 unsafe_allow_html=True,
             )
 
-        # Probability grid + stream
         section_heading("Probability Distribution", "chart")
         prob_grid(result["probabilities"], result["prediction"])
 
         section_heading("Live Probability Stream", "activity")
         render_prob_bars(result, mc_result=mc_res)
 
-        # XAI visual
         if gc_png or pp_png:
             section_heading("Dual XAI Visualization", "eye")
             gc_col, pp_col = st.columns(2)
@@ -1958,7 +2311,6 @@ def _render_analysis_results(col_res) -> None:
                 st.markdown("**Grad-CAM++** &nbsp;<span style='color:var(--muted);font-size:.75rem'>(inferno · α=0.46)</span>", unsafe_allow_html=True)
                 if pp_png: st.image(pp_png, **_W())
 
-        # Exports
         section_heading("Export", "download")
         dl1, dl2, dl3 = st.columns(3)
         if gc_png:
@@ -2002,7 +2354,9 @@ def _render_analysis_results(col_res) -> None:
 # =============================================================================
 
 def render_xai_page() -> None:
-    page_header("eye", "XAI Lab")
+    st.markdown('<div class="nl-page">', unsafe_allow_html=True)
+    page_header("eye", "XAI Lab",
+                "Visual explanations from Grad-CAM and Grad-CAM++ with agreement scoring.")
     render_ticker()
 
     hist   = st.session_state.prediction_history
@@ -2012,7 +2366,8 @@ def render_xai_page() -> None:
     if not hist:
         empty_state("eye", "No analyses yet",
                     "Run an MRI analysis first to view explanations here.")
-        render_footer()
+        st.markdown('</div>', unsafe_allow_html=True)
+        render_site_footer()
         return
 
     result = st.session_state.last_result
@@ -2069,7 +2424,8 @@ def render_xai_page() -> None:
         st.pyplot(fig, **_W())
         plt.close(fig)
 
-    render_footer()
+    st.markdown('</div>', unsafe_allow_html=True)
+    render_site_footer()
 
 
 # =============================================================================
@@ -2077,14 +2433,17 @@ def render_xai_page() -> None:
 # =============================================================================
 
 def render_dashboard_page() -> None:
-    page_header("chart", "Dashboard")
+    st.markdown('<div class="nl-page">', unsafe_allow_html=True)
+    page_header("chart", "Dashboard",
+                "Aggregate statistics, trends, and activity for this session.")
     render_ticker()
 
     dash_hist = st.session_state.prediction_history
     if not dash_hist:
         empty_state("chart", "No data yet",
                     "Run at least one MRI analysis to populate the dashboard.")
-        render_footer()
+        st.markdown('</div>', unsafe_allow_html=True)
+        render_site_footer()
         return
 
     total    = st.session_state.live_predictions_count
@@ -2163,7 +2522,8 @@ def render_dashboard_page() -> None:
             unsafe_allow_html=True,
         )
 
-    render_footer()
+    st.markdown('</div>', unsafe_allow_html=True)
+    render_site_footer()
 
 
 # =============================================================================
@@ -2171,13 +2531,16 @@ def render_dashboard_page() -> None:
 # =============================================================================
 
 def render_history_page() -> None:
-    page_header("history", "History")
+    st.markdown('<div class="nl-page">', unsafe_allow_html=True)
+    page_header("history", "History",
+                "Browse, filter, and export every analysis you've run this session.")
     render_ticker()
 
     hist_list = st.session_state.prediction_history
     if not hist_list:
         empty_state("history", "No history", "Analyses you run will appear here.")
-        render_footer()
+        st.markdown('</div>', unsafe_allow_html=True)
+        render_site_footer()
         return
 
     fc1, fc2, fc3, fc4 = st.columns([1, 1, 1, 2])
@@ -2252,7 +2615,8 @@ def render_history_page() -> None:
                        "neurolens_history.csv", "text/csv",
                        key="hist_csv", **_btn_icon("download"), **_W())
 
-    render_footer()
+    st.markdown('</div>', unsafe_allow_html=True)
+    render_site_footer()
 
 
 # =============================================================================
@@ -2260,7 +2624,9 @@ def render_history_page() -> None:
 # =============================================================================
 
 def render_settings_page() -> None:
-    page_header("settings", "Settings")
+    st.markdown('<div class="nl-page">', unsafe_allow_html=True)
+    page_header("settings", "Settings",
+                "Configure runtime options, inspect the model, and reset session data.")
 
     c1, c2 = st.columns(2)
 
@@ -2352,7 +2718,8 @@ def render_settings_page() -> None:
         if r2.button("Cancel", key="settings_confirm_no", **_W()):
             st.session_state.settings_confirm_reset = False
 
-    render_footer()
+    st.markdown('</div>', unsafe_allow_html=True)
+    render_site_footer()
 
 
 # =============================================================================
