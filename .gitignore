@@ -6,3 +6,11 @@ venv/
 .streamlit/secrets.toml
 *.pth
 *.pt
+models/
+model/
+checkpoints/
+!models/.gitkeep
+!model/.gitkeep
+!checkpoints/.gitkeep
+.streamlit/
+*.log
