@@ -54,6 +54,14 @@ python -c "import torch; print('PyTorch:', torch.__version__); print('CUDA avail
 
 Install dependencies with `pip install -r requirements.txt`, then start the app with `python app.py`. It uses Waitress as its WSGI server by default; visit http://127.0.0.1:5000. Set `FLASK_DEBUG=1` only for local development.
 
+## Deploying to Render
+
+This repository includes a `render.yaml` Blueprint. In Render, create a new Blueprint instance from the repository and deploy the `neurolens-ai` web service. The Blueprint installs `requirements.txt`, starts the app with Waitress, binds to `0.0.0.0`, generates a private `SECRET_KEY`, and checks `/healthz`.
+
+The Blueprint uses Render's Free plan. Its filesystem is temporary, so prediction history in `data/history.sqlite3` can be lost when the service restarts or redeploys. Free services do not support persistent disks. To keep history, use a paid service and attach a disk mounted at `/opt/render/project/src/data`.
+
+The supplied PyTorch model needs substantial memory. Render Free web services have 512 MB RAM, so the service may run out of memory while importing or loading the model. If that happens, use a larger memory plan. [Render's free instance limits](https://render.com/docs/free)
+
 ## Testing
 
 Run `pytest`. Tests cover strict checkpoint loading when the checkpoint is present, output and probability shapes, CPU prediction, MC Dropout mode restoration, attribution utilities, image conversion/rejection, and Flask routes/upload validation.

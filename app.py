@@ -171,6 +171,13 @@ def about():
     return render_template("about.html", model_name=model_name, device=str(DEVICE), class_names=class_names, mc_samples=MC_SAMPLES, model_available=model is not None, model_error=model_error)
 
 
+@app.get("/healthz")
+def healthz():
+    if model is None:
+        return jsonify({"status": "unavailable", "model": model_error}), 503
+    return jsonify({"status": "ok"})
+
+
 @app.errorhandler(413)
 def too_large(_error):
     if request.accept_mimetypes.best == "application/json":
@@ -180,7 +187,7 @@ def too_large(_error):
 
 
 if __name__ == "__main__":
-    host = os.getenv("HOST", "127.0.0.1")
+    host = os.getenv("HOST", "0.0.0.0")
     port = int(os.getenv("PORT", "5000"))
     if os.getenv("FLASK_DEBUG", "0").lower() in {"1", "true"}:
         app.run(host=host, port=port, debug=True)
