@@ -1,2 +1,0 @@
-libfreetype6
-pkg-config

@@ -1,16 +1,39 @@
-__pycache__/
-*.pyc
-.venv/
-venv/
+# Local secrets and environment settings
 .env
-.streamlit/secrets.toml
-*.pth
-*.pt
-models/
-model/
-checkpoints/
-!models/.gitkeep
-!model/.gitkeep
-!checkpoints/.gitkeep
-.streamlit/
+.env.*
+!.env.example
+
+# Python virtual environments
+venv/
+.venv/
+env/
+ENV/
+
+# Python bytecode and caches
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# Test and coverage output
+.coverage
+.coverage.*
+htmlcov/
+coverage.xml
+
+# Transient SQLite files (keep data/history.sqlite3 trackable)
+data/*.sqlite3-shm
+data/*.sqlite3-wal
+
+# Local agent worktrees
+.kilo/
+
+# Editor and operating system files
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# Runtime logs
 *.log
