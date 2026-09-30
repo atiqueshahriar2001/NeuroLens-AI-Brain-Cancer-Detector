@@ -17,6 +17,7 @@ from utils.validation import validate_filename
 from utils.history_store import HistoryStore
 
 logging.basicConfig(level=logging.INFO)
+logging.getLogger("matplotlib.font_manager").setLevel(logging.WARNING)
 logger = logging.getLogger(__name__)
 app = Flask(__name__, template_folder=str(BASE_DIR / "templates"), static_folder=str(BASE_DIR / "static"))
 # Leave room for multipart form boundaries; enforce the 16 MB file limit below.

@@ -27,6 +27,9 @@ HISTORY_DB_PATH = Path(os.getenv("HISTORY_DB_PATH", "data/history.sqlite3"))
 if not HISTORY_DB_PATH.is_absolute():
     HISTORY_DB_PATH = BASE_DIR / HISTORY_DB_PATH
 DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+if os.getenv("DISABLE_NNPACK", "0").strip().lower() in {"1", "true", "yes"}:
+    # Railway's virtual CPU does not support NNPACK; use PyTorch's normal CPU kernels.
+    torch.backends.nnpack.set_flags(False)
 try:
     TORCH_NUM_THREADS = int(os.getenv("TORCH_NUM_THREADS", "1"))
 except ValueError as exc:
