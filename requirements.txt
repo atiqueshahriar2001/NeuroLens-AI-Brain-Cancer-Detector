@@ -1,5 +1,4 @@
 Flask
-gunicorn
 torch
 torchvision
 numpy

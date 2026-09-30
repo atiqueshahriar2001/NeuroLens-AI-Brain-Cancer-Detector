@@ -19,10 +19,12 @@ def load_model(checkpoint_path: Path, device: torch.device):
     name = checkpoint.get("best_model_name")
     classes = checkpoint.get("class_names")
     count = checkpoint.get("num_classes")
-    if not name or not isinstance(classes, (list, tuple)) or not isinstance(count, int):
+    if not isinstance(name, str) or not name.strip() or not isinstance(classes, (list, tuple)) or not isinstance(count, int) or isinstance(count, bool) or count < 1:
         raise ValueError("Checkpoint must contain best_model_name, class_names, and num_classes.")
     if len(classes) != count:
         raise ValueError(f"Checkpoint class metadata mismatch: {len(classes)} names for {count} outputs.")
+    if any(not isinstance(label, str) or not label.strip() for label in classes) or len(set(classes)) != len(classes):
+        raise ValueError("Checkpoint class_names must contain unique, non-empty strings.")
     state = checkpoint["model_state_dict"]
     if not isinstance(state, dict):
         raise ValueError("Checkpoint model_state_dict is invalid.")

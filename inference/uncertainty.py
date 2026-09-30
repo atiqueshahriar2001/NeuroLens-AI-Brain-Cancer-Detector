@@ -4,7 +4,7 @@ import torch
 from torch import nn
 
 
-def mc_dropout(model, image, samples=30):
+def mc_dropout(model, image, samples=4):
     if samples < 2:
         raise ValueError("MC Dropout requires at least two samples.")
     model.eval()

@@ -19,7 +19,8 @@ from utils.history_store import HistoryStore
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 app = Flask(__name__, template_folder=str(BASE_DIR / "templates"), static_folder=str(BASE_DIR / "static"))
-app.config.update(SECRET_KEY=SECRET_KEY, MAX_CONTENT_LENGTH=MAX_UPLOAD_BYTES)
+# Leave room for multipart form boundaries; enforce the 16 MB file limit below.
+app.config.update(SECRET_KEY=SECRET_KEY, MAX_CONTENT_LENGTH=MAX_UPLOAD_BYTES + 1024 * 1024)
 MAX_HISTORY = 100
 history_store = HistoryStore(HISTORY_DB_PATH, MAX_HISTORY)
 # Attribution code installs hooks and MC dropout changes module training flags.
@@ -76,13 +77,12 @@ def analyze():
             raise ValueError("The image exceeds the 16 MB upload limit.")
         image = load_image(data)
         tensor = image_tensor(image, DEVICE)
-        with model_lock:
-            prediction = predict_image(model, tensor, class_names, DEVICE)
-        result = {"prediction": prediction, "image": image_data_url(image), "explanations": {}, "uncertainty": None, "eas": None}
+        result = {"prediction": None, "prediction_method": "single_pass", "image": image_data_url(image), "explanations": {}, "uncertainty": None, "eas": None}
         try:
             with model_lock:
                 uncertainty = mc_result(model, tensor)
             result["uncertainty"] = uncertainty
+            result["prediction_method"] = "mc_dropout"
             # Match the notebook: the displayed prediction is argmax(mean MC
             # probabilities), with per-class dropout spread alongside it.
             mean_probs = uncertainty["mean_by_class"]
@@ -98,6 +98,9 @@ def analyze():
             uncertainty["level"], uncertainty["reliability"] = reliability_label(uncertainty["predictive_entropy"])
         except Exception as exc:
             logger.exception("MC Dropout failed.")
+            with model_lock:
+                prediction = predict_image(model, tensor, class_names, DEVICE)
+            result["prediction"] = prediction
         cam = None
         try:
             with model_lock:

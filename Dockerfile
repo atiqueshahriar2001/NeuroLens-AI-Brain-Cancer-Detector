@@ -19,4 +19,4 @@ RUN python -m pip install --upgrade pip \
 COPY . .
 
 EXPOSE 8080
-CMD ["sh", "-c", "gunicorn --bind 0.0.0.0:${PORT:-8080} --workers 1 --timeout 300 app:app"]
+CMD ["sh", "-c", "gunicorn --bind 0.0.0.0:${PORT:-8080} --worker-class gthread --workers 1 --threads 4 --timeout 300 app:app"]
