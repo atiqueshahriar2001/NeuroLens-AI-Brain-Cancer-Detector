@@ -15,14 +15,14 @@ def load_image(data: bytes) -> Image.Image:
         raise ValueError("The uploaded file is empty.")
     try:
         image = Image.open(BytesIO(data))
-    except (UnidentifiedImageError, OSError, ValueError) as exc:
+    except (UnidentifiedImageError, Image.DecompressionBombError, OSError, ValueError) as exc:
         raise ValueError("The uploaded file is not a valid, readable image.") from exc
     if image.width <= 0 or image.height <= 0 or image.width * image.height > MAX_IMAGE_PIXELS:
         raise ValueError("The image dimensions are too large to process safely.")
     try:
         image.load()
         return ImageOps.exif_transpose(image).convert("RGB")
-    except (UnidentifiedImageError, OSError, ValueError) as exc:
+    except (UnidentifiedImageError, Image.DecompressionBombError, OSError, ValueError) as exc:
         raise ValueError("The uploaded file is not a valid, readable image.") from exc
 
 

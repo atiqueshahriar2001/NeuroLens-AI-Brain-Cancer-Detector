@@ -20,6 +20,12 @@ function setFile(file) {
     errorBox.textContent = !allowed ? "Choose a JPG, PNG, BMP, or WEBP image." : "The image exceeds the 16 MB upload limit.";
     errorBox.hidden = false;
     fileInput.value = "";
+    if (previewUrl) URL.revokeObjectURL(previewUrl);
+    previewUrl = null;
+    document.getElementById("preview-wrap").hidden = true;
+    document.getElementById("drop-title").textContent = "Drop your MRI image here";
+    document.getElementById("drop-subtitle").innerHTML = 'or <span class="browse-link">browse files</span> from your device';
+    document.getElementById("file-name").textContent = "Select a scan to begin analysis.";
     return;
   }
   errorBox.hidden = true;
