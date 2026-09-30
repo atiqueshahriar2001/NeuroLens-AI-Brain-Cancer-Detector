@@ -68,7 +68,7 @@ Run `pytest`. Tests cover strict checkpoint loading when the checkpoint is prese
 
 ## Explainability
 
-Grad-CAM++ uses the second-order weighting formulation. Integrated Gradients uses Captum with 16 steps in small batches to limit CPU memory use. MC Dropout defaults to 8 passes and can be changed with `MC_SAMPLES`. The Explainability Agreement Score (EAS) is thresholded mask intersection-over-union after resizing; it compares attribution maps and is not clinical validation. Each explanation is generated independently and can be unavailable without blocking prediction.
+Grad-CAM++ uses the second-order weighting formulation. Integrated Gradients uses Captum with 16 steps in small batches to limit CPU memory use. MC Dropout defaults to 4 passes and can be changed with `MC_SAMPLES`. CPU thread use defaults to 1 and can be changed with `TORCH_NUM_THREADS`. The Explainability Agreement Score (EAS) is thresholded mask intersection-over-union after resizing; it compares attribution maps and is not clinical validation. Each explanation is generated independently and can be unavailable without blocking prediction.
 
 ## Uncertainty
 

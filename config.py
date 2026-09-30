@@ -12,7 +12,7 @@ CLASS_NAMES = ["glioma", "meningioma", "notumor", "pituitary"]
 IMAGE_SIZE = 224
 MAX_UPLOAD_BYTES = 16 * 1024 * 1024
 try:
-    MC_SAMPLES = int(os.getenv("MC_SAMPLES", "8"))
+    MC_SAMPLES = int(os.getenv("MC_SAMPLES", "4"))
 except ValueError as exc:
     raise RuntimeError("MC_SAMPLES must be an integer greater than or equal to 2.") from exc
 if MC_SAMPLES < 2:
@@ -27,3 +27,10 @@ HISTORY_DB_PATH = Path(os.getenv("HISTORY_DB_PATH", "data/history.sqlite3"))
 if not HISTORY_DB_PATH.is_absolute():
     HISTORY_DB_PATH = BASE_DIR / HISTORY_DB_PATH
 DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+try:
+    TORCH_NUM_THREADS = int(os.getenv("TORCH_NUM_THREADS", "1"))
+except ValueError as exc:
+    raise RuntimeError("TORCH_NUM_THREADS must be a positive integer.") from exc
+if TORCH_NUM_THREADS < 1:
+    raise RuntimeError("TORCH_NUM_THREADS must be a positive integer.")
+torch.set_num_threads(TORCH_NUM_THREADS)
