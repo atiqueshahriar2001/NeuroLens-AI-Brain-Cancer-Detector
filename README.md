@@ -54,13 +54,13 @@ python -c "import torch; print('PyTorch:', torch.__version__); print('CUDA avail
 
 Install dependencies with `pip install -r requirements.txt`, then start the app with `python app.py`. It uses Waitress as its WSGI server by default; visit http://127.0.0.1:5000. Set `FLASK_DEBUG=1` only for local development.
 
-## Deploying to Render
+## Deploying to Railway
 
-This repository includes a `render.yaml` Blueprint. In Render, create a new Blueprint instance from the repository and deploy the `neurolens-ai` web service. The Blueprint installs `requirements.txt`, starts the app with Waitress, binds to `0.0.0.0`, generates a private `SECRET_KEY`, and checks `/healthz`.
+This repository includes a `Dockerfile` and `railway.json`. Railway builds the Docker image, installs CPU-only PyTorch wheels from `requirements-railway.txt`, starts the app with Waitress, and checks `/healthz`. Connect the GitHub repository to a Railway project and deploy from the repository root. Railway injects `PORT`; the container binds to `0.0.0.0` by default.
 
-The Blueprint uses Render's Free plan. Its filesystem is temporary, so prediction history in `data/history.sqlite3` can be lost when the service restarts or redeploys. Free services do not support persistent disks. To keep history, use a paid service and attach a disk mounted at `/opt/render/project/src/data`.
+Set a stable, private `SECRET_KEY` in the Railway service variables. To persist SQLite prediction history, attach a Railway Volume at `/app/data` and set `HISTORY_DB_PATH=/app/data/history.sqlite3`. Without a volume, history is stored in the container filesystem and may be lost when Railway replaces the deployment. [Railway Volumes](https://docs.railway.com/volumes)
 
-The supplied PyTorch model needs substantial memory. Render Free web services have 512 MB RAM, so the service may run out of memory while importing or loading the model. If that happens, use a larger memory plan. [Render's free instance limits](https://render.com/docs/free)
+The model requires substantial memory. If the service exits during startup with an out-of-memory error, increase the Railway service memory allocation. CPU-only PyTorch avoids downloading unused NVIDIA CUDA packages, but does not eliminate the model's runtime memory needs.
 
 ## Testing
 

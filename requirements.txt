@@ -7,4 +7,3 @@ Pillow
 matplotlib
 captum
 python-dotenv
-pytest
