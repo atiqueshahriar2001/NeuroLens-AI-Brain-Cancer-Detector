@@ -17,4 +17,4 @@ RUN python -m pip install --upgrade pip \
 COPY . .
 
 EXPOSE 8080
-CMD ["sh", "-c", "python -m waitress --listen=0.0.0.0:${PORT:-8080} --threads=${WAITRESS_THREADS:-4} app:app"]
+CMD ["python", "app.py"]

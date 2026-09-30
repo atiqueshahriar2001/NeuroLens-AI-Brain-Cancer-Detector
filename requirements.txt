@@ -1,5 +1,4 @@
 Flask
-waitress
 torch
 torchvision
 numpy

@@ -52,11 +52,11 @@ Verify PyTorch:
 python -c "import torch; print('PyTorch:', torch.__version__); print('CUDA available:', torch.cuda.is_available())"
 ```
 
-Install dependencies with `pip install -r requirements.txt`, then start the app with `python app.py`. It uses Waitress as its WSGI server by default; visit http://127.0.0.1:5000. Set `FLASK_DEBUG=1` only for local development.
+Install dependencies with `pip install -r requirements.txt`, then start the app with `python app.py`; visit http://127.0.0.1:5000. Set `FLASK_DEBUG=1` only for local development.
 
 ## Deploying to Railway
 
-This repository includes a `Dockerfile` and `railway.json`. Railway builds the Docker image, installs CPU-only PyTorch wheels from `requirements-railway.txt`, starts the app with Waitress, and checks `/healthz`. Connect the GitHub repository to a Railway project and deploy from the repository root. Railway injects `PORT`; the container binds to `0.0.0.0` by default.
+This repository includes a `Dockerfile` and `railway.json`. Railway builds the Docker image, installs CPU-only PyTorch wheels from `requirements-railway.txt`, starts the app with Flask's built-in server, and checks `/healthz`. Connect the GitHub repository to a Railway project and deploy from the repository root. Railway injects `PORT`; the container binds to `0.0.0.0` by default.
 
 Set a stable, private `SECRET_KEY` in the Railway service variables. To persist SQLite prediction history, attach a Railway Volume at `/app/data` and set `HISTORY_DB_PATH=/app/data/history.sqlite3`. Without a volume, history is stored in the container filesystem and may be lost when Railway replaces the deployment. [Railway Volumes](https://docs.railway.com/volumes)
 

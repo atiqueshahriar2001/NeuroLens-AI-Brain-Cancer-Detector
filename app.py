@@ -189,8 +189,5 @@ def too_large(_error):
 if __name__ == "__main__":
     host = os.getenv("HOST", "0.0.0.0")
     port = int(os.getenv("PORT", "5000"))
-    if os.getenv("FLASK_DEBUG", "0").lower() in {"1", "true"}:
-        app.run(host=host, port=port, debug=True)
-    else:
-        from waitress import serve
-        serve(app, host=host, port=port, threads=int(os.getenv("WAITRESS_THREADS", "4")))
+    debug = os.getenv("FLASK_DEBUG", "0").lower() in {"1", "true"}
+    app.run(host=host, port=port, debug=debug)
