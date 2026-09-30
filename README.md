@@ -56,7 +56,7 @@ Install dependencies with `pip install -r requirements.txt`, then start the app 
 
 ## Deploying to Railway
 
-This repository includes a `Dockerfile` and `railway.json`. Railway builds the Docker image, installs CPU-only PyTorch wheels from `requirements-railway.txt`, starts the app with Flask's built-in server, and checks `/healthz`. Connect the GitHub repository to a Railway project and deploy from the repository root. Railway injects `PORT`; the container binds to `0.0.0.0` by default.
+This repository includes a `Dockerfile` and `railway.json`. Railway builds the Docker image, installs CPU-only PyTorch wheels from `requirements-railway.txt`, starts the app with Gunicorn, and checks `/healthz`. Connect the GitHub repository to a Railway project and deploy from the repository root. Railway injects `PORT`; the container binds to `0.0.0.0` by default.
 
 Set a stable, private `SECRET_KEY` in the Railway service variables. To persist SQLite prediction history, attach a Railway Volume at `/app/data` and set `HISTORY_DB_PATH=/app/data/history.sqlite3`. Without a volume, history is stored in the container filesystem and may be lost when Railway replaces the deployment. [Railway Volumes](https://docs.railway.com/volumes)
 
@@ -68,7 +68,7 @@ Run `pytest`. Tests cover strict checkpoint loading when the checkpoint is prese
 
 ## Explainability
 
-Grad-CAM++ uses the second-order weighting formulation. Integrated Gradients uses Captum with 32 steps. The Explainability Agreement Score (EAS) is thresholded mask intersection-over-union after resizing; it compares attribution maps and is not clinical validation. Each explanation is generated independently and can be unavailable without blocking prediction.
+Grad-CAM++ uses the second-order weighting formulation. Integrated Gradients uses Captum with 16 steps in small batches to limit CPU memory use. MC Dropout defaults to 8 passes and can be changed with `MC_SAMPLES`. The Explainability Agreement Score (EAS) is thresholded mask intersection-over-union after resizing; it compares attribution maps and is not clinical validation. Each explanation is generated independently and can be unavailable without blocking prediction.
 
 ## Uncertainty
 

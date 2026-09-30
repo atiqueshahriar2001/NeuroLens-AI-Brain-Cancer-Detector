@@ -12,7 +12,7 @@ CLASS_NAMES = ["glioma", "meningioma", "notumor", "pituitary"]
 IMAGE_SIZE = 224
 MAX_UPLOAD_BYTES = 16 * 1024 * 1024
 try:
-    MC_SAMPLES = int(os.getenv("MC_SAMPLES", "30"))
+    MC_SAMPLES = int(os.getenv("MC_SAMPLES", "8"))
 except ValueError as exc:
     raise RuntimeError("MC_SAMPLES must be an integer greater than or equal to 2.") from exc
 if MC_SAMPLES < 2:

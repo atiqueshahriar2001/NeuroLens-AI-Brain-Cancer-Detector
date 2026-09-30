@@ -98,7 +98,12 @@ if (form) form.addEventListener("submit", async event => {
   const timer = setInterval(() => { stage = Math.min(stage + 1, stages.length - 1); statusText.textContent = stages[stage]; }, 2500);
   try {
     const response = await fetch(form.action, {method:"POST", body:new FormData(form), headers:{Accept:"application/json"}});
-    const payload = await response.json();
+    let payload;
+    try {
+      payload = await response.json();
+    } catch {
+      throw new Error(`The server returned an unreadable response (HTTP ${response.status}). Check the deployment logs.`);
+    }
     if (!response.ok) throw new Error(payload.error || "Analysis could not be completed.");
     statusText.textContent = "Preparing your dashboard…";
     renderResult(payload);
